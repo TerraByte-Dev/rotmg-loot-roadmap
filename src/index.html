@@ -124,6 +124,10 @@ button,input,select{font:inherit}
 .chip i.up{color:var(--good)}
 .chip i.down{color:#ff6b6b}
 .chip .of{color:var(--ink-faint);font-size:10px}
+/* Dashed = you only get this sometimes. Never in the Kit totals. */
+.chip.cond{border-style:dashed;opacity:.9}
+.chip.cond i{color:var(--ink-dim)}
+.chip.scal i.x{color:var(--shiny);font-size:10px;letter-spacing:.04em}
 
 /* ---- damage table ---- */
 table.dmg{width:100%;border-collapse:collapse;margin-top:3px}
@@ -302,6 +306,10 @@ tbody tr.tracked .nm{color:var(--st)}
 .stat .k{color:var(--ink-faint);font-size:9.5px;letter-spacing:.1em}
 .stat .v{font-size:15px;color:var(--ink)}
 .stat .b{color:var(--good);font-size:11px}
+.stat .e{color:var(--accent);font-size:11px}
+.stat .b.neg,.stat .e.neg{color:#ff6b6b}
+.stat .k{display:flex;align-items:center;gap:4px}
+.stat .k .sico .ico{--ico:13px}
 
 .dungeon{display:flex;gap:9px;align-items:center;padding:4px 13px;border-bottom:1px solid var(--line-soft);cursor:pointer}
 .dungeon:hover{background:var(--bg-hover)}
@@ -511,6 +519,7 @@ const S = {
   petGear: LS("rm.petGear")===true,
   enchTop: LS("rm.enchTop")!==false,   // he only cares about the best roll; default on
   petFrom: null, petTo: null,
+  statf: LS("rm.statf") || "",   // "show me everything that touches ATT"
   // biome name -> "g" (hunting here) or "r" (done). Kept out of S.biome, which is just
   // where the view is scrolled to.
   biomeMark: (LS("rm.biomeMark") && typeof LS("rm.biomeMark")==="object"
@@ -625,7 +634,17 @@ function filterFn(){
   const sf = $("#srcf") ? $("#srcf").value : "";
   const hr = $("#hidere") && $("#hidere").checked;
   const sg = $("#showgone") && $("#showgone").checked;
+  const statSel = $("#statf") ? $("#statf").value : "";
   return it => {
+    // "Which of these specs the stat I am building?" - the question the whole table
+    // exists to answer. All four kinds count, because all four are reasons to pick it.
+    if (statSel){
+      const hit = (it.bonus && it.bonus[statSel] != null)
+        || (it.cond || []).some(c => c.stat === statSel)
+        || (it.scaled || []).some(x => x.stat === statSel || x.of === statSel)
+        || (it.scal || []).includes(statSel);
+      if (!hit) return false;
+    }
     if (tr && it.tier !== tr) return false;
     // Read it.sk, NOT sources.length. Since source resolution landed, almost every item
     // carries SOME source - set, event, community, inherited, or "any dungeon" for tiered.
@@ -724,6 +743,12 @@ function itemsView(){
    <div class="bar">
      <input type="search" id="q" placeholder="name, dungeon…" autocomplete="off">
      <select id="tier"><option value="">all types</option><option>UT</option><option>ST</option><option>Tiered</option></select>
+     <select id="statf" title="Every item that touches this stat — permanently, conditionally,
+       as a percentage of it, or by scaling its own effect off it.">
+       <option value="">any stat</option>
+       ${D.stats.map(k=>`<option value="${k}" ${S.statf===k?"selected":""}>${
+         (STAT3[k]||k)} &mdash; ${k==="MAXHP"?"life":k==="MAXMP"?"mana":k.toLowerCase()}</option>`).join("")}
+     </select>
      <select id="srcf">
        <option value="">any source</option>
        <option value="known">has a dungeon</option>
@@ -859,16 +884,51 @@ function kitView(){
       <div class="pick" data-kitslot="${i}">${it?ico(it.sp):`<div class="ico none"></div>`}
       <div>${it?`<div class="nm">${esc(it.name)}</div><div class="dim">${it.rel!=null?"DPS* "+Math.round(it.rel):""}</div>`
       :`<div class="dim">click to choose</div>`}</div></div></div>`; }).join("");
-  const tot={}; D.stats.forEach(s=>tot[s]=0);
+  // Three separate buckets, because they are three different kinds of number and adding
+  // them together is how a totals panel starts lying.
+  //   gear      flat <ActivateOnEquip amount=".." stat=".."> on the equipped item
+  //   ench      the same element on the enchantments you have PLANNED for those items
+  //   scaled    "+7% of ATT" rows, from either - these depend on the total they would be
+  //             added to, and the client never states the order the game applies them in
+  const tot={}, fromGear={}, fromEnch={};
+  D.stats.forEach(s=>{ tot[s]=0; fromGear[s]=0; fromEnch[s]=0; });
+  const scaledRows=[];
   kit.forEach(id=>{ const it=id&&byId[id];
-    if(it&&it.bonus) Object.entries(it.bonus).forEach(([k,v])=>{ if(k in tot) tot[k]+=v; }); });
+    if(!it) return;
+    if(it.bonus) Object.entries(it.bonus).forEach(([k,v])=>{
+      if(k in tot){ tot[k]+=v; fromGear[k]+=v; } });
+    (it.scaled||[]).forEach(x=>scaledRows.push({src:it.name, ...x}));
+    // The enchantments you planned are as real as the item once they are rolled, and
+    // leaving them out was the difference between "+3 ATT" and the "+21 ATT" this ring
+    // actually gives.
+    (S.ench[it.id]||[]).forEach(eid=>{ const e=eid&&enchById[eid]; if(!e) return;
+      (e.mut||[]).forEach(m=>{
+        if(!m.stat || m.amt==null) return;
+        if(m.of){ scaledRows.push({src:e.name, stat:m.stat, amt:+m.amt, of:m.of}); return; }
+        if(m.stat in tot){ tot[m.stat]+=+m.amt; fromEnch[m.stat]+=+m.amt; }
+      });
+    });
+  });
+  const round1=x=>Math.round(x*10)/10;
+  // A trade-off enchantment takes a stat away, and "+-30" is not a number anybody reads.
+  const signed=x=>(x>0?"+":"")+round1(x);
   const base=c.base||{}, mx=c.max||{};
   const useMax = !S.lvl1;
   const src = useMax ? mx : base;
-  const stats=D.stats.map(s=>`<div class="stat"><div class="k">${s}</div>
-      <div class="v">${Math.round((src[s]||0)+tot[s])}</div>
-      <div class="dim" style="font-size:10.5px">${Math.round(src[s]||0)} ${useMax?"maxed":"base"}${tot[s]?` <span class="b">+${tot[s]}</span>`:""}</div>
+  const stats=D.stats.map(s=>`<div class="stat"><div class="k">${
+      STATSP[s]!=null?`<span class="sico">${ico(STATSP[s])}</span>`:""}<span style="color:${
+      STATCOL[s]||"var(--ink-faint)"}">${STAT3[s]||s}</span></div>
+      <div class="v">${round1((src[s]||0)+tot[s])}</div>
+      <div class="dim" style="font-size:10.5px">${Math.round(src[s]||0)} ${useMax?"maxed":"base"}${
+        fromGear[s]?` <span class="b ${fromGear[s]<0?"neg":""}" title="from your gear">${signed(fromGear[s])}</span>`:""}${
+        fromEnch[s]?` <span class="e ${fromEnch[s]<0?"neg":""}" title="from the enchantments you planned">${signed(fromEnch[s])}</span>`:""}</div>
       </div>`).join("");
+  const scaled = scaledRows.length ? `<div class="dsec">Scaled off another stat</div>
+    <div class="dim" style="margin-bottom:6px">These are a percentage of a stat, not points,
+      so they are <b>not</b> in the totals above &mdash; the client never says in what order
+      the game applies them.</div>
+    ${scaledRows.map(x=>`<div class="drow"><span>${esc(x.src)}</span>
+      <span>${statChip(x.stat, x.amt, x.of)}</span></div>`).join("")}` : "";
   const w = kit[0]&&byId[kit[0]];
   return `<div class="kit">
     <div class="dsec">Kit · ${esc(S.cls)}</div><div class="kitslots">${slots}</div>
@@ -878,6 +938,7 @@ function kitView(){
     <label class="dim" style="display:flex;gap:6px;align-items:center;margin-bottom:8px;cursor:pointer">
       <input type="checkbox" id="lvl1" ${S.lvl1?"checked":""}> show level-1 base instead of maxed</label>
     <div class="statgrid">${stats}</div>
+    ${scaled}
     <div class="dsec">Enchantments</div>
     <div class="dim" style="margin-bottom:9px">Click a slot to choose what you want rolled.
       Right-click one to hold it through a reroll. <b>Roll</b> draws from the enchantments
@@ -890,10 +951,12 @@ function kitView(){
     ${w?damagePanel(w):`<div class="dsec">Damage</div>
       <div class="dim">No weapon equipped.</div>`}
     <div class="dsec">Honest limits</div>
-    <div class="dim">Class stats are read straight from the game files — both the level-1 base and the
-      <b>maxed</b> value (the <code>max</code> attribute on each stat). Gear bonuses are exact, from each
-      item's <b>flat</b> on-equip effects. <b>Not counted:</b> percentage/scaled bonuses (shown separately
-      on each item), enchantments, exaltations, or the pet.</div></div>`;
+    <div class="dim">Class stats are read straight from the game files — both the level-1 base and
+      the <b>maxed</b> value (the <code>max</code> attribute on each stat). Gear and enchantment
+      bonuses are exact, from the <b>flat</b> on-equip effects of each. <b>Not counted:</b>
+      percentage/scaled bonuses (listed above on their own), conditional buffs that only apply
+      while shooting or after an ability, exaltations, or the pet — and the enchantments counted
+      here are the ones you have <b>planned</b>, not ones you have rolled.</div></div>`;
 }
 
 function dungeonsView(){
@@ -1610,26 +1673,54 @@ const STATCOL = (SP.statColors) || {};
 const STAT3 = { MAXHP: "LIF", MAXMP: "MAN", ATT: "ATT", DEF: "DEF", SPD: "SPD",
                 DEX: "DEX", VIT: "VIT", WIS: "WIS" };
 
-// The on-equip stats of an ITEM, for the table. Flat only: a scaled bonus is a different
-// kind of number and the detail pane keeps the two apart for a reason.
+// Every stat an item touches, in four visually distinct kinds - because they are four
+// different promises and treating them alike is how you buy the wrong item:
+//   solid chip    permanent, and in your Kit totals
+//   dashed chip   conditional: only while shooting, or for 5s after an ability
+//   % chip        a percentage of another stat, not points
+//   x chip        this item's effect scales off that stat
+function condTitle(c){
+  const bits = [c.on];
+  if(c.dur) bits.push(`${c.dur}s`);
+  if(c.cd) bits.push(`${c.cd}s cooldown`);
+  // proc= is not defined in any of the 246 files. Its values run 0.01 to 1.0 and never
+  // above 1, so it is shown as the raw number rather than called a percentage.
+  if(c.proc!=null && c.proc<1) bits.push(`proc ${c.proc}`);
+  if(c.ladder) bits.push(`per enemy: ${c.ladder.join(" / ")}`);
+  return bits.join(" · ");
+}
 function itemChips(it){
   const flat = it.bonus ? Object.entries(it.bonus) : [];
-  if(!flat.length && !(it.scaled||[]).length) return "";
+  const cond = it.cond || [], scal = it.scal || [], scaled = it.scaled || [];
+  if(!flat.length && !cond.length && !scal.length && !scaled.length && it.disc==null) return "";
   return `<span class="chips tight">${
     flat.map(([k,v]) => statChip(k, v)).join("")}${
-    (it.scaled||[]).length ? `<span class="chip" title="${esc((it.scaled||[]).map(x=>
+    cond.map(c => statChip(c.stat, c.amt!=null?c.amt:(c.ladder?`${c.ladder[0]}–${c.ladder[c.ladder.length-1]}`:"?"),
+                          null, {cond:true, title:condTitle(c)})).join("")}${
+    scal.map(k => `<span class="chip scal" title="this item's effect scales off ${esc(k)}">${
+      STATSP[k]!=null?ico(STATSP[k]):""}<b style="color:${STATCOL[k]||"var(--ink)"}">${
+      STAT3[k]||k}</b><i class="x">scales</i></span>`).join("")}${
+    scaled.length ? `<span class="chip" title="${esc(scaled.map(x=>
       `${x.stat} ${x.amt>0?"+":""}${x.amt}${x.of?` of ${x.of}`:""}`).join(" · "))}"><b
-      style="color:var(--shiny)">%</b><i>${it.scaled.length}</i></span>` : ""}</span>`;
+      style="color:var(--shiny)">%</b><i>${scaled.length}</i></span>` : ""}${
+    it.disc!=null ? `<span class="chip" title="this item's ability costs ${
+      Math.round(it.disc*100)}% of its usual MP"><b style="color:var(--shiny)">MP</b><i
+      class="up">${Math.round((it.disc-1)*100)}%</i></span>` : ""}</span>`;
 }
 
-function statChip(stat, amt, of){
+function statChip(stat, amt, of, opt){
   const key = String(stat || "").toUpperCase();
+  // 41 enchantments move something that is not one of the eight stats - dust, XP, damage
+  // resistance - and those rows used to render as an empty bordered box.
+  if(!key) return "";
   const label = STAT3[key] || key.slice(0, 3);
   const col = STATCOL[key] || "var(--ink)";
   const n = +amt;
   const sign = isNaN(n) ? "" : (n > 0 ? "+" : "");
   const cls = isNaN(n) ? "" : (n > 0 ? "up" : n < 0 ? "down" : "");
-  return `<span class="chip" title="${esc(key)}${of ? ` — scaled off ${esc(of)}` : ""}">${
+  const o = opt || {};
+  return `<span class="chip${o.cond?" cond":""}" title="${esc(key)}${
+    of ? ` — scaled off ${esc(of)}` : ""}${o.title ? ` — ${esc(o.title)}` : ""}">${
     STATSP[key] != null ? ico(STATSP[key]) : ""
   }<b style="color:${col}">${label}</b><i class="${cls}">${sign}${esc(String(amt))}${
     of ? `<span class="of">% of ${esc(STAT3[of] || of)}</span>` : ""}</i></span>`;
@@ -1960,7 +2051,9 @@ function draw(p){
 }
 
 document.addEventListener("change", e=>{
-  if(e.target.id==="srcf"){ drawItems(); }
+  if(e.target.id==="srcf"||e.target.id==="statf"){
+    if(e.target.id==="statf"){ S.statf=e.target.value; LSet("rm.statf",S.statf); }
+    drawItems(); }
 });
 document.addEventListener("input", e=>{
   if(e.target.id==="lvl1"){ S.lvl1=e.target.checked; render(); return; }
@@ -1969,7 +2062,7 @@ document.addEventListener("input", e=>{
   if(e.target.id==="petfrom"){ S.petFrom=+e.target.value; drawPets(); return; }
   if(e.target.id==="petto"){ S.petTo=+e.target.value; drawPets(); return; }
   if(e.target.id==="petgear"){ S.petGear=e.target.checked; LSet("rm.petGear",S.petGear); drawPets(); return; }
-  if(["q","tier","srcf","hidere","showgone"].includes(e.target.id)){
+  if(["q","tier","srcf","statf","hidere","showgone"].includes(e.target.id)){
     if(S.view==="items") drawItems();
     else if(S.view==="pets") drawPets();
     else if(S.view==="ench") drawEnch(); }

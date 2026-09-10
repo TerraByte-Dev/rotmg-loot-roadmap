@@ -708,6 +708,133 @@ ABILITY_BEHAVIOR = {
 }
 
 
+# ---------------------------------------------------------------------------
+# The stats an item gives you that are NOT a flat on-equip bonus.
+#
+# <ActivateOnEquip stat=".." amount="..">IncrementStat</ActivateOnEquip> is the permanent
+# kind and has always been read. Three other kinds were not, and between them they are the
+# only stat 125 items have:
+#
+#   conditional   "+15 DEF for 5s on ability use, 15s cooldown" - the On*Activate families,
+#                 plus <Activate>StatBoostSelf/StatBoostAura, which is the item's ability
+#                 buffing you. NEVER summable into a total: Adamantine Helm would read
+#                 +24 VIT when 4 of it is permanent and 20 lasts five seconds.
+#   scaling       scalingStat="ATT" - the item's effect gets stronger with a stat. This is
+#                 the axis a player actually builds around, and it was invisible.
+#   discount      <ActivateOnEquip multiplier="0.80">AbilityUseDiscount - the ability costs
+#                 80% MP. The percentage was reaching the app only as English prose.
+#
+# The families below are the complete set of elements in equip.xml that carry stat= on an
+# equippable, verified by sweeping every element name in the file rather than by guessing
+# which ones matter.
+#
+# One thing deliberately NOT asserted: proc= is not defined in any of the 246 files. Its
+# observed values run 0.01 to 1.0 and never exceed 1, which is what the UI says - not
+# "33% chance", which would be reading the game rather than the file.
+# ---------------------------------------------------------------------------
+
+COND_TRIGGERS = {
+    "OnPlayerShootActivate": "while shooting",
+    "OnPlayerAbilityActivate": "on ability use",
+    "OnSwitchAbilityActivate": "on switching ability",
+    "OnPlayerHitActivate": "when you are hit",
+    "OnEnemyHitActivate": "when you hit an enemy",
+    "OnDetonateHexActivate": "on detonating a hex",
+    "OnConditionEndActivate": "when a condition ends",
+}
+# <Activate> is the item's ability firing. The element's TEXT says which kind, and the
+# text is the only discriminator - the attribute set is identical across all of them.
+ACTIVATE_TRIGGERS = {
+    "StatBoostSelf": "while the ability is active",
+    "StatBoostAura": "party aura, while the ability is active",
+    "Dash": "per enemy dashed through",
+}
+
+
+def item_stat_extras(body):
+    """(conditional grants, stats scaled off, ability MP discount) for one <Object> body.
+
+    Reads the WHOLE body on purpose, including <Ability>, <StartUse> and <EndUse>: an
+    item's ability is the item's, and 56 of these grants sit inside those wrappers. That
+    is the opposite of the <Subattack> rule, where a nested element's numbers are NOT the
+    item's own - here they are, and attributing them to the item is the correct answer.
+    """
+    cond, scal, disc = [], set(), None
+
+    def row(name, a, trigger):
+        st = a.get("stat")
+        if not st:
+            return None
+        r = {"stat": st, "on": trigger}
+        # Sheaths state a ladder rather than a number - amountPerEnemy="1,5,10,16,23" -
+        # and float() on that string throws. Ship the ladder as a ladder.
+        if a.get("amount") is not None:
+            try:
+                r["amt"] = float(a["amount"])
+            except ValueError:
+                return None
+        elif a.get("amountPerEnemy"):
+            parts = [p.strip() for p in a["amountPerEnemy"].split(",") if p.strip()]
+            try:
+                r["ladder"] = [float(p) for p in parts]
+            except ValueError:
+                return None
+        else:
+            return None
+        for src, dst in (("duration", "dur"), ("cooldown", "cd"), ("proc", "proc"),
+                         ("effectDuration", "dur")):
+            if a.get(src) and dst not in r:
+                try:
+                    r[dst] = float(a[src])
+                except ValueError:
+                    pass
+        if a.get("channel"):
+            r["ch"] = a["channel"]
+        return r
+
+    for name, trigger in COND_TRIGGERS.items():
+        for a, _inner in elems(body, name):
+            r = row(name, a, trigger)
+            if r:
+                cond.append(r)
+
+    for a, inner in elems(body, "Activate"):
+        kind = (inner or "").strip()
+        trig = ACTIVATE_TRIGGERS.get(kind)
+        if trig:
+            r = row("Activate", a, trig)
+            if r:
+                cond.append(r)
+        if a.get("scalingStat"):
+            scal.add(a["scalingStat"])
+
+    # scalingStat also rides the conditional families and a few others; one sweep of the
+    # whole body catches every carrier without naming them all.
+    for m in re.finditer(r'scalingStat="(\w+)"', body):
+        # The client misspells MAXMP as MAHMP exactly once, on Kaiju Skull. Correcting a
+        # known typo beats printing "MAH" at somebody and letting them think it is a
+        # ninth stat; the correction is named here rather than done silently.
+        scal.add("MAXMP" if m.group(1) == "MAHMP" else m.group(1))
+
+    for a, inner in elems(body, "ActivateOnEquip"):
+        if (inner or "").strip() == "AbilityUseDiscount" and a.get("multiplier"):
+            try:
+                disc = float(a["multiplier"])
+            except ValueError:
+                pass
+
+    # Deduplicate identical rows: an item with three firing modes can declare the same
+    # buff once per mode, and three identical chips say nothing three times.
+    seen, out = set(), []
+    for r in cond:
+        k = (r["stat"], r["on"], r.get("amt"), tuple(r.get("ladder") or ()))
+        if k in seen:
+            continue
+        seen.add(k)
+        out.append(r)
+    return out, sorted(scal), disc
+
+
 def load_pet_abilities():
     """The 9 pet abilities, each joined to the behaviour object that carries its numbers.
 
@@ -1038,6 +1165,10 @@ def main():
                 scaled.append({"stat": st.group(1), "amt": float(am.group(1)),
                                "of": rel_to.group(1) if rel_to else None, "kind": eff})
 
+        # Everything else that touches a stat: conditional buffs, what the item scales
+        # off, and the ability MP discount. See item_stat_extras().
+        cond_stats, scal_stats, mp_disc = item_stat_extras(body)
+
         # <EffectInfo> ships in BOTH attribute orders (1,858 description-first vs
         # 1,641 name-first). A positional regex here was dropping 53% of them.
         # trunk = the item's own fields, with every WRAPPER block removed so nothing
@@ -1266,7 +1397,13 @@ def main():
             "dmg": [mn, mx] if mn is not None else None,
             "rof": rof, "shots": shots,
             "rel": round(rel, 1) if rel is not None else None,
-            "proc": round(proc, 1) if proc is not None else None,
+            # Renamed from "proc": the XML's own proc= attribute is a probability on a
+            # conditional buff, and having a field of the same name holding an ability's
+            # damage meant AoOStar shipped "proc": 325 next to a real proc of 0.33.
+            "abilityDmg": round(proc, 1) if proc is not None else None,
+            "cond": cond_stats or None,
+            "scal": scal_stats or None,
+            "disc": mp_disc,
             "relAssumed": rel_assumed or None,
             "multi": len(subattacks) or None,
             "bonus": bonus or None, "scaled": scaled or None,
