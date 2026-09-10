@@ -1,6 +1,6 @@
 {
  "_README": "Items that can no longer be obtained. HIDDEN BY DEFAULT in the roadmap - Tate: 'We dont care about limited items at all.'\n\nIMPORTANT: the client does NOT encode this. There is no LIMITED / RETIRED / UNOBTAINABLE token in any of the 4,240 items' <Labels>, and Ceremonial Wand even carries ORG_LIBRARY as though it still drops in the Cursed Library. So this list is CURATED, not derived, and it is the one file here that needs a human. Add an id, save, re-run build.ps1.\n\nSeasonal items are deliberately NOT listed: Easter, Halloween and Oryxmas gear comes back.",
- "_count": 30,
+ "_count": 31,
  "items": {
   "Sword of Illumination": {
    "reason": "Limited",
@@ -151,6 +151,11 @@
    "reason": "Limited event reskin",
    "evidence": "One of the 11 blood/occult reskins at contiguous type ids 0xA526-0xA53D, one per dungeon (UDL, Puppet, Library, Manor, CDepths, Cem, Spectral, Encore). Tate: Ceremonial Wand is a limited-time reskin that can no longer be obtained.",
    "confidence": "medium"
+  },
+  "Feed": {
+   "reason": "Developer object",
+   "evidence": "equip.xml: <Object type=\"0x5e1f\" id=\"Feed\"> carries <Description>Ultimate Feed Power.</Description>, <PetFood /> and <feedPower>50000</feedPower> - twice the next-highest food in the game. It has no name beyond \"Feed\", no drop source in any of the 246 files, and no source resolver in this project matches it.",
+   "confidence": "high"
   }
  }
 }

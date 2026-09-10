@@ -58,6 +58,26 @@ button,input,select{font:inherit}
 .navbtn.pop:hover{background:var(--accent-glow)}
 .navsep{border-top:1px solid var(--line-soft);margin:6px 2px 3px}
 
+/* ---- pets ---- */
+.pettabs{display:flex;gap:6px;padding:9px 13px 0}
+.pettab{background:none;border:1px solid var(--line);border-radius:var(--radius);cursor:pointer;
+  color:var(--ink-dim);font:inherit;font-size:12px;padding:6px 13px}
+.pettab[aria-selected=true]{border-color:var(--accent-dim);background:var(--accent-glow);color:var(--accent)}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:9px;padding:11px 13px}
+.pcard{border:1px solid var(--line);border-radius:var(--radius);background:var(--bg-panel);padding:10px 12px}
+.pcard .pnm{color:var(--ink);font-size:13.5px}
+.pcard .grp{color:var(--ink-faint);font-size:10px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:5px}
+.prow{display:flex;gap:8px;align-items:baseline;padding:2px 0;border-top:1px solid var(--line-soft)}
+.prow .k{color:var(--ink-faint);font-size:11.5px;min-width:104px}
+.prow .v{color:var(--ink);font-size:12.5px;font-variant-numeric:tabular-nums}
+.prow .v .to{color:var(--ink-faint);padding:0 3px}
+.prow .c{margin-left:auto;color:var(--ink-faint);font-size:10px}
+.prow.sub .k{padding-left:11px;font-style:italic}
+.ladder{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.ladder b{background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);
+  padding:2px 6px;font-weight:400;color:var(--ink-dim);font-size:11.5px}
+.ladder b i{color:var(--ink-faint);font-style:normal;font-size:10px}
+
 /* ---- home: pick a character ---- */
 .home{padding:22px 26px;overflow:auto}
 .home h2{margin:0 0 3px;font-size:15px;color:var(--ink);letter-spacing:.04em}
@@ -383,6 +403,9 @@ const LSet= (k,v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch
 const S = {
   cls: LS("rm.cls") || "Wizard",
   view:"home", tab:0, sel:null, kitPick:null, lvl1:false, biome:null, trackAt:null, dgAt:null,
+  ptab: LS("rm.ptab")==="feed" ? "feed" : "ability",
+  petGear: LS("rm.petGear")===true,
+  petFrom: null, petTo: null,
   theme: LS("rm.theme") || "roadmap",
   opacity: (typeof LS("rm.widgetOpacity")==="number") ? LS("rm.widgetOpacity") : 0.92,
   kit: (LS("rm.kit") && typeof LS("rm.kit")==="object" && !Array.isArray(LS("rm.kit")))?LS("rm.kit"):{},
@@ -531,7 +554,8 @@ function renderRail(){
       btn("items","Items",sp[0]) +
       btn("dungeons","Dungeons",UI.realm,D.counts.portals) +
       btn("ench","Enchants",UI.ench,D.counts.enchants) +
-      btn("bestiary","Bestiary",UI.beast);
+      btn("bestiary","Bestiary",UI.beast) +
+    btn("pets","Pets",UI.pet);
 
   // Kit above Track, Track pinned to the bottom with Pop Out locked under it.
   $("#navbot").innerHTML =
@@ -808,6 +832,234 @@ function dungeonDrops(name){
         <td style="width:110px" class="dim">${esc(i.slotName)}</td>
         <td></td></tr>`).join("")}</tbody></table>`
       :`<div class="empty">Nothing recorded from here.</div>`}</div>`;
+}
+
+// ---------------------------------------------------------------------------
+// Pets
+//
+// Two things this page will not do, and the reason is the same for both: the
+// client does not contain them.
+//
+//   * It will not tell you what an ability does AT YOUR LEVEL. pets.xml gives the
+//     value at the ability's lowest level and its highest, and names the curve
+//     between them - exp_incr, dim_returns, exp_decr, linear. No file in the dump
+//     defines any of those four, and no file states what level range the endpoints
+//     span. So the endpoints are shown, and nothing is drawn between them.
+//   * It will not convert feed power into levels. feedPower is a per-item number
+//     and nothing in the game files consumes it. A feed calculator that is
+//     confidently wrong costs somebody an evening of real drops.
+//
+// What it does do is exact: every feedable item's worth, the tier ladders, and the
+// two ends of every ability. If a community table for the level curve ever lands in
+// data/, this is where it plugs in.
+// ---------------------------------------------------------------------------
+const PETS = D.pets || {};
+
+function petsView(){
+  const tabs = [["ability","Abilities"],["feed","Feed"]].map(([k,l])=>
+    `<button class="pettab" type="button" data-ptab="${k}"
+       aria-selected="${(S.ptab||"ability")===k}">${l}</button>`).join("");
+  return `<div class="pettabs">${tabs}</div>
+    <div class="bar">
+      <input type="search" id="q" placeholder="${(S.ptab||"ability")==="feed"
+        ? "food, egg or item name…" : "ability name…"}" autocomplete="off">
+      ${(S.ptab||"ability")==="feed"
+        ? `<label title="Any equippable item can be sacrificed to a pet. Off, this lists
+             only what the client marks as pet food, plus the eggs."><input type="checkbox"
+             id="petgear" ${S.petGear?"checked":""}> include gear you can feed</label>
+           <label title="Dev objects and items that can no longer be obtained. The game files
+             do not mark these, so the list is curated by hand in data/unobtainable.json."><input
+             type="checkbox" id="showgone"> show unobtainable</label>`
+        : ""}
+      <span class="spacer" id="count"></span>
+    </div>
+    <div class="scroll" id="list"></div>`;
+}
+
+// "10 -> 90 · exp_incr", or "4.5" for a constant. Never a value in between.
+function pparam(p){
+  const scaling = p.min != null && p.max != null;
+  const v = scaling
+    ? `${esc(p.min)}<span class="to">&rarr;</span>${esc(p.max)}`
+    : esc(p.value != null ? p.value : "—");
+  return `<div class="prow${p.in?" sub":""}">
+    <span class="k">${esc(p.name)}</span><span class="v">${v}</span>
+    ${p.curve?`<span class="c" title="The client names this curve and defines it nowhere.">${esc(p.curve)}</span>`:""}
+  </div>`;
+}
+
+// Internal plumbing, not something a player can act on: which projectile object the
+// ability fires, its tint, and how it aims. DamageCurve is not dropped but MOVED - it is
+// the curve for the projectile damage row, which is drawn separately below.
+const PET_PARAM_HIDE = new Set(["ProjectileId", "Color", "AimType", "DamageCurve"]);
+
+function petAbilityCard(a){
+  const params = (a.params||[]).filter(p=>!PET_PARAM_HIDE.has(p.name)).map(pparam).join("");
+  const dmgCurve = (a.params||[]).find(p=>p.name==="DamageCurve");
+  // The shoot abilities carry no damage of their own - it lives on the projectile they
+  // name. Joined on ProjectileId, never on ObjectId: all three share "Pet Bullet 3",
+  // and that object has no damage at all.
+  const proj = a.proj ? `<div class="prow"><span class="k">Damage</span>
+      <span class="v">${a.proj.min}<span class="to">&rarr;</span>${a.proj.max}</span>
+      ${dmgCurve?`<span class="c" title="The client names this curve and defines it nowhere.">${
+        esc(dmgCurve.value)}</span>`:""}</div>` : "";
+  const first = (a.first||[]).length;
+  return `<div class="pcard">
+    <div class="pnm">${esc(a.id)}</div>
+    <div class="grp">${esc(a.group||"")}${a.base?` &middot; ${esc(a.base)}`:""}</div>
+    <div class="dim" style="margin-bottom:7px;line-height:1.5">${esc(a.desc||"")}</div>
+    ${proj}${params}
+    <div class="prow"><span class="k">Starter pets</span>
+      <span class="v">${first||"&mdash;"}</span>
+      <span class="c" title="${first?esc((a.first||[]).join(", ")):"no pet in the files opens with this"}">${
+        first?"hover to list":"none declare it"}</span></div>
+  </div>`;
+}
+
+function drawPets(){
+  const q=(($("#q")||{}).value||"").trim().toLowerCase();
+  if((S.ptab||"ability")==="ability"){
+    const rows=(PETS.abilities||[]).filter(a=>!q ||
+      (a.id+" "+(a.group||"")+" "+(a.desc||"")).toLowerCase().includes(q));
+    $("#count").textContent=`${rows.length} of ${(PETS.abilities||[]).length}`;
+    $("#list").innerHTML =
+      `<div class="hint">These are the <b>endpoints</b> the game files declare &mdash; the value
+        at an ability's lowest level and at its highest. The curve between them is named in
+        <code>pets.xml</code> and <b>defined nowhere</b> in the client, and nothing in the files
+        says what level range the two ends span. So there is no honest way to show what your
+        pet heals for right now, and this app will not invent one.</div>` +
+      `<div class="pgrid">${rows.map(petAbilityCard).join("")}</div>` +
+      petFootnotes();
+    return;
+  }
+  // ---- feed ----
+  // Same checkbox, same source of truth as the Items table: read the DOM, not a copy.
+  const sg = $("#showgone") && $("#showgone").checked;
+  let rows=(PETS.food||[]).filter(r=>sg || !r.gone);
+  if(S.petGear){
+    // Gear feed power is already on each item; fold it in rather than duplicating it
+    // into the pets payload. Shinies fold onto their base row the way they do elsewhere.
+    D.items.filter(i=>i.feed!=null && !i.baseOf).forEach(i=>rows.push(
+      {id:i.id, name:i.name, feed:+i.feed, kind:"gear", sp:i.sp, bag:i.bag, item:i.id}));
+    rows.sort((a,b)=>b.feed-a.feed || a.name.localeCompare(b.name));
+  }
+  if(q) rows=rows.filter(r=>(r.name+" "+(r.desc||"")+" "+(r.fam||"")).toLowerCase().includes(q));
+  $("#count").textContent=`${rows.length} feedable`;
+  const shown=rows.slice(0,600);
+  $("#list").innerHTML =
+    `<div class="hint">What each thing is worth as pet food, straight out of the game files.
+      Items the client marks <code>PETBLACKLIST</code> are left out &mdash; they advertise a
+      feed power the game will not accept.</div>` +
+    `<table class="items"><thead><tr>
+       <th style="width:60px"></th><th style="width:280px">Item</th>
+       <th style="width:46px">Bag</th>
+       <th style="width:78px" class="num" title="feedPower, from the game files">Feed</th>
+       <th style="width:190px">Where</th><th></th></tr></thead><tbody>${
+      shown.map(r=>{
+        const it = r.item && byId[r.item];
+        return `<tr${it?` data-id="${esc(r.id)}"`:""}>
+        <td>${r.sp!=null?ico(r.sp):`<div class="ico none"></div>`}</td>
+        <td class="nm">${esc(r.name)} ${r.kind==="egg"
+            ? `<span class="tg tg-old" title="${esc(r.fam||"")}">EGG</span>` : ""}</td>
+        <td>${r.bag!=null?ico((SP.bags||{})[String(r.bag)]):""}</td>
+        <td class="num hi">${r.feed.toLocaleString()}</td>
+        <td>${it?srcDoors(it):`<span class="dim">${esc(r.rar||r.fam||"")}</span>`}</td>
+        <td></td></tr>`;}).join("")}</tbody></table>` +
+    (rows.length>shown.length?`<div class="empty">Showing ${shown.length} of ${rows.length}. Narrow it down.</div>`:"") +
+    (rows.length?"":`<div class="empty">Nothing matches.</div>`) +
+    petLevelCalc() + petLadders() + petFootnotes();
+}
+
+// The one calculator this app will do, and only when a human has put a table in
+// data/pet-levels.json. No table, no calculator - the game files contain nothing that
+// relates feed power to a level, and an invented coefficient here would send someone to
+// farm the wrong thing for an evening.
+function petLevelCalc(){
+  const L = PETS.levels;
+  if(!L) return `<div style="padding:4px 13px 16px">
+    <div class="dsec">How much feed to reach a level</div>
+    <div class="dim">Not shown, because the game files do not contain it &mdash; there is no
+      XP value, no per-level table and no cap by rarity anywhere in the client. Put a
+      community table you trust into <code>data/pet-levels.json</code> (it explains the
+      shape) and re-run the build; this turns into a calculator and labels every number
+      it draws from that file.</div></div>`;
+  const rows=L.feedToLevel, lv=rows.map(r=>r[0]);
+  const cum=Object.fromEntries(rows);
+  const from=S.petFrom!=null?S.petFrom:lv[0], to=S.petTo!=null?S.petTo:lv[lv.length-1];
+  const opt=(sel)=>lv.map(n=>`<option value="${n}"${n===sel?" selected":""}>${n}</option>`).join("");
+  const have=cum[from], want=cum[to];
+  const need = (have!=null && want!=null) ? want-have : null;
+  // What to feed, cheapest-first by item count. Straight greedy over the feed table,
+  // which is optimal here because every larger value is a multiple-ish of the smaller
+  // ones and the answer is a shopping list, not a proof.
+  let plan="";
+  if(need!=null && need>0){
+    const pool=(PETS.food||[]).filter(f=>!f.gone && f.feed>0)
+                              .sort((a,b)=>b.feed-a.feed).slice(0,60);
+    let left=need; const take=[];
+    for(const f of pool){
+      const n=Math.floor(left/f.feed);
+      if(n>0){ take.push([f,n]); left-=n*f.feed; }
+      if(left<=0) break;
+    }
+    plan = `<div class="dsec">One way to get there</div>` +
+      (take.length?`<table class="items"><tbody>${take.map(([f,n])=>`<tr>
+        <td style="width:60px">${f.sp!=null?ico(f.sp):`<div class="ico none"></div>`}</td>
+        <td class="nm" style="width:260px">${esc(f.name)}</td>
+        <td class="num">&times;${n}</td>
+        <td class="num hi">${(f.feed*n).toLocaleString()}</td><td></td></tr>`).join("")}</tbody></table>`
+        :`<div class="dim">Nothing in the food table is small enough.</div>`) +
+      (left>0?`<div class="dim">&hellip;and ${left.toLocaleString()} feed power still short of a
+        whole item &mdash; anything on the list above covers it.</div>`:"");
+  }
+  return `<div style="padding:4px 13px 16px">
+    <div class="dsec">How much feed to reach a level</div>
+    <div class="note">These numbers are <b>not from the game files</b>. They come from
+      <code>data/pet-levels.json</code>: ${esc(L.source)}</div>
+    <div class="bar" style="padding:9px 0;border:0">
+      <label>from level <select id="petfrom">${opt(from)}</select></label>
+      <label>to <select id="petto">${opt(to)}</select></label>
+      <span class="spacer">${need==null?"not in the table"
+        : need<=0 ? "already there"
+        : `<b style="color:var(--accent)">${need.toLocaleString()}</b> feed power`}</span>
+    </div>${plan}</div>`;
+}
+function petLadders(){
+  const rows=(PETS.ladders||[]).map(l=>`<div class="dsec">${esc(l.names.join(" · "))}</div>
+    <div class="ladder">${l.rows.map(([t,f])=>
+      `<b>T${t} <i>${f.toLocaleString()}</i></b>`).join("")}</div>`).join("");
+  const y=(PETS.yard||[]).filter(r=>r.price!=null).map(r=>
+    `<div class="drow"><span>Yard ${esc(String(r.yard))}</span>
+     <span>${r.price.toLocaleString()} gold &middot; ${r.fame.toLocaleString()} fame</span></div>`).join("");
+  return `<div style="padding:4px 13px 16px">
+    <div class="dsec">Tiered gear, by tier</div>
+    <div class="dim">Every tiered item of the same slot and tier is worth exactly the same
+      feed, with no exceptions in the whole file &mdash; so this is the answer for the pile
+      of tiered junk, without looking anything up.</div>
+    ${rows}
+    ${y?`<div class="dsec">Pet Yard upgrades</div>${y}`:""}</div>`;
+}
+
+function petFootnotes(){
+  return `<div style="padding:0 13px 18px">
+    <div class="dsec">What the game files do not contain</div>
+    <div class="dim" style="line-height:1.6">
+      <b>How much feed a level costs.</b> <code>feedPower</code> is a number on an item and
+      nothing in the client consumes it &mdash; there is no XP value, no per-level table and no
+      cap by rarity anywhere in the 246 files. So this app cannot tell you how much to feed to
+      reach a level, and does not guess.<br>
+      <b>The curve between the two ends.</b> Four curve names are used
+      (<code>exp_incr</code>, <code>dim_returns</code>, <code>exp_decr</code>, <code>linear</code>)
+      and not one of them is defined on disk.<br>
+      <b>What level the ends are.</b> No file states a floor or ceiling for a pet or an
+      ability level.<br>
+      <b>Whether the heal is the heal.</b> The element is <code>MaxHeal</code> &mdash; a
+      ceiling. The client never says whether the actual heal equals it, and never states its
+      units.<br>
+      <b>Abilities past the first.</b> Only the 70 Common pets declare a
+      <code>FirstAbility</code>; every Rare and Divine pet declares none. A pet's real loadout
+      is assigned server-side.
+    </div></div>`;
 }
 
 function trackRow(it){
@@ -1235,6 +1487,7 @@ function draw(p){
   else if(S.view==="items"){ p.innerHTML=itemsView(); drawItems(); }
   else if(S.view==="kit"){ p.innerHTML=kitView(); }
   else if(S.view==="dungeons"){ p.innerHTML=dungeonsView(); }
+  else if(S.view==="pets"){ p.innerHTML=petsView(); drawPets(); }
   else if(S.view==="track"){ p.innerHTML=trackView(); }
   else if(S.view==="bestiary"){ p.innerHTML=bestiaryView(); wireBestiary(); }
   else { p.innerHTML=enchView(); drawEnch(); }
@@ -1246,8 +1499,13 @@ document.addEventListener("change", e=>{
 document.addEventListener("input", e=>{
   if(e.target.id==="lvl1"){ S.lvl1=e.target.checked; render(); return; }
   if(e.target.id==="fitkit"){ drawEnch(); return; }
+  if(e.target.id==="petfrom"){ S.petFrom=+e.target.value; drawPets(); return; }
+  if(e.target.id==="petto"){ S.petTo=+e.target.value; drawPets(); return; }
+  if(e.target.id==="petgear"){ S.petGear=e.target.checked; LSet("rm.petGear",S.petGear); drawPets(); return; }
   if(["q","tier","srcf","hidere","showgone"].includes(e.target.id)){
-    if(S.view==="items") drawItems(); else if(S.view==="ench") drawEnch(); }
+    if(S.view==="items") drawItems();
+    else if(S.view==="pets") drawPets();
+    else if(S.view==="ench") drawEnch(); }
 });
 // Right-click a slot to hold it through a reroll. The game files contain no lock or
 // reroll mechanic at all, so this is the app's affordance, not a game rule.
@@ -1358,6 +1616,8 @@ document.addEventListener("click", e=>{
   if(e.target.closest("[data-pop]")){
     if(T2) T2.core.invoke("open_widget",{alpha:S.opacity}).catch(()=>{});
     return; }
+  const pt=e.target.closest("[data-ptab]");
+  if(pt){ S.ptab=pt.dataset.ptab; LSet("rm.ptab",S.ptab); render(); return; }
   const tab=e.target.closest("[data-tab]");
   if(tab){ S.tab=+tab.dataset.tab; S.sel=null; render(); return; }
   const ks=e.target.closest("[data-kitslot]");

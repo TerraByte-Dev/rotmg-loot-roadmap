@@ -314,6 +314,38 @@ def chest_textures():
     return out
 
 
+def food_textures():
+    """Dedicated pet food, and pet eggs.
+
+    item_textures() deliberately skips <SlotType>10</SlotType> - the consumable slot -
+    because those are not equippable and would flood the Items table. That skip also
+    throws away every piece of pet food in the game, so this pass picks them back up
+    under their own key space.
+
+    Deliberately NARROW. Roughly 5,000 objects carry a <feedPower>, because almost
+    anything in the game can be sacrificed to a pet; packing art for all of them
+    tripled the atlas to feed a page that only ever lists the food worth feeding.
+    So: objects the client itself marks <PetFood />, plus the eggs. Everything else
+    is equippable gear, which already has a sprite from item_textures().
+    """
+    out, seen = {}, 0
+    for fn, xml in each_xml():
+        egg_file = fn in ("equipEggs.xml", "permapets.xml")
+        if not egg_file and "<PetFood" not in xml:
+            continue
+        for iid, body in objects(xml):
+            if "<feedPower>" not in body:
+                continue
+            if not egg_file and "<PetFood" not in body:
+                continue
+            seen += 1
+            art = own_art(body)
+            if art:
+                out.setdefault(("egg:" if egg_file else "food:") + iid, art)
+    guard(seen, len(out), "pet food and eggs")
+    return out
+
+
 def boss_textures():
     """<Quest> on an <Enemy> marks a boss (Oryx 3, LH Void Entity, Septavius...).
     Keyed by the file it lives in, so a dungeon can show its own boss.
@@ -358,7 +390,8 @@ def main():
                       ("ST set skins", skin_textures),
                       ("class art", class_textures),
                       ("realm globe", realm_textures),
-                      ("loot / event chests", chest_textures)):
+                      ("loot / event chests", chest_textures),
+                      ("pet food & eggs", food_textures)):
         got = fn()
         tex.update(got)
         print("%s: %d" % (label, len(got)))

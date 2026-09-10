@@ -639,6 +639,267 @@ def objects(xml):
     return out
 
 
+# ---------------------------------------------------------------------------
+# Pets
+#
+# Read this before changing anything here.
+#
+# The client ships the ENDPOINTS of every pet ability - the value at the ability's
+# lowest level and at its highest - and nothing else. The four curve names it uses
+# (exp_incr, dim_returns, exp_decr, linear) appear in pets.xml and in no other file
+# in the dump, and no file defines what any of them compute. Nothing anywhere states
+# what level range those endpoints span, and nothing relates feedPower to a pet level
+# or to XP of any kind.
+#
+# So: this emits min, max and the curve NAME, verbatim. It does not interpolate, it
+# does not name a level, and it does not convert feed into levels. A feed calculator
+# that is confidently wrong sends someone to waste an evening of real drops.
+# ---------------------------------------------------------------------------
+
+# <FirstAbility> names a <Class>PetAbility</Class> id; the numbers live on a
+# <Class>PetBehavior</Class> object with a DIFFERENT id. Five de-space cleanly
+# ("Attack Far" -> AttackFar) and four do not, so this is a hand-written map rather
+# than a string transform. Nine rows, all checkable by eye.
+ABILITY_BEHAVIOR = {
+    "Attack Close": "AttackClose",
+    "Attack Mid": "AttackMid",
+    "Attack Far": "AttackFar",
+    "Heal": "Heal",
+    "Magic Heal": "MagicHeal",
+    "Electric": "ElectricZap",       # not "Electric"
+    "Decoy": "PetDecoy",             # not "Decoy"
+    "Rising Fury": "PetRisingFury",  # not "RisingFury"
+    "Savage": "PetSavage",           # a real ability that no pet declares as its first
+}
+
+
+def load_pet_abilities():
+    """The 9 pet abilities, each joined to the behaviour object that carries its numbers.
+
+    Three shapes live in a <Parameters> block and all three matter:
+        <MaxHeal min="10" max="90" curve="exp_incr" />   a scaling range
+        <ThreatRange value="4.5" />                      a constant
+        <ProjectileId value="CloseRangeAttack" />        a join to a <PetProjectile>
+    """
+    path = os.path.join(XML, "pets.xml")
+    if not os.path.exists(path):
+        return []
+    with open(path, encoding="utf-8", errors="ignore") as f:
+        px = f.read()
+
+    behaviors, projectiles, abilities = {}, {}, []
+    for oid, _oa, body in objects(px):
+        if "<PetProjectile" in body:
+            projectiles[oid] = {
+                "id": oid,
+                "min": num(body, "MinDamage"),
+                "max": num(body, "MaxDamage"),
+                "speed": num(body, "Speed"),
+                "life": num(body, "LifetimeMS"),
+            }
+            continue
+        if "<PetBehavior" in body:
+            bb = elems(body, "BaseBehavior")
+            base = bb[0][0].get("id") if bb else None
+            params = []
+            for _pa, pinner in elems(body, "Parameters"):
+                # Every child of <Parameters> is a parameter. Read the attributes with
+                # attrs() so ORDER never matters - the <EffectInfo> bug cost 53% of a
+                # field to exactly that assumption.
+                #
+                # ElectricZap nests a whole <Effect> block - Type, Probability, Duration -
+                # inside its parameters. Flattened, its "Duration" reads as the zap's
+                # duration when it is the paralysis it applies. Tag the nested ones.
+                for eff, einner in elems(pinner, "Effect"):
+                    pinner = pinner.replace(einner, "")
+                    for m in re.finditer(r"<([A-Za-z]\w*)(?=[\s/>])([^>]*?)/?>", einner):
+                        a = attrs(m.group(2))
+                        if a:
+                            params.append({"name": m.group(1), "min": a.get("min"),
+                                           "max": a.get("max"), "value": a.get("value"),
+                                           "curve": a.get("curve"), "in": "Effect"})
+                for m in re.finditer(r"<([A-Za-z]\w*)(?=[\s/>])([^>]*?)/?>", pinner):
+                    a = attrs(m.group(2))
+                    if not a:
+                        continue
+                    params.append({"name": m.group(1), "min": a.get("min"),
+                                   "max": a.get("max"), "value": a.get("value"),
+                                   "curve": a.get("curve")})
+            behaviors[oid] = {"base": base, "params": params}
+            continue
+        if "<PetAbility" in body:
+            abilities.append({"id": oid, "group": tag(body, "Group"),
+                              "desc": clean_desc(tag(body, "Description"))})
+
+    for a in abilities:
+        b = behaviors.get(ABILITY_BEHAVIOR.get(a["id"], ""))
+        if not b:
+            FAILURES.append("pet ability %r has no behaviour object" % a["id"])
+            continue
+        a["base"] = b["base"]
+        a["params"] = [{k: v for k, v in p.items() if v is not None} for p in b["params"]]
+        # Damage for the three shoot abilities comes from a <PetProjectile>, joined on
+        # ProjectileId. NOT on <ObjectId> - all three share "Pet Bullet 3", and that
+        # object carries no damage at all, so an ObjectId join silently zeroes them.
+        pid = next((p.get("value") for p in b["params"] if p["name"] == "ProjectileId"), None)
+        if pid and pid in projectiles:
+            a["proj"] = projectiles[pid]
+
+    # Which starter pets open with which ability. Only the 70 Common pets declare one;
+    # every Rare and Divine pet in the file declares none, because the loadout is
+    # assigned server-side at hatch.
+    firsts = {}
+    for oid, _oa, body in objects(px):
+        if "<Class>Pet</Class>" not in body:
+            continue
+        fa = tag(body, "FirstAbility")
+        if fa:
+            firsts.setdefault(fa, []).append(oid)
+    for a in abilities:
+        a["first"] = sorted(firsts.get(a["id"], []))
+
+    guard(px, "PetAbility", len(abilities), "pet abilities")
+    guard(px, "PetBehavior", len(behaviors), "pet behaviours")
+    guard(px, "PetProjectile", len(projectiles), "pet projectiles")
+    return abilities
+
+
+def load_pet_food(cells, gone):
+    """Everything the client itself marks as pet food, plus every egg.
+
+    Roughly 5,000 objects carry a <feedPower> - almost anything can be sacrificed to a
+    pet - so listing them all is noise. <PetFood /> is the client's own mark for the
+    consumables that exist to be fed, and the eggs are what a new pet hatches from.
+    Equippable gear keeps its feed power on the item itself, over in the Items table.
+
+    PETBLACKLIST is a hard exclusion: 358 objects advertise a feedPower and carry that
+    label, and the game will not accept them. Their stated number is a lie.
+    """
+    out = []
+    for fn in sorted(os.listdir(XML)):
+        if not fn.endswith(".xml"):
+            continue
+        egg_file = fn in ("equipEggs.xml", "permapets.xml")
+        with open(os.path.join(XML, fn), encoding="utf-8", errors="ignore") as f:
+            xml = f.read()
+        if not egg_file and "<PetFood" not in xml:
+            continue
+        for oid, _oa, body in objects(xml):
+            feed = tag(body, "feedPower")
+            if feed is None:
+                continue
+            if not egg_file and "<PetFood" not in body:
+                continue
+            labels = [x.strip() for x in (tag(body, "Labels") or "").split(",") if x.strip()]
+            if "PETBLACKLIST" in labels or "<AdminOnly" in body:
+                continue
+            # The curated unobtainable list carries the dev objects too - "Feed", whose
+            # whole description is "Ultimate Feed Power.", sat at the top of this table at
+            # twice the next real food. Marked, not deleted; the UI hides it by default.
+            row = {"id": oid, "name": tag(body, "DisplayId") or oid,
+                   "feed": int(float(feed)), "kind": "egg" if egg_file else "food",
+                   "desc": clean_desc(tag(body, "Description")),
+                   "bag": tag(body, "BagType"),
+                   "gone": True if oid in gone else None}
+            if egg_file:
+                row["fam"] = tag(body, "PetFamily")
+                row["rar"] = tag(body, "Rarity")
+                row["pet"] = tag(body, "PetId")
+            n = cells.get(("egg:" if egg_file else "food:") + oid)
+            if n is not None:
+                row["sp"] = n
+            out.append({k: v for k, v in row.items() if v is not None and v != ""})
+    out.sort(key=lambda r: (-r["feed"], r["name"]))
+    return out
+
+
+def load_feed_ladders():
+    """What a tiered item is worth as feed, by slot and tier.
+
+    Every tiered item in equip.xml sits on one of a handful of ladders keyed by slot -
+    within a (slot, tier) pair the feed power is a single value, no exceptions. The
+    ladders are DERIVED here rather than hard-coded: slots whose whole tier->feed table
+    is identical get merged, so if a patch splits one apart this splits with it instead
+    of quietly reporting the old grouping.
+    """
+    path = os.path.join(XML, "equip.xml")
+    if not os.path.exists(path):
+        return []
+    with open(path, encoding="utf-8", errors="ignore") as f:
+        eq = f.read()
+    by_slot = {}
+    for _oid, _oa, body in objects(eq):
+        slot, tier, feed = tag(body, "SlotType"), tag(body, "Tier"), tag(body, "feedPower")
+        if not slot or tier is None or feed is None:
+            continue
+        s = int(slot)
+        if s == 10:
+            continue        # potions and wines - consumables, not a gear ladder
+        by_slot.setdefault(s, {}).setdefault(int(tier), set()).add(int(float(feed)))
+    merged = {}
+    for s, rows in by_slot.items():
+        # A slot whose tiers disagree with themselves is a shape we did not anticipate;
+        # say so rather than picking one silently.
+        for t, vals in rows.items():
+            if len(vals) > 1:
+                FAILURES.append("feed ladder: slot %d tier %d has %d feed values"
+                                % (s, t, len(vals)))
+        key = tuple(sorted((t, sorted(v)[0]) for t, v in rows.items()))
+        merged.setdefault(key, []).append(s)
+    out = []
+    for key, slots in merged.items():
+        out.append({"slots": sorted(slots),
+                    "names": [SLOT_NAMES.get(s, str(s)) for s in sorted(slots)],
+                    "rows": [[t, f] for t, f in key]})
+    out.sort(key=lambda l: -len(l["rows"]))
+    return out
+
+
+def load_pet_levels():
+    """Community numbers for the one thing the client does not contain.
+
+    Nothing in the 246 XML files relates feedPower to a pet level - no XP value, no
+    per-level table, no cap by rarity. data/pet-levels.json is where a human puts a table
+    they trust, and the app labels every number that comes from it as not-from-the-files.
+    Empty by default, and the app is complete without it: an absent table means the level
+    calculator is hidden, not that a number gets invented.
+    """
+    path = os.path.join(HERE, "data", "pet-levels.json")
+    if not os.path.exists(path):
+        return None
+    with open(path, encoding="utf-8") as f:
+        d = json.load(f)
+    # A table with no stated provenance is exactly the thing this project refuses to
+    # print, so an unsourced file counts as no file.
+    if not (d.get("source") or "").strip():
+        return None
+    rows = sorted(([int(a), int(b)] for a, b in d.get("feedToLevel", [])),
+                  key=lambda r: r[0])
+    if not rows:
+        return None
+    return {"source": d["source"].strip(), "maxLevel": d.get("maxLevel") or {},
+            "feedToLevel": rows}
+
+def load_pet_yard():
+    """The Pet Yard upgrades, with the gold and fame the client actually asks for."""
+    path = os.path.join(XML, "staticobjects.xml")
+    if not os.path.exists(path):
+        return []
+    with open(path, encoding="utf-8", errors="ignore") as f:
+        xml = f.read()
+    out = []
+    for oid, _oa, body in objects(xml):
+        if "<Class>YardUpgrader</Class>" not in body:
+            continue
+        # One of the five upgraders carries no price at all. Ship it as it is rather
+        # than inventing a number for it.
+        row = {"id": oid, "yard": tag(body, "PetYardType"),
+               "price": num(body, "Price"), "fame": num(body, "Fame")}
+        out.append({k: v for k, v in row.items() if v is not None})
+    out.sort(key=lambda r: (r.get("price") is None, r.get("price") or 0))
+    return out
+
+
 def main():
     print("reading %s" % XML)
 
@@ -1255,7 +1516,8 @@ def main():
                    "ui": {"realm": cells.get("realm:Realm Portal"),
                           "ench": (t4 or {}).get("sp"),
                           "beast": beast,
-                          "bag": bagcells.get("6")}}
+                          "bag": bagcells.get("6"),
+                          "pet": cells.get("egg:Common Feline Egg")}}
         print("  sprites: %d items, %d portals"
               % (sum(1 for i in items if "sp" in i), sum(1 for p in portals if "sp" in p)))
 
@@ -1407,6 +1669,22 @@ def main():
     print("  kit combinations: %s across %d classes | avg %d legal enchants per item, "
           "%s ways to fill 4 slots" % (f"{total_kits:,}", len(classes), avg_legal, f"{four_slot:,}"))
 
+    # ---- pets ----------------------------------------------------------------
+    # Endpoints and feed power only. See the module comment above load_pet_abilities.
+    pet_abilities = load_pet_abilities()
+    pet_food = load_pet_food(cells, gone)
+    feed_ladders = load_feed_ladders()
+    pet_yard = load_pet_yard()
+    pet_levels = load_pet_levels()
+    print("  pet level table: %s" % ("none - data/pet-levels.json is empty or unsourced, "
+          "so the level calculator stays hidden" if not pet_levels
+          else "%d rows from %s" % (len(pet_levels["feedToLevel"]), pet_levels["source"])))
+    print("  pets: %d abilities, %d feedable food/eggs, %d feed ladders"
+          % (len(pet_abilities), len(pet_food), len(feed_ladders)))
+    scaling = sum(1 for ab in pet_abilities for pp in ab.get("params", []) if "curve" in pp)
+    print("  pet ability parameters that scale with level: %d - endpoints only, the "
+          "curve functions are named in pets.xml and defined nowhere" % scaling)
+
     data = {
         # Not a game version string - nothing in the extracted assets states one.
         # This is provable: when the assets on disk were written.
@@ -1429,8 +1707,12 @@ def main():
         "portals": portals, "enchants": enchants, "slotNames": SLOT_NAMES,
         "sourceIcons": source_icons, "combos": combos,
         "stats": STATS,
+        "pets": {"abilities": pet_abilities, "food": pet_food,
+                 "levels": pet_levels,
+                 "ladders": feed_ladders, "yard": pet_yard},
         "counts": {"items": len(items), "enchants": len(enchants),
-                   "classes": len(classes), "portals": len(portals)},
+                   "classes": len(classes), "portals": len(portals),
+                   "petAbilities": len(pet_abilities), "petFood": len(pet_food)},
     }
     if FAILURES:
         print("")

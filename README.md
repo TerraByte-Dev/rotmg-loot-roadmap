@@ -34,6 +34,8 @@ it in any browser, or drop it in a Discord DM.
 - **Dungeons** — every portal in the client, with the difficulty rating the game itself
   stores on its dungeon keys.
 - **Bestiary** — the community realm infographic, with a jump-to-biome picker.
+- **Pets** — what every pet ability actually does at each end of its scale, and what
+  everything in the game is worth as pet food.
 
 ## Where the data comes from, and how much to trust it
 
@@ -51,11 +53,20 @@ hover. In descending order of confidence:
 | `community` | RealmEye's *Untiered Items by Dungeon* page, captured once into `data/` |
 | `tiered` | tiered gear, which drops anywhere by design |
 
+The Pets page is the sharpest example of the rule. The client states the **endpoints** of
+every pet ability — a maxed Heal tops out at 90, a maxed Magic Heal at 45 — and names the
+curve between them, but defines that curve nowhere and never says what level range the two
+ends span. Nothing anywhere relates feed power to a level. So the app shows both ends and
+draws nothing in between, and there is no feed-to-level calculator unless you put a
+community table into `data/pet-levels.json` — which the app then labels as not-from-the-files
+wherever it uses it.
+
 **81 UT/ST items still say "not recorded".** That is deliberate. Nothing in the client, the
 captured page or the derived layer says where they drop, and a wrong dungeon costs somebody an
 evening of farming.
 
-`data/unobtainable.json` is the one file here that is **curated by hand**: the client has no
+`data/unobtainable.json` and `data/pet-levels.json` are the two files here that are
+**curated by hand**: the client has no
 "limited" or "retired" flag of any kind, so items that can no longer be obtained are listed
 manually and hidden by default. There is a toggle to show them.
 
