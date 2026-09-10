@@ -37,6 +37,41 @@ button,input,select{font:inherit}
 @media(max-width:900px){.app{grid-template-columns:1fr;height:auto}}
 
 .rail{background:var(--bg-panel);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.brandbtn{display:flex;align-items:center;gap:10px;width:100%;padding:12px 13px;cursor:pointer;
+  background:none;border:0;border-bottom:1px solid var(--line);color:var(--ink-dim);
+  font:inherit;text-align:left}
+.brandbtn:hover{background:var(--bg-hover)}
+.brandbtn .bico .ico{--ico:34px}
+.brandbtn .btxt b{display:block;color:var(--accent);font-size:13px;letter-spacing:.16em}
+.brandbtn .btxt small{display:block;color:var(--ink-faint);font-size:10px;margin-top:1px}
+.nav{display:flex;flex-direction:column;padding:7px 8px;gap:3px}
+.navgap{flex:1;min-height:0}
+.navbtn{display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;cursor:pointer;
+  background:none;border:1px solid transparent;border-radius:var(--radius);
+  color:var(--ink-dim);font:inherit;font-size:13px;text-align:left}
+.navbtn .ico{--ico:26px}
+.navbtn .n{margin-left:auto;color:var(--ink-faint);font-size:10.5px}
+.navbtn:hover{background:var(--bg-hover);color:var(--ink)}
+.navbtn[aria-selected=true]{background:var(--accent-glow);border-color:var(--accent-dim);color:var(--accent)}
+.navbtn.pop{color:var(--accent);border-color:var(--accent-dim);justify-content:center;
+  font-size:11.5px;letter-spacing:.1em;text-transform:uppercase}
+.navbtn.pop:hover{background:var(--accent-glow)}
+.navsep{border-top:1px solid var(--line-soft);margin:6px 2px 3px}
+
+/* ---- home: pick a character ---- */
+.home{padding:22px 26px;overflow:auto}
+.home h2{margin:0 0 3px;font-size:15px;color:var(--ink);letter-spacing:.04em}
+.home .lead{color:var(--ink-faint);font-size:12px;margin-bottom:18px}
+.chargrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:10px}
+.charcard{display:flex;flex-direction:column;align-items:center;gap:6px;padding:15px 8px 12px;
+  cursor:pointer;background:none;border:1px solid var(--line);border-radius:var(--radius);
+  color:var(--ink-dim);font:inherit}
+.charcard .ico{--ico:64px}
+.charcard b{color:var(--ink);font-size:13px;font-weight:500}
+.charcard small{color:var(--ink-faint);font-size:10.5px}
+.charcard:hover{border-color:var(--accent-dim);background:var(--bg-hover)}
+.charcard[aria-selected=true]{border-color:var(--accent);background:var(--accent-glow)}
+.charcard[aria-selected=true] b{color:var(--accent)}
 .brand{padding:12px 13px 9px;border-bottom:1px solid var(--line)}
 .brand h1{margin:0;font-size:12px;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);font-weight:600}
 .brand .sub{color:var(--ink-faint);font-size:10px;margin-top:2px;white-space:pre-line;line-height:1.35}
@@ -312,8 +347,14 @@ body.widget .app,body.widget .titlebar{display:none}
 </div>
 <div class="app">
   <aside class="rail">
-    <div class="brand"><h1>Loot Roadmap</h1><div class="sub" id="brandsub"></div></div>
-    <div class="railscroll"><div class="railhead">Class</div><div id="classlist"></div></div>
+    <button class="brandbtn" type="button" data-home
+            title="Back to the character picker">
+      <span class="bico" id="brandico"></span>
+      <span class="btxt"><b>RotMG</b><small id="brandsub2">pick a character</small></span>
+    </button>
+    <nav class="nav" id="navtop"></nav>
+    <div class="navgap"></div>
+    <nav class="nav" id="navbot"></nav>
   </aside>
   <main class="main">
     <div class="topbar" id="views"></div>
@@ -341,7 +382,7 @@ const LSet= (k,v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch
 
 const S = {
   cls: LS("rm.cls") || "Wizard",
-  view:"items", tab:0, sel:null, kitPick:null, lvl1:false, biome:null, trackAt:null,
+  view:"home", tab:0, sel:null, kitPick:null, lvl1:false, biome:null, trackAt:null, dgAt:null,
   theme: LS("rm.theme") || "roadmap",
   opacity: (typeof LS("rm.widgetOpacity")==="number") ? LS("rm.widgetOpacity") : 0.92,
   kit: (LS("rm.kit") && typeof LS("rm.kit")==="object" && !Array.isArray(LS("rm.kit")))?LS("rm.kit"):{},
@@ -469,35 +510,60 @@ function filterFn(){
 }
 
 /* ------------------------------- views ------------------------------- */
+// The rail is the app's navigation. Every button carries the game's own art rather than
+// a word, and the brand button doubles as "swap character" - which is where the class
+// list lives now, on the home screen.
+const UI = (D.sprites && D.sprites.ui) || {};
+
 function renderRail(){
-  // Show the class the way the game draws it. players.xml gives every class its own
-  // <AnimatedTexture> on the "players" sheet, so this is the real character, not an
-  // icon anybody invented - and it reads far faster than a column of names.
-  const r = $("#classlist");
-  r.className = "classgrid";
-  r.innerHTML = D.classes.map(c => `
-    <button class="cls2" type="button" data-cls="${esc(c.name)}"
-            aria-pressed="${c.name===S.cls}" title="${esc(c.name)} — ${esc(c.slotNames[0])}">
-      ${c.sp!=null?ico(c.sp):`<div class="ico none"></div>`}
-      <span>${esc(c.name)}</span>
-      <span class="wep">${esc(c.slotNames[0])}</span>
-    </button>`).join("");
-  $("#brandsub").textContent = `${D.counts.items} items · ${D.counts.portals} dungeons
-built ${D.built||"?"} · assets ${D.assetsBuilt||"?"}`;
+  const c = cls();
+  const sp = c.slotSp || [];
+  const bico = $("#brandico");
+  if(bico) bico.innerHTML = c.sp!=null ? ico(c.sp) : "";
+  const sub = $("#brandsub2");
+  if(sub) sub.textContent = S.cls ? `${c.name} — swap` : "pick a character";
+
+  const btn = (k,label,art,n) => `<button class="navbtn" type="button" data-view="${k}"
+      aria-selected="${S.view===k}">${art!=null?ico(art):`<div class="ico none"></div>`}
+      <span>${label}</span>${n!=null&&n!==""?`<span class="n">${n}</span>`:""}</button>`;
+
+  $("#navtop").innerHTML =
+      btn("items","Items",sp[0]) +
+      btn("dungeons","Dungeons",UI.realm,D.counts.portals) +
+      btn("ench","Enchants",UI.ench,D.counts.enchants) +
+      btn("bestiary","Bestiary",UI.beast);
+
+  // Kit above Track, Track pinned to the bottom with Pop Out locked under it.
+  $("#navbot").innerHTML =
+      btn("kit","Kit",sp[2]) +
+      btn("track","Track",UI.bag,S.track.length) +
+      `<div class="navsep"></div>` +
+      `<button class="navbtn pop" type="button" data-pop
+         title="A small always-on-top window listing what you are tracking">Pop Out</button>`;
 }
-function renderViews(){
-  const v=$("#views"); v.innerHTML="";
-  [["items","Items",""],["kit","Kit",""],["dungeons","Dungeons",D.counts.portals],
-   ["track","Track",S.track.length],["ench","Enchants",D.counts.enchants],
-   ["bestiary","Bestiary",""]].forEach(([k,l,n])=>{
-    const b=document.createElement("button");
-    b.className="vtab"; b.type="button";
-    b.setAttribute("aria-selected", String(S.view===k));
-    b.innerHTML = l + (n!==""?`<span class="n">${n}</span>`:"");
-    b.onclick=()=>{ S.view=k; S.sel=null; render(); };
-    v.appendChild(b);
-  });
+
+// The character picker. This is what the app opens to: Items is a wall of 1,700 rows and
+// is no place to land.
+function homeView(){
+  return `<div class="home">
+    <h2>Pick a character</h2>
+    <div class="lead">Everything after this is filtered to that class — its slots, its
+      items, its kit.</div>
+    <div class="chargrid">${D.classes.map(c=>`
+      <button class="charcard" type="button" data-cls="${esc(c.name)}"
+              aria-selected="${c.name===S.cls}">
+        ${c.sp!=null?ico(c.sp):`<div class="ico none"></div>`}
+        <b>${esc(c.name)}</b>
+        <small>${esc(c.slotNames.slice(0,2).join(" · "))}</small>
+      </button>`).join("")}</div>
+    <div class="lead" style="margin-top:20px">${D.counts.items} items ·
+      ${D.counts.portals} dungeons · built ${esc(D.built||"?")} ·
+      assets ${esc(D.assetsBuilt||"?")}</div>
+  </div>`;
 }
+
+function renderViews(){ /* navigation lives in the rail now */ }
+
 
 function itemsView(){
   const c=cls();
@@ -662,6 +728,15 @@ function kitView(){
     <label class="dim" style="display:flex;gap:6px;align-items:center;margin-bottom:8px;cursor:pointer">
       <input type="checkbox" id="lvl1" ${S.lvl1?"checked":""}> show level-1 base instead of maxed</label>
     <div class="statgrid">${stats}</div>
+    <div class="dsec">Enchantments</div>
+    <div class="dim" style="margin-bottom:9px">Click a slot to choose what you want rolled.
+      Right-click one to hold it through a reroll. <b>Roll</b> draws from the enchantments
+      that can legally sit on that item, weighted the way the game weights them &mdash; the
+      reroll itself is this app's idea, the client has no such mechanic.</div>
+    ${kit.every(x=>!x)
+      ? `<div class="dim">Equip something above first.</div>`
+      : `<table class="items"><tbody>${kit.map(id=>id&&byId[id]).filter(Boolean)
+            .map(trackRow).join("")}</tbody></table>`}
     <div class="dsec">Weapon</div>
     <div class="dim">${w&&w.rel!=null?`${esc(w.name)} — relative DPS* ${Math.round(w.rel)}`:"No weapon equipped."}</div>
     <div class="dsec">Honest limits</div>
@@ -673,62 +748,91 @@ function kitView(){
 
 function dungeonsView(){
   // Count by SOURCE CODE, not display string - a name join silently missed most dungeons.
-  // Count only sources that really are this dungeon's own tag. Community matches, boss
-  // prose, forge dismantle requirements and inherited sources are not tags, and counting
-  // them made the "N items carry this dungeon's tag" line false.
+  // Community matches, boss prose, forge requirements and inherited sources are not this
+  // dungeon's own tag, so they are counted separately rather than inflating the number.
+  // Count only the rows the drill-in will actually show: a shiny is folded onto its base
+  // there, so counting it here made the header promise more items than the list had.
   const counts={}, loose={};
-  D.items.forEach(i=>i.sources.forEach(s=>{
+  D.items.filter(i=>!i.baseOf).forEach(i=>i.sources.forEach(s=>{
     const k=s.name||("ORG_"+s.code);
     loose[k]=(loose[k]||0)+1;
     if (s.kind==="dungeon") counts[k]=(counts[k]||0)+1; }));
+
+  if(S.dgAt) return dungeonDrops(S.dgAt);
+
   const rows=D.portals.slice().sort((a,b)=>{
-      const ca=loose[a.name]||0, cb=loose[b.name]||0;
-      if(cb!==ca) return cb-ca;                      // dungeons with loot first
-      return a.name.localeCompare(b.name); })
+      // Hardest last: this reads as a progression, same as Track.
+      const da=a.diff, db=b.diff;
+      if(da==null && db==null) return a.name.localeCompare(b.name);
+      if(da==null) return 1;
+      if(db==null) return -1;
+      return da-db; })
     .map(p=>{
       const n=counts[p.name]||0, ln=loose[p.name]||0;
-      const d=p.diff;
-      return `<div class="dungeon" ${n?`data-dungeon="${esc(p.name)}"`:""}>${ico(p.sp)}
-        <div style="flex:1"><div class="nm">${esc(p.name)}
-          ${d!=null?`<span class="tg" style="color:var(--st);background:var(--st-bg)"
-             title="dungeon difficulty from the game files, 0-10">${d}</span>`:""}</div>
-        <div class="dim">${n?n+" items carry this dungeon's tag":"no items carry this dungeon's tag"}${
-          ln>n?` &middot; ${ln-n} more traced here`:""}</div>
-        </div></div>`;}).join("");
-  return `<div class="hint">Dungeon doors, names and <b>difficulty</b> come straight from the client
-    (difficulty is on the dungeon keys in <code>equipKeys.xml</code>, 0-10 &mdash; present for
-    ${D.portals.filter(p=>p.diff!=null).length} of ${D.portals.length} dungeons).
-    Rows with loot are listed first; a row with no tagged items is not clickable.</div>
-    <div class="scroll">${rows}</div>`;
+      return `<button class="dgrow" type="button" ${ln?`data-dgat="${esc(p.name)}"`:""}
+          ${ln?"":'style="opacity:.45;cursor:default"'}>
+        <span class="art">${ico(p.sp)}${p.boss!=null?ico(p.boss):""}</span>
+        <span class="txt"><span class="nm">${esc(p.name)}</span>
+          <span class="dim">${ln?`${ln} item${ln==1?"":"s"} drop here`:"nothing recorded from here"}</span></span>
+        ${p.diff!=null?`<span class="diff" title="dungeon difficulty from the game files, 0-10">${p.diff}</span>`
+                      :`<span class="diff none">&mdash;</span>`}
+        <span class="chev">${ln?"&#8250;":""}</span>
+      </button>`;}).join("");
+
+  return `<div class="hint">Every dungeon portal in the client, easiest first.
+    <b>Difficulty</b> is the game's own rating, stored on the dungeon keys in
+    <code>equipKeys.xml</code> &mdash; present for ${D.portals.filter(p=>p.diff!=null).length}
+    of ${D.portals.length}. Click one to see what drops there.</div>
+    <div class="scroll"><div class="dglist">${rows}</div></div>`;
 }
 
-// The point of Track is not "look at my nice items". It is: where do I go, what kills it,
-// and what do I want rolled on it when it drops. So it groups by PLACE, headed by that
-// dungeon's door and its boss, and every row carries its enchant plan.
-function trackRow(i){
-  const n = i.ench || 0;
-  const plan = S.ench[i.id] || [];
-  const locks = S.lock[i.id] || [];
-  const slots = n > 0
-    ? `<span class="eslots">${Array.from({length:n},(_,k)=>{
+function dungeonDrops(name){
+  const e=SRCI[name]||{};
+  const drops=D.items.filter(i=>!i.baseOf && i.sources.some(s=>(s.name||("ORG_"+s.code))===name));
+  const bio=BIOME_OF[name];
+  return `<div class="hint"><button class="mini" data-dgback>&#8249; all dungeons</button></div>
+    <div class="dghead">
+      <span class="art">${e.sp!=null?ico(e.sp):""}${e.boss!=null?ico(e.boss):""}</span>
+      <div style="min-width:0"><div class="nm">${esc(name)}</div>
+        <div class="dim">${drops.length} item${drops.length==1?"":"s"}${
+          e.diff!=null?` &middot; difficulty ${e.diff}`:""}</div></div>
+      ${bio?`<button class="mini" data-biome="${esc(bio)}">show in bestiary</button>`:""}
+    </div>
+    <div class="scroll">${drops.length?`<table class="items"><tbody>${drops.map(i=>`
+      <tr data-id="${esc(i.id)}" class="${S.track.includes(i.id)?'tracked':''}"
+          title="click to track / untrack">
+        <td style="width:82px">${icoPair(i)}</td>
+        <td class="nm" style="width:300px">${esc(i.name)} ${tierTag(i)}</td>
+        <td style="width:46px">${bagIco(i)}</td>
+        <td style="width:66px" class="num ${i.rel?"hi":""}">${i.rel!=null?Math.round(i.rel):""}</td>
+        <td style="width:110px" class="dim">${esc(i.slotName)}</td>
+        <td></td></tr>`).join("")}</tbody></table>`
+      :`<div class="empty">Nothing recorded from here.</div>`}</div>`;
+}
+
+function trackRow(it){
+  // One row of the enchant planner: the item, one slot per enchantment it can hold, and a
+  // Roll button. Shared by Track's drill-in and by Kit, which is why it takes the item and
+  // reads the plan and the locks off S.
+  const n = it.ench || 0;
+  const plan = S.ench[it.id] || [], locks = S.lock[it.id] || [];
+  const strip = n
+    ? `<span class="eslots">` + Array.from({length:n}, (_,k)=>{
         const e = plan[k] && enchById[plan[k]];
-        const lk = !!locks[k];
-        return `<button class="eslot${e?" on":""}${lk?" lock":""}"
-             data-eslot="${esc(i.id)}|${k}"
-             title="${e?esc(e.name):"slot "+(k+1)+" — empty"}
-click to choose &middot; right-click to ${lk?"unlock":"lock"} against rerolls">${
-          e ? (e.sp!=null?ico(e.sp):"&#9679;") : "+"}${lk?'<span class="lk">&#128274;</span>':""}</button>`;
-      }).join("")}<button class="roll" data-roll="${esc(i.id)}"
-        title="roll this item's enchantments — unlocked slots only">roll</button></span>`
+        const t = (e ? esc(e.name) + " &mdash; click to change" : "empty &mdash; click to choose")
+                + ". Right-click to hold it through a reroll.";
+        return `<button class="eslot${e?" on":""}${locks[k]?" lock":""}" type="button"
+          data-eslot="${esc(it.id)}|${k}" title="${t}">${
+          e ? (e.sp!=null?ico(e.sp):esc(e.name.slice(0,2))) : "+"
+        }${locks[k]?`<span class="lk">&#128274;</span>`:""}</button>`;
+      }).join("") + `</span>`
     : `<span class="dim">no enchant slots</span>`;
-  return `<tr data-id="${esc(i.id)}">
-    <td style="width:82px">${icoPair(i)}</td>
-    <td class="nm" style="width:262px">${esc(i.name)} ${tierTag(i)}</td>
-    <td style="width:96px" class="dim">${esc(i.slotName)}</td>
-    <td style="width:238px">${slots}</td>
-    <td style="width:96px">${slotPips(i)}</td>
-    <td style="width:36px"><button class="star on" data-star="${esc(i.id)}" title="stop tracking">&#9733;</button></td>
-    <td></td>
+  return `<tr>
+    <td style="width:82px">${icoPair(it)}</td>
+    <td class="nm" style="width:210px">${esc(it.name)} ${tierTag(it)}</td>
+    <td>${strip}</td>
+    <td style="width:74px">${n?`<button class="mini" type="button" data-roll="${esc(it.id)}"
+      title="Draw every unheld slot again, weighted the way the game weights them">Roll</button>`:""}</td>
   </tr>`;
 }
 
@@ -1116,7 +1220,19 @@ function renderWidget(){
 function render(){
   renderRail(); renderViews();
   const p=$("#panel");
-  if(S.view==="items"){ p.innerHTML=itemsView(); drawItems(); }
+  // A view that throws used to leave the PREVIOUS view's markup on screen with the new
+  // one selected in the rail - which reads as "the button does nothing" and is how a
+  // missing function shipped unnoticed. Say so instead.
+  try{ draw(p); }
+  catch(err){
+    console.error("view failed:", S.view, err);
+    p.innerHTML = `<div class="empty">The <b>${esc(S.view)}</b> view failed to draw.<br>
+      <code>${esc(String(err))}</code></div>`;
+  }
+}
+function draw(p){
+  if(S.view==="home"){ p.innerHTML=homeView(); }
+  else if(S.view==="items"){ p.innerHTML=itemsView(); drawItems(); }
   else if(S.view==="kit"){ p.innerHTML=kitView(); }
   else if(S.view==="dungeons"){ p.innerHTML=dungeonsView(); }
   else if(S.view==="track"){ p.innerHTML=trackView(); }
@@ -1211,17 +1327,17 @@ document.addEventListener("click", e=>{
   const es=e.target.closest("[data-eslot]");
   if(es){ e.stopPropagation();
     const [id,slot]=es.dataset.eslot.split("|");
-    S.enchPick={id, slot:+slot}; S.view="ench"; render(); return; }
-  if(e.target.closest("[data-ecancel]")){ e.preventDefault(); S.enchPick=null; S.view="track"; render(); return; }
+    S.enchPick={id, slot:+slot}; S.enchFrom=S.view; S.view="ench"; render(); return; }
+  if(e.target.closest("[data-ecancel]")){ e.preventDefault(); S.enchPick=null; S.view=S.enchFrom||"track"; render(); return; }
   if(e.target.closest("[data-eclear]")){ e.preventDefault();
     const {id,slot}=S.enchPick||{};
     if(id){ const a=S.ench[id]||[]; a[slot]=null; S.ench[id]=a; LSet("rm.ench",S.ench); }
-    S.enchPick=null; S.view="track"; render(); return; }
+    S.enchPick=null; S.view=S.enchFrom||"track"; render(); return; }
   const ecard=e.target.closest("[data-ench]");
   if(ecard && S.enchPick){
     const {id,slot}=S.enchPick;
     const a=S.ench[id]||[]; a[slot]=ecard.dataset.ench; S.ench[id]=a;
-    LSet("rm.ench",S.ench); S.enchPick=null; S.view="track"; render(); return; }
+    LSet("rm.ench",S.ench); S.enchPick=null; S.view=S.enchFrom||"track"; render(); return; }
   const ta=e.target.closest("[data-trackat]");
   if(ta){ S.trackAt=ta.dataset.trackat; render(); return; }
   if(e.target.closest("[data-trackback]")){ S.trackAt=null; render(); return; }
@@ -1233,13 +1349,22 @@ document.addEventListener("click", e=>{
       b.setAttribute("aria-selected", String(b.dataset.ecat===S.ecat)));
     drawEnch(); return; }
   const cl=e.target.closest("[data-cls]");
-  if(cl){ S.cls=cl.dataset.cls; LSet("rm.cls",S.cls); S.sel=null; render(); return; }
+  if(cl){ S.cls=cl.dataset.cls; LSet("rm.cls",S.cls); S.sel=null;
+          if(S.view==="home") S.view="items";      // picking a character gets on with it
+          render(); return; }
+  const nv=e.target.closest("[data-view]");
+  if(nv){ S.view=nv.dataset.view; S.sel=null; S.trackAt=null; S.dgAt=null; render(); return; }
+  if(e.target.closest("[data-home]")){ S.view="home"; S.sel=null; render(); return; }
+  if(e.target.closest("[data-pop]")){
+    if(T2) T2.core.invoke("open_widget",{alpha:S.opacity}).catch(()=>{});
+    return; }
   const tab=e.target.closest("[data-tab]");
   if(tab){ S.tab=+tab.dataset.tab; S.sel=null; render(); return; }
   const ks=e.target.closest("[data-kitslot]");
   if(ks){ S.kitPick=+ks.dataset.kitslot; S.tab=S.kitPick; S.view="items"; render(); return; }
-  const dg=e.target.closest("[data-dungeon]");
-  if(dg){ S.view="items"; render(); const q=$("#q"); if(q){ q.value=dg.dataset.dungeon; drawItems(); } return; }
+  const dga=e.target.closest("[data-dgat]");
+  if(dga){ S.dgAt=dga.dataset.dgat; render(); return; }
+  if(e.target.closest("[data-dgback]")){ S.dgAt=null; render(); return; }
   const row=e.target.closest("tr[data-id]");
   if(row){
     // Equipping is a SINGLE click while a kit slot is armed. The old dblclick could never

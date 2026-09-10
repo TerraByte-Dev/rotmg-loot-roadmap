@@ -1246,7 +1246,16 @@ def main():
             n = cells.get("ench:" + e["id"])
             if n is not None:
                 e["sp"] = n
-        sprites = {"cell": sidx["cell"], "cols": sidx["cols"], "bags": bagcells}
+        # Art for the navigation rail, so the menu uses the game's own imagery rather than
+        # words. The realm portal is the grey/black door players know; the rest are picked
+        # from what the atlas already holds.
+        beast = next((v for k, v in cells.items() if k.startswith("boss:undeadLair")), None)
+        t4 = next((e for e in enchants if e.get("tier") == "TIER4" and e.get("sp") is not None), None)
+        sprites = {"cell": sidx["cell"], "cols": sidx["cols"], "bags": bagcells,
+                   "ui": {"realm": cells.get("realm:Realm Portal"),
+                          "ench": (t4 or {}).get("sp"),
+                          "beast": beast,
+                          "bag": bagcells.get("6")}}
         print("  sprites: %d items, %d portals"
               % (sum(1 for i in items if "sp" in i), sum(1 for p in portals if "sp" in p)))
 
