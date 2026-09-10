@@ -1137,6 +1137,12 @@ def main():
             n = cells.get(it["id"])
             if n is not None:
                 it["sp"] = n
+        # Each class's own character art, so the rail can show the class instead of
+        # spelling its name in a list.
+        for c in classes:
+            n = cells.get("class:" + c["name"])
+            if n is not None:
+                c["sp"] = n
         for p in portals:
             n = cells.get(p["id"])
             if n is not None:
@@ -1272,9 +1278,14 @@ def main():
         L = set(it["labels"])
         legal = 0
         for e in enchants:
-            if e["compat"] and not (set(e["compat"]) & L):
+            # CompatibleWithItemLabels is AND: the item must carry EVERY token. Reading
+            # it as "shares any label" made PATH_OF_THE_MAGUS_STAFF legal on 1,473 items
+            # instead of the single item it is written for, and inflated this count.
+            if "ROLLABLE" not in e["labels"]:
                 continue
-            if set(e["noItem"]) & L:
+            if e["compat"] and not set(e["compat"]).issubset(L):
+                continue
+            if set(e["noItem"]) & L:          # IncompatibleWithItemLabels is OR
                 continue
             if it["id"] in e["noIds"]:
                 continue
@@ -1297,6 +1308,12 @@ def main():
         "built": __import__("datetime").datetime.now().strftime("%b %d %H:%M"),
         "assetsBuilt": __import__("datetime").datetime.fromtimestamp(
             os.path.getmtime(os.path.join(XML, "equip.xml"))).strftime("%Y-%m-%d"),
+        # Read from tauri.conf.json rather than hard-coded, so Settings cannot drift
+        # from what the installer actually says.
+        "appVersion": (json.load(open(os.path.join(HERE, "src-tauri", "tauri.conf.json"),
+                                     encoding="utf-8")).get("version")
+                       if os.path.exists(os.path.join(HERE, "src-tauri", "tauri.conf.json"))
+                       else None),
         "biomeBands": biome_bands,
         # Source name -> biome, for the "click a place, see its mobs" jump. Only exact
         # name matches: the infographic has no dungeons in it, so anything else would be

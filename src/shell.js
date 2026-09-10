@@ -62,6 +62,33 @@ if (T) {
   opIn.value = Math.round(alpha * 100);
   paint(); applyPin(); applyAlpha();
 
+
+  // TEMP DIAGNOSTIC - reports computed sprite geometry through the window title, which
+  // is readable from outside without attaching a debugger to the webview.
+  setTimeout(() => {
+    try {
+      const el = document.querySelector('table.items .ico') || document.querySelector('.ico');
+      const cs = el ? getComputedStyle(el) : null;
+      const root = getComputedStyle(document.documentElement);
+      const img = new Image();
+      img.onload = () => report(img.naturalWidth + 'x' + img.naturalHeight);
+      img.onerror = () => report('ATLAS-FAIL');
+      img.src = 'sprite-atlas.png';
+      function report(atlas) {
+        const D2 = window.D || {};
+        w.setTitle([
+          'cols=' + ((D2.sprites || {}).cols),
+          'dpr=' + window.devicePixelRatio,
+          'bgSize=' + (cs ? cs.backgroundSize : 'no-el'),
+          'bgPos=' + (cs ? cs.backgroundPosition : '-'),
+          'ico=' + root.getPropertyValue('--ico').trim(),
+          'atlas=' + atlas,
+          'url=' + (cs ? cs.backgroundImage.slice(0, 46) : '-'),
+        ].join(' | '));
+      }
+    } catch (e) { w.setTitle('DIAG-ERR ' + String(e).slice(0, 90)); }
+  }, 2500);
+
   // --- updates -------------------------------------------------------------
   // A non-modal strip, and it never installs on its own. A window that vanishes
   // mid-run is worse than a version that is a week stale.

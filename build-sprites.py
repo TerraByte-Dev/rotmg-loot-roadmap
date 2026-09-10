@@ -256,6 +256,28 @@ def skin_textures():
     return out
 
 
+def class_textures():
+    """Each of the 19 classes' own character art.
+
+    players.xml gives every class an <AnimatedTexture> on the "players" sheet - Rogue is
+    index 0, Archer 1, and so on. These are 8x8 sprites, so they upscale to the 16px cell
+    and then again to whatever the UI asks for; image-rendering:pixelated keeps them
+    crisp. This is the class as the game draws it, not an icon anyone invented.
+    """
+    with io.open(os.path.join(XML, "players.xml"), encoding="utf-8", errors="ignore") as f:
+        pl = f.read()
+    out, seen = {}, 0
+    for cid, body in objects(pl):
+        if "<Player" not in body:
+            continue
+        seen += 1
+        art = own_art(body)
+        if art:
+            out["class:" + cid] = art
+    guard(seen, len(out), "class art")
+    return out
+
+
 def chest_textures():
     """Loot chests. The client labels them itself - <Labels>CHEST</Labels> - so there is
     no name-guessing here. Covers the event chests (Event Chest MotMG, Event Chest O1,
@@ -318,6 +340,7 @@ def main():
                       ("enchantment icons", enchant_textures),
                       ("dungeon bosses", boss_textures),
                       ("ST set skins", skin_textures),
+                      ("class art", class_textures),
                       ("loot / event chests", chest_textures)):
         got = fn()
         tex.update(got)

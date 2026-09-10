@@ -33,7 +33,7 @@ html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:var(--fs)/1.45 var(--font);-webkit-font-smoothing:antialiased}
 button,input,select{font:inherit}
 
-.app{display:grid;grid-template-columns:180px 1fr;height:100vh}
+.app{display:grid;grid-template-columns:236px 1fr;height:100vh}
 @media(max-width:900px){.app{grid-template-columns:1fr;height:auto}}
 
 .rail{background:var(--bg-panel);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
@@ -42,6 +42,15 @@ button,input,select{font:inherit}
 .brand .sub{color:var(--ink-faint);font-size:10px;margin-top:2px;white-space:pre-line;line-height:1.35}
 .railscroll{overflow-y:auto;min-height:0;flex:1;padding:6px 0}
 .railhead{padding:9px 13px 4px;color:var(--ink-faint);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase}
+.classgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;padding:4px 6px}
+.cls2{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 6px;
+  background:none;border:0;border-radius:var(--radius);cursor:pointer;color:var(--ink-dim);
+  font:inherit;font-size:10.5px;line-height:1.1;position:relative}
+.cls2 .ico{--ico:44px}
+.cls2:hover{background:var(--bg-hover);color:var(--ink)}
+.cls2[aria-pressed=true]{background:var(--accent-glow);color:var(--accent);
+  box-shadow:inset 0 0 0 1px var(--accent-dim)}
+.cls2 .wep{color:var(--ink-faint);font-size:9px;letter-spacing:.04em}
 .cls{display:flex;align-items:center;gap:7px;width:100%;text-align:left;background:none;border:0;
      border-left:2px solid transparent;color:var(--ink-dim);padding:4px 13px;cursor:pointer}
 .cls:hover{background:var(--bg-hover);color:var(--ink)}
@@ -173,7 +182,14 @@ td .pips{display:inline-flex;gap:2px;align-items:center}
   display:inline-flex;align-items:center;justify-content:center;font-size:14px;line-height:1}
 .eslot:hover{border-color:var(--accent-dim);color:var(--accent)}
 .eslot.on{border-style:solid;border-color:var(--accent-dim)}
+.eslot.lock{border-style:solid;border-color:var(--st);box-shadow:0 0 0 1px var(--st) inset}
+.eslot .lk{position:absolute;right:-3px;bottom:-4px;font-size:9px;line-height:1;
+  filter:drop-shadow(0 0 2px var(--bg))}
+.eslot{position:relative}
 .eslot .ico{--ico:24px}
+.roll{background:none;border:1px solid var(--line);color:var(--ink-dim);cursor:pointer;
+  border-radius:var(--radius);font:inherit;font-size:10.5px;padding:3px 9px;margin-left:5px}
+.roll:hover{border-color:var(--accent-dim);color:var(--accent)}
 .planrow{display:flex;gap:9px;align-items:center;padding:3px 0}
 .planrow .ico{--ico:28px}
 .hint{padding:6px 13px;color:var(--ink-faint);font-size:11px;border-bottom:1px solid var(--line-soft)}
@@ -187,9 +203,76 @@ td .pips{display:inline-flex;gap:2px;align-items:center}
 #bimg{position:absolute;top:0;left:0;transform-origin:0 0;image-rendering:pixelated;max-width:none;
       user-select:none;-webkit-user-drag:none;pointer-events:none}
 .picking{background:var(--warn-bg);color:var(--warn);padding:6px 13px;font-size:11.5px;border-bottom:1px solid var(--line-soft)}
+
+/* ---- window chrome. Only shown in the desktop app; the page in a browser keeps the
+   browser's own chrome and never sees this. ------------------------------------- */
+body.tauri .app{height:calc(100vh - 34px)}
+/* In the app this is chrome, not a document. Dragging across it should not paint a
+   text selection over the whole UI. Inputs stay selectable. */
+body.tauri{user-select:none;-webkit-user-select:none}
+body.tauri input,body.tauri textarea,body.tauri .ddesc,body.tauri .edesc{user-select:text;-webkit-user-select:text}
+.titlebar{display:none}
+body.tauri .titlebar{display:flex;align-items:center;height:34px;background:var(--bg-panel);
+  border-bottom:1px solid var(--line);user-select:none;position:relative;z-index:60}
+.titlebar .tb-title{padding:0 12px;color:var(--ink-faint);font-size:11px;letter-spacing:.12em;
+  text-transform:uppercase;pointer-events:none}
+.titlebar .tb-drag{flex:1;align-self:stretch}
+.tb-btn{width:46px;height:34px;background:none;border:0;color:var(--ink-dim);cursor:pointer;
+  font:inherit;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center}
+.tb-btn:hover{background:var(--bg-hover);color:var(--ink)}
+.tb-btn.close:hover{background:#c0392b;color:#fff}
+.tb-btn.gear{width:38px;font-size:15px}
+.tb-btn.gear.on{color:var(--accent)}
+
+.sheet{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.5);display:flex;
+  align-items:flex-start;justify-content:flex-end}
+.sheet .card{width:340px;max-height:100%;overflow:auto;background:var(--bg-panel);
+  border-left:1px solid var(--line);padding:16px 18px}
+.sheet h2{margin:0 0 3px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.sheet .sub{color:var(--ink-faint);font-size:10.5px;margin-bottom:14px}
+.sheet .grp{margin:16px 0 6px;color:var(--ink-faint);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase}
+.themes{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.thm{display:flex;align-items:center;gap:8px;padding:8px 9px;border:1px solid var(--line);
+  border-radius:var(--radius);background:none;color:var(--ink-dim);cursor:pointer;font:inherit;font-size:11px}
+.thm:hover{border-color:var(--accent-dim)}
+.thm[aria-pressed=true]{border-color:var(--accent);color:var(--accent);background:var(--accent-glow)}
+.swatch{width:15px;height:15px;border-radius:3px;flex:0 0 auto;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+.srow{display:flex;align-items:center;gap:9px;margin:9px 0;font-size:11.5px;color:var(--ink-dim)}
+.srow input[type=range]{flex:1;accent-color:var(--accent)}
+.sbtn{background:none;border:1px solid var(--line);color:var(--ink-dim);border-radius:var(--radius);
+  padding:5px 11px;cursor:pointer;font:inherit;font-size:11.5px}
+.sbtn:hover{border-color:var(--accent-dim);color:var(--accent)}
+.updmsg{font-size:11px;color:var(--ink-faint);margin-top:7px;white-space:normal;line-height:1.45}
+
+/* ---- overlay widget: the same page, rendered small ------------------------- */
+body.widget{background:var(--bg-panel);overflow:hidden}
+body.widget .app,body.widget .titlebar{display:none}
+.wdg{display:flex;flex-direction:column;height:100vh}
+.wdg .bar{display:flex;align-items:center;gap:6px;padding:6px 8px;border-bottom:1px solid var(--line);
+  background:var(--bg-panel)}
+.wdg .bar .t{flex:1;color:var(--accent);font-size:10px;letter-spacing:.14em;text-transform:uppercase}
+.wdg .bar button{background:none;border:0;color:var(--ink-faint);cursor:pointer;font:inherit;
+  font-size:12px;padding:0 4px}
+.wdg .bar button:hover{color:var(--ink)}
+.wdg .list{flex:1;overflow:auto;padding:2px 0}
+.wdg .grp{padding:7px 9px 3px;color:var(--ink-faint);font-size:9.5px;letter-spacing:.12em;
+  text-transform:uppercase;display:flex;align-items:center;gap:6px}
+.wdg .grp .ico{--ico:20px}
+.wdg .row{display:flex;align-items:center;gap:7px;padding:3px 9px;font-size:11.5px;color:var(--ink)}
+.wdg .row .ico{--ico:24px}
+.wdg .row .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wdg .empty{padding:18px 12px;color:var(--ink-faint);font-size:11.5px;text-align:center;line-height:1.5}
 </style>
 </head>
 <body>
+<div class="titlebar">
+  <span class="tb-title">Loot Roadmap</span>
+  <div class="tb-drag" data-tauri-drag-region></div>
+  <button class="tb-btn gear" id="tb-gear" type="button" title="Settings">&#9881;</button>
+  <button class="tb-btn" id="tb-min" type="button" title="Minimise">&#8211;</button>
+  <button class="tb-btn" id="tb-max" type="button" title="Maximise">&#9633;</button>
+  <button class="tb-btn close" id="tb-close" type="button" title="Close">&#10005;</button>
+</div>
 <div class="app">
   <aside class="rail">
     <div class="brand"><h1>Loot Roadmap</h1><div class="sub" id="brandsub"></div></div>
@@ -222,10 +305,15 @@ const LSet= (k,v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch
 const S = {
   cls: LS("rm.cls") || "Wizard",
   view:"items", tab:0, sel:null, kitPick:null, lvl1:false, biome:null,
+  theme: LS("rm.theme") || "roadmap",
+  opacity: (typeof LS("rm.widgetOpacity")==="number") ? LS("rm.widgetOpacity") : 0.92,
   kit: (LS("rm.kit") && typeof LS("rm.kit")==="object" && !Array.isArray(LS("rm.kit")))?LS("rm.kit"):{},
   track: (Array.isArray(LS("rm.track"))?LS("rm.track"):[]).filter(x=>typeof x==="string"),
   // itemId -> [enchantId | null, ...] — what you WANT rolled on it, not what you have.
   ench: (LS("rm.ench") && typeof LS("rm.ench")==="object" && !Array.isArray(LS("rm.ench")))?LS("rm.ench"):{},
+  // itemId -> [bool,...] — slots held through a reroll. The client has no lock mechanic;
+  // this is the app's own affordance and the UI says so.
+  lock: (LS("rm.lock") && typeof LS("rm.lock")==="object" && !Array.isArray(LS("rm.lock")))?LS("rm.lock"):{},
   enchPick: null,   // {id, slot} while choosing
 };
 const cls = () => D.classes.find(c => c.name === S.cls) || D.classes[0];
@@ -246,13 +334,20 @@ function icoPair(it){
 function slotPips(it){
   const ch = it.chance;
   if(!ch || !ch.length) return `<span class="dim">&mdash;</span>`;
-  const guaranteed = ch.filter(x=>x>=1).length;
+  // slotChance is CUMULATIVE: entry k is P(at least k+1 slots). Every one of the 2,069
+  // lists in equip.xml is monotone non-increasing, which a per-slot independent reading
+  // would not require. So P(exactly n) = ch[n-1] - ch[n], and "guaranteed" is the run of
+  // leading 1.0s - the number of slots the item ALWAYS drops with.
+  const guaranteed = (()=>{ let n=0; while(n<ch.length && ch[n]>=1) n++; return n; })();
   // Colour by how many slots are GUARANTEED - that is what separates a great drop
   // from an average one. Solid pip = always rolls. Hollow = a chance. Dark = never.
   const v = TIERS[Math.max(1,guaranteed)] || TIERS[4];
-  const pct = x => (x>=1?"always":x<=0?"never":Math.round(x*100)+"%");
-  const tip = ch.map((x,k)=>`slot ${k+1}: ${pct(x)}`).join(" · ") +
-              (it.dust?` · ${it.dust.type}`:"");
+  const pc = x => Math.round(x*1000)/10;
+  const exact = ch.map((x,k)=> pc(x - (ch[k+1]||0)));
+  const tip = "chance of dropping with exactly N slots — " +
+              exact.map((x,k)=>`${k+1}: ${x}%`).join(" · ") +
+              (ch[0]<1?` · none: ${pc(1-ch[0])}%`:"") +
+              (it.dust?` · costs ${it.dust.amounts||"?"} ${it.dust.type}`:"");
   return `<span class="pips" title="${esc(tip)}">` + Array.from({length:4},(_,k)=>{
     const x = ch[k]==null?0:ch[k];
     if(x>=1)  return `<i style="background:${v[1]}"></i>`;
@@ -338,15 +433,18 @@ function filterFn(){
 
 /* ------------------------------- views ------------------------------- */
 function renderRail(){
-  const r = $("#classlist"); r.innerHTML = "";
-  D.classes.forEach(c => {
-    const b = document.createElement("button");
-    b.className="cls"; b.type="button";
-    b.setAttribute("aria-pressed", String(c.name===S.cls));
-    b.innerHTML = `<span>${c.name}</span><small>${c.slotNames[0]}</small>`;
-    b.onclick = () => { S.cls=c.name; LSet("rm.cls",c.name); S.sel=null; render(); };
-    r.appendChild(b);
-  });
+  // Show the class the way the game draws it. players.xml gives every class its own
+  // <AnimatedTexture> on the "players" sheet, so this is the real character, not an
+  // icon anybody invented - and it reads far faster than a column of names.
+  const r = $("#classlist");
+  r.className = "classgrid";
+  r.innerHTML = D.classes.map(c => `
+    <button class="cls2" type="button" data-cls="${esc(c.name)}"
+            aria-pressed="${c.name===S.cls}" title="${esc(c.name)} — ${esc(c.slotNames[0])}">
+      ${c.sp!=null?ico(c.sp):`<div class="ico none"></div>`}
+      <span>${esc(c.name)}</span>
+      <span class="wep">${esc(c.slotNames[0])}</span>
+    </button>`).join("");
   $("#brandsub").textContent = `${D.counts.items} items · ${D.counts.portals} dungeons
 built ${D.built||"?"} · assets ${D.assetsBuilt||"?"}`;
 }
@@ -564,21 +662,24 @@ function dungeonsView(){
 function trackRow(i){
   const n = i.ench || 0;
   const plan = S.ench[i.id] || [];
+  const locks = S.lock[i.id] || [];
   const slots = n > 0
     ? `<span class="eslots">${Array.from({length:n},(_,k)=>{
         const e = plan[k] && enchById[plan[k]];
-        return e
-          ? `<button class="eslot on" data-eslot="${esc(i.id)}|${k}"
-               title="${esc(e.name)} — click to change">${e.sp!=null?ico(e.sp):"&#9679;"}</button>`
-          : `<button class="eslot" data-eslot="${esc(i.id)}|${k}"
-               title="choose an enchantment for slot ${k+1}">+</button>`;
-      }).join("")}</span>`
+        const lk = !!locks[k];
+        return `<button class="eslot${e?" on":""}${lk?" lock":""}"
+             data-eslot="${esc(i.id)}|${k}"
+             title="${e?esc(e.name):"slot "+(k+1)+" — empty"}
+click to choose &middot; right-click to ${lk?"unlock":"lock"} against rerolls">${
+          e ? (e.sp!=null?ico(e.sp):"&#9679;") : "+"}${lk?'<span class="lk">&#128274;</span>':""}</button>`;
+      }).join("")}<button class="roll" data-roll="${esc(i.id)}"
+        title="roll this item's enchantments — unlocked slots only">roll</button></span>`
     : `<span class="dim">no enchant slots</span>`;
   return `<tr data-id="${esc(i.id)}">
     <td style="width:82px">${icoPair(i)}</td>
-    <td class="nm" style="width:300px">${esc(i.name)} ${tierTag(i)}</td>
-    <td style="width:104px" class="dim">${esc(i.slotName)}</td>
-    <td style="width:172px">${slots}</td>
+    <td class="nm" style="width:262px">${esc(i.name)} ${tierTag(i)}</td>
+    <td style="width:96px" class="dim">${esc(i.slotName)}</td>
+    <td style="width:238px">${slots}</td>
     <td style="width:96px">${slotPips(i)}</td>
     <td style="width:36px"><button class="star on" data-star="${esc(i.id)}" title="stop tracking">&#9733;</button></td>
     <td></td>
@@ -699,12 +800,135 @@ const ECATS = [
 ];
 
 // What may legally roll on a given item: label intersection minus both exclusion lists.
-function legalFor(item){
+// Which enchantments can legally sit on an item, and beside which others.
+//
+// CompatibleWithItemLabels is AND, not intersection: the item must carry EVERY token.
+// Reading it as "shares any label" made PATH_OF_THE_MAGUS_STAFF legal on 1,473 items
+// instead of the 1 it is designed for, and inflated every "can roll here" count.
+//
+// IncompatibleWithItemLabels is OR - any single match excludes. Proof that the two
+// differ: 60 enchantments declare "ABILITY,WEAPON" there, and NO item carries both,
+// so under AND those declarations would do nothing at all.
+// ---------------------------------------------------------------------------
+// Themes. Each is nothing but a set of the same tokens the stylesheet already uses,
+// so switching one cannot break layout. The two brand palettes are the real values
+// from TerraByte-Dev/TerraPlayer and TerraByte-Dev/OpenEdu, not approximations.
+// ---------------------------------------------------------------------------
+const THEMES = {
+  roadmap: { name:"Roadmap", swatch:"#4ee39a", v:{} },   // {} = the stylesheet defaults
+  mainframe: { name:"Mainframe", swatch:"#00FF88", v:{
+    "--bg":"#000000", "--bg-panel":"#020503", "--bg-hover":"rgba(0,255,136,.08)",
+    "--line":"rgba(0,255,136,.18)", "--line-soft":"rgba(0,255,136,.08)",
+    "--ink":"#9bf5b8", "--ink-dim":"rgba(155,245,184,.55)", "--ink-faint":"rgba(155,245,184,.30)",
+    "--accent":"#00FF88", "--accent-dim":"#1f5e3a", "--accent-glow":"rgba(0,255,136,.15)",
+    "--warn":"#FFB000", "--good":"#7CFF6B",
+    "--font":"'IBM Plex Mono', ui-monospace, SFMono-Regular, Consolas, monospace" } },
+  phosphor: { name:"Blue Phosphor", swatch:"#00C6FF", v:{
+    "--bg":"#000000", "--bg-panel":"#020409", "--bg-hover":"#050b12",
+    "--line":"rgba(0,198,255,.18)", "--line-soft":"rgba(0,198,255,.08)",
+    "--ink":"#6DD4EE", "--ink-dim":"rgba(109,212,238,.55)", "--ink-faint":"rgba(109,212,238,.42)",
+    "--accent":"#00C6FF", "--accent-dim":"#0a2840", "--accent-glow":"rgba(0,198,255,.20)",
+    "--warn":"#FFB000", "--good":"#2BFF88",
+    "--font":"'IBM Plex Mono', 'Share Tech Mono', ui-monospace, monospace" } },
+  slate: { name:"Slate", swatch:"#4493f8", v:{
+    "--bg":"#0d1117", "--bg-panel":"#11161d", "--bg-hover":"#161b22",
+    "--line":"#2a313a", "--line-soft":"#20262d",
+    "--ink":"#c9d1d9", "--ink-dim":"#8b949e", "--ink-faint":"#6e7681",
+    "--accent":"#4493f8", "--accent-dim":"#1f4b7a", "--accent-glow":"rgba(68,147,248,.16)",
+    "--warn":"#d29922", "--good":"#3fb950",
+    "--font":"ui-monospace, SFMono-Regular, Consolas, monospace" } },
+};
+
+function applyTheme(id){
+  const th = THEMES[id] || THEMES.roadmap;
+  const r = document.documentElement;
+  // Clear whatever the last theme set before applying the next, or tokens a theme does
+  // not define would linger from the previous one.
+  Object.values(THEMES).forEach(t2 => Object.keys(t2.v).forEach(k => r.style.removeProperty(k)));
+  Object.entries(th.v).forEach(([k,v]) => r.style.setProperty(k,v));
+  S.theme = id; LSet("rm.theme", id);
+}
+
+// ---------------------------------------------------------------------------
+// Settings. Lives behind the gear in the title bar, which only exists in the app.
+// ---------------------------------------------------------------------------
+function settingsSheet(){
+  const inApp = !!globalThis.__TAURI__;
+  return `<div class="sheet" id="sheet"><div class="card" data-stop>
+    <h2>Settings</h2>
+    <div class="sub">v${esc(D.appVersion||"1.0.0")} &middot; data ${esc(D.assetsBuilt||"?")}</div>
+
+    <div class="grp">Theme</div>
+    <div class="themes">${Object.entries(THEMES).map(([id,th])=>`
+      <button class="thm" type="button" data-theme="${id}" aria-pressed="${S.theme===id}">
+        <span class="swatch" style="background:${th.swatch}"></span>${esc(th.name)}</button>`).join("")}</div>
+
+    <div class="grp">Overlay widget</div>
+    <div class="srow"><span>Opacity</span>
+      <input type="range" id="wopacity" min="35" max="100" step="5" value="${Math.round(S.opacity*100)}">
+      <span id="wopval">${Math.round(S.opacity*100)}%</span></div>
+    <div class="srow"><button class="sbtn" data-widget>${inApp?"Open overlay widget":"Desktop app only"}</button></div>
+    <div class="updmsg">The overlay is a small always-on-top window listing what you are
+      tracking. Opacity applies to it, not to this window &mdash; a see-through main window
+      is hard to read.</div>
+
+    <div class="grp">Updates</div>
+    <div class="srow"><button class="sbtn" data-checkupd>Check for updates</button></div>
+    <div class="updmsg" id="updmsg">${inApp?"":"Updates only apply to the installed desktop app."}</div>
+
+    <div class="grp">About</div>
+    <div class="updmsg">Built from the game client's own XML and sprite sheets. Nothing here
+      talks to the game or to the network, apart from the update check.
+      Bestiary infographic by <b>GHZD</b>.</div>
+    <div class="srow" style="margin-top:12px"><button class="sbtn" data-closesheet>Close</button></div>
+  </div></div>`;
+}
+
+function openSettings(){
+  if($("#sheet")) return;
+  document.body.insertAdjacentHTML("beforeend", settingsSheet());
+  $("#tb-gear") && $("#tb-gear").classList.add("on");
+  const op=$("#wopacity");
+  if(op) op.addEventListener("input", ()=>{
+    S.opacity = op.value/100; LSet("rm.widgetOpacity", S.opacity);
+    $("#wopval").textContent = op.value+"%";
+    if(globalThis.__TAURI__) __TAURI__.core.invoke("set_widget_opacity",{alpha:S.opacity}).catch(()=>{});
+  });
+}
+function closeSettings(){
+  const s=$("#sheet"); if(s) s.remove();
+  $("#tb-gear") && $("#tb-gear").classList.remove("on");
+}
+
+function legalFor(item, placed){
   const L = new Set(item.labels || []);
-  return D.enchants.filter(e =>
-    (!e.compat.length || e.compat.some(c => L.has(c))) &&
-    !(e.noItem || []).some(c => L.has(c)) &&
-    !(e.noIds || []).includes(item.id));
+  const others = (placed || []).filter(Boolean);
+  return D.enchants.filter(e => {
+    if (!(e.labels || []).includes("ROLLABLE")) return false;
+    if ((e.compat || []).length && !e.compat.every(c => L.has(c))) return false;   // AND
+    if ((e.noItem || []).some(c => L.has(c))) return false;                        // OR
+    if ((e.noIds || []).includes(item.id)) return false;
+    // Enchantments also exclude EACH OTHER across slots on the same item. 1,553 pairs
+    // conflict in only one direction, which would make legality depend on roll order,
+    // so the check is deliberately symmetric.
+    for (const o of others){
+      if (o.id === e.id) return false;
+      if ((e.excl || []).some(x => (o.labels || []).includes(x))) return false;
+      if ((o.excl || []).some(x => (e.labels || []).includes(x))) return false;
+    }
+    return true;
+  });
+}
+
+// A weighted draw over the legal pool, using the client's own <Weight> values.
+function rollEnchant(item, placed){
+  const pool = legalFor(item, placed);
+  let total = 0;
+  for (const e of pool) total += (+e.weight || 0);
+  if (!pool.length || total <= 0) return null;
+  let x = Math.random() * total;
+  for (const e of pool){ x -= (+e.weight || 0); if (x <= 0) return e; }
+  return pool[pool.length - 1];
 }
 function kitItems(){
   return (S.kit[S.cls] || []).map(id => id && byId[id]).filter(Boolean);
@@ -741,7 +965,8 @@ function drawEnch(){
   let pool=D.enchants;
   let legalIds=null;
   if(pick){
-    const ok=new Set(legalFor(pick).map(e=>e.id));
+    const others=(S.ench[pick.id]||[]).map((id,k)=> k===S.enchPick.slot?null:(id&&enchById[id]));
+    const ok=new Set(legalFor(pick, others).map(e=>e.id));
     pool=pool.filter(e=>ok.has(e.id));
   }
   if(fit && equipped.length){
@@ -779,6 +1004,41 @@ function drawEnch(){
     ${pool.length===0?`<div class="empty">Nothing matches.</div>`:""}`;
 }
 
+// ---------------------------------------------------------------------------
+// Overlay widget. The Rust side opens a second window on index.html#widget; the
+// page notices the hash and renders this instead of the whole app, so there is
+// only ever one frontend.
+// ---------------------------------------------------------------------------
+function renderWidget(){
+  document.body.className = "widget";
+  const g={};
+  S.track.forEach(id=>{ const it=byId[id]; if(!it) return;
+    const s=it.sources[0]; const k=s?(s.name||("ORG_"+s.code)):"Not recorded";
+    (g[k]=g[k]||[]).push(it); });
+  const body = S.track.length
+    ? Object.keys(g).sort().map(k=>{
+        const e=SRCI[k]||{};
+        return `<div class="grp">${e.sp!=null?ico(e.sp):""}${
+          e.boss!=null?ico(e.boss):""}<span>${esc(k)}</span></div>` +
+          g[k].map(i=>`<div class="row">${ico(i.sp)}<span class="n">${esc(i.name)}</span></div>`).join("");
+      }).join("")
+    : `<div class="empty">Nothing tracked.<br>Click items in the main window and they show up here.</div>`;
+  document.body.innerHTML = `<div class="wdg">
+    <div class="bar" data-tauri-drag-region>
+      <span class="t" data-tauri-drag-region>Tracking ${S.track.length}</span>
+      <button id="wdg-x" type="button" title="Close overlay">&#10005;</button>
+    </div>
+    <div class="list">${body}</div>
+  </div>`;
+  document.getElementById("wdg-x").onclick = () => {
+    if(globalThis.__TAURI__) __TAURI__.window.getCurrentWindow().close();
+  };
+  // The main window owns the tracked list; pick up its edits without a refresh.
+  addEventListener("storage", ev => {
+    if(ev.key === "rm.track"){ S.track = LS("rm.track") || []; renderWidget(); }
+  });
+}
+
 function render(){
   renderRail(); renderViews();
   const p=$("#panel");
@@ -799,7 +1059,51 @@ document.addEventListener("input", e=>{
   if(["q","tier","srcf","hidere","showgone"].includes(e.target.id)){
     if(S.view==="items") drawItems(); else if(S.view==="ench") drawEnch(); }
 });
+// Right-click a slot to hold it through a reroll. The game files contain no lock or
+// reroll mechanic at all, so this is the app's affordance, not a game rule.
+document.addEventListener("contextmenu", e=>{
+  const es=e.target.closest("[data-eslot]");
+  if(!es) return;
+  e.preventDefault();
+  const [id,slot]=es.dataset.eslot.split("|");
+  const a=S.lock[id]||[]; a[+slot]=!a[+slot]; S.lock[id]=a;
+  LSet("rm.lock",S.lock); render();
+});
+
 document.addEventListener("click", e=>{
+  // --- window chrome ------------------------------------------------------
+  const T2 = globalThis.__TAURI__;
+  if(e.target.closest("#tb-gear")){ $("#sheet")?closeSettings():openSettings(); return; }
+  if(e.target.closest("#tb-min") && T2){ T2.window.getCurrentWindow().minimize(); return; }
+  if(e.target.closest("#tb-max") && T2){ T2.window.getCurrentWindow().toggleMaximize(); return; }
+  if(e.target.closest("#tb-close") && T2){ T2.window.getCurrentWindow().close(); return; }
+  const th=e.target.closest("[data-theme]");
+  if(th){ applyTheme(th.dataset.theme);
+    document.querySelectorAll("[data-theme]").forEach(b=>
+      b.setAttribute("aria-pressed", String(b.dataset.theme===S.theme)));
+    return; }
+  if(e.target.closest("[data-closesheet]")){ closeSettings(); return; }
+  if(e.target.closest("[data-widget]")){
+    if(T2) T2.core.invoke("open_widget",{alpha:S.opacity}).catch(err=>{
+      const m=$("#updmsg"); if(m) m.textContent="Could not open the overlay: "+String(err).slice(0,90); });
+    return; }
+  if(e.target.closest("[data-checkupd]")){
+    const m=$("#updmsg"); if(!m) return;
+    if(!T2 || !T2.updater){ m.textContent="Updates only apply to the installed desktop app."; return; }
+    m.textContent="Checking…";
+    T2.updater.check().then(up=>{
+      if(!up){ m.textContent="You are on the latest version."; return; }
+      m.innerHTML = `Version <b>${esc(up.version)}</b> is available. `+
+        `<button class="sbtn" data-doupd>install &amp; restart</button>`;
+    }).catch(err=> m.textContent="Update check failed: "+String(err).slice(0,110));
+    return; }
+  if(e.target.closest("[data-doupd]")){
+    const m=$("#updmsg"); m.textContent="Downloading…";
+    T2.updater.check().then(up=>up&&up.downloadAndInstall())
+      .catch(err=> m.textContent="Update failed: "+String(err).slice(0,110));
+    return; }
+  // clicking the dimmed backdrop closes the sheet; clicking the card does not
+  if(e.target.id==="sheet"){ closeSettings(); return; }
   if(e.target.closest("[data-cancelpick]")){ e.preventDefault(); S.kitPick=null; render(); return; }
   const star=e.target.closest("[data-star]");
   if(star){ e.stopPropagation();
@@ -814,6 +1118,20 @@ document.addEventListener("click", e=>{
     if(badge){ const n=badge.querySelector(".n"); if(n) n.textContent=S.track.length; }
     if(S.view==="track") render();
     return; }
+  const rl=e.target.closest("[data-roll]");
+  if(rl){ e.stopPropagation();
+    const it=byId[rl.dataset.roll]; if(!it) return;
+    const n=it.ench||0, locks=S.lock[it.id]||[], plan=(S.ench[it.id]||[]).slice();
+    // Roll every slot that is not held, one at a time, each draw seeing what the
+    // earlier ones put down - that is what makes the cross-slot exclusions bite.
+    for(let k=0;k<n;k++){ if(locks[k]) continue; plan[k]=null; }
+    for(let k=0;k<n;k++){
+      if(locks[k] && plan[k]) continue;
+      const placed=plan.map((id,j)=> j===k?null:(id&&enchById[id]));
+      const got=rollEnchant(it, placed);
+      plan[k]=got?got.id:null;
+    }
+    S.ench[it.id]=plan; LSet("rm.ench",S.ench); render(); return; }
   const es=e.target.closest("[data-eslot]");
   if(es){ e.stopPropagation();
     const [id,slot]=es.dataset.eslot.split("|");
@@ -835,6 +1153,8 @@ document.addEventListener("click", e=>{
     document.querySelectorAll("[data-ecat]").forEach(b=>
       b.setAttribute("aria-selected", String(b.dataset.ecat===S.ecat)));
     drawEnch(); return; }
+  const cl=e.target.closest("[data-cls]");
+  if(cl){ S.cls=cl.dataset.cls; LSet("rm.cls",S.cls); S.sel=null; render(); return; }
   const tab=e.target.closest("[data-tab]");
   if(tab){ S.tab=+tab.dataset.tab; S.sel=null; render(); return; }
   const ks=e.target.closest("[data-kitslot]");
@@ -872,7 +1192,11 @@ S.track = S.track.filter(id => byId[id]);
 LSet("rm.track", S.track);
 if (!D.classes.some(c => c.name === S.cls)) S.cls = D.classes[0].name;
 
-render();
+// The app draws its own title bar, so the page has to know which it is. In a browser
+// this class is never set and the title bar stays display:none.
+if (globalThis.__TAURI__) document.body.classList.add("tauri");
+applyTheme(S.theme);
+if (location.hash === "#widget") renderWidget(); else render();
 </script>
 </body>
 </html>

@@ -9,7 +9,10 @@
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use tauri::{Manager, PhysicalPosition, PhysicalSize, WebviewWindow};
+use tauri::{
+    AppHandle, Manager, PhysicalPosition, PhysicalSize, WebviewUrl, WebviewWindow,
+    WebviewWindowBuilder,
+};
 use tauri_plugin_window_state::{StateFlags, WindowExt};
 
 /// Geometry only.
@@ -144,6 +147,54 @@ fn set_window_opacity(window: WebviewWindow, alpha: f64) -> Result<(), String> {
 }
 
 // ---------------------------------------------------------------------------
+// The overlay widget
+// ---------------------------------------------------------------------------
+//
+// A second, small, chromeless, always-on-top window that loads the SAME page with
+// #widget on the URL. The page sees the hash and renders a compact tracked-items
+// list instead of the full app, so there is no second frontend to keep in sync.
+//
+// Opacity lives here rather than on the main window on purpose: a see-through main
+// window is unreadable, while a see-through overlay beside the game is the point.
+
+#[tauri::command]
+fn open_widget(app: AppHandle, alpha: f64) -> Result<(), String> {
+    if let Some(w) = app.get_webview_window("widget") {
+        let _ = w.show();
+        let _ = w.set_focus();
+        let _ = apply_opacity(&w, alpha);
+        return Ok(());
+    }
+
+    let w = WebviewWindowBuilder::new(&app, "widget", WebviewUrl::App("index.html#widget".into()))
+        .title("Loot Roadmap - overlay")
+        .inner_size(340.0, 460.0)
+        .min_inner_size(240.0, 180.0)
+        .decorations(false)
+        .always_on_top(true)
+        .skip_taskbar(true)
+        .resizable(true)
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    // Opacity has to wait for the window to exist; setting it on the builder is not
+    // a thing, and a layered style applied before first paint can show as a flash.
+    let _ = apply_opacity(&w, alpha);
+    let _ = w.show();
+    Ok(())
+}
+
+/// `invoke("set_widget_opacity", { alpha: 0.85 })` - a no-op when the overlay is
+/// not open, because the page keeps the value and passes it to `open_widget`.
+#[tauri::command]
+fn set_widget_opacity(app: AppHandle, alpha: f64) -> Result<(), String> {
+    match app.get_webview_window("widget") {
+        Some(w) => apply_opacity(&w, alpha),
+        None => Ok(()),
+    }
+}
+
+// ---------------------------------------------------------------------------
 
 fn main() {
     tauri::Builder::default()
@@ -156,7 +207,11 @@ fn main() {
                 .skip_initial_state("main")
                 .build(),
         )
-        .invoke_handler(tauri::generate_handler![set_window_opacity])
+        .invoke_handler(tauri::generate_handler![
+            set_window_opacity,
+            set_widget_opacity,
+            open_widget
+        ])
         .setup(|app| {
             let win = app
                 .get_webview_window("main")
