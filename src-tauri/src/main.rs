@@ -194,7 +194,11 @@ fn open_widget(app: AppHandle, alpha: f64) -> Result<(), String> {
         return Ok(());
     }
 
-    let w = WebviewWindowBuilder::new(&app, "widget", WebviewUrl::App("index.html#widget".into()))
+    // A URL fragment does not survive WebviewUrl::App - "index.html#widget" is resolved as
+    // a PATH, the custom protocol finds no such file, and the window renders blank white.
+    // An init script runs before the document and carries the mode with no URL parsing.
+    let w = WebviewWindowBuilder::new(&app, "widget", WebviewUrl::App("index.html".into()))
+        .initialization_script("window.__ROTMG_WIDGET__ = true;")
         .title("Loot Roadmap - overlay")
         .inner_size(340.0, 460.0)
         .min_inner_size(240.0, 180.0)
@@ -226,6 +230,14 @@ fn set_widget_opacity(app: AppHandle, alpha: f64) -> Result<(), String> {
 
 fn main() {
     tauri::Builder::default()
+        // Closing the main window quits. Without this the chromeless overlay keeps the
+        // process alive with no taskbar entry and no way to close it - it survived the
+        // app being shut down and had to be killed from Task Manager.
+        .on_window_event(|window, event| {
+            if window.label() == "main" && matches!(event, tauri::WindowEvent::Destroyed) {
+                window.app_handle().exit(0);
+            }
+        })
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(
             tauri_plugin_window_state::Builder::new()
@@ -264,6 +276,7 @@ fn main() {
 
             win.show()?;
             let _ = win.set_focus();
+
             Ok(())
         })
         .run(tauri::generate_context!())

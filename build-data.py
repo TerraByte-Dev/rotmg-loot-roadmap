@@ -97,6 +97,34 @@ STATS = ["MAXHP", "MAXMP", "ATT", "DEF", "SPD", "DEX", "VIT", "WIS"]
 # Slots that hold an actual weapon. Only these get a comparable DPS number.
 WEAPON_SLOTS = {1, 2, 3, 8, 17, 24}
 
+# Low-tier tiered gear is noise: nobody farms a T4 sword, and 300-odd of them bury the
+# items that matter. Tate's cutoffs. The kind comes from the item's OWN <Labels>, not from
+# the slot number - the game already says WEAPON / ARMOR / ABILITY / RING.
+TIER_FLOOR = {"WEAPON": 13, "ARMOR": 13, "ABILITY": 6, "RING": 6}
+
+
+def tier_num(labels):
+    """The T-number on a tiered item, or None when it carries no T label."""
+    for l in labels:
+        m = re.fullmatch(r"T(\d+)", l)
+        if m:
+            return int(m.group(1))
+    return None
+
+
+def below_floor(labels):
+    """True for tiered gear beneath its kind's cutoff. Untiered gear is never dropped,
+    and a tiered item with no T label at all is KEPT - we cannot judge it."""
+    if "TIERED" not in labels:
+        return False
+    n = tier_num(labels)
+    if n is None:
+        return False
+    for kind, floor in TIER_FLOOR.items():
+        if kind in labels:
+            return n < floor
+    return False
+
 # Portal rows that are not places you farm.
 PORTAL_SKIP = re.compile(r"^(Legacy |Admin|Test|Easter|Snowball|Tutorial)|Arena|Test Map", re.I)
 
@@ -638,8 +666,13 @@ def main():
                     maxed[key] = float(mx)
                 except ValueError:
                     pass
+        # <Equipment> is the class's own starting gear, one entry per slot in SlotTypes
+        # order. Using it for the slot tabs means the icons are real in-game art for
+        # exactly the right slot type, and the client has no empty-slot placeholder
+        # sprites of its own - I looked.
+        eq = [x.strip() for x in (tag(body, "Equipment") or "").split(",")]
         classes.append({
-            "name": cid, "slots": slots,
+            "name": cid, "slots": slots, "startGear": eq[:4],
             "slotNames": [SLOT_NAMES.get(s, "Slot %d" % s) for s in slots],
             "base": base, "max": maxed,
         })
@@ -956,6 +989,11 @@ def main():
     before = len(items)
     items = [i for i in items if not i["admin"] and i["bag"]]
     print("  dropped %d engine objects (AdminOnly, or no BagType)" % (before - len(items)))
+
+    before = len(items)
+    items = [i for i in items if not below_floor(i["labels"])]
+    print("  dropped %d low-tier tiered items (weapons/armor under T%d, abilities/rings under T%d)"
+          % (before - len(items), TIER_FLOOR["WEAPON"], TIER_FLOOR["ABILITY"]))
     for i in items:
         i.pop("admin", None)
 
@@ -1143,6 +1181,21 @@ def main():
             n = cells.get("class:" + c["name"])
             if n is not None:
                 c["sp"] = n
+            # slot tab icons, from that class's own starting equipment
+            gear = c.pop("startGear", []) or []
+            sp = [cells.get(type_to_id.get((h or "").lower(), "")) for h in gear]
+            # Classes start with no ring (<Equipment> ends in -1), and the client ships no
+            # empty-slot placeholder art. Fall back to the lowest-tier real item of that
+            # slot, so every tab still shows in-game art for the right kind of thing.
+            while len(sp) < 4:
+                sp.append(None)
+            for k, slot in enumerate(c["slots"]):
+                if sp[k] is None:
+                    pick = sorted((i for i in items if i["slot"] == slot and "sp" in i),
+                                  key=lambda i: (tier_num(i["labels"]) or 99, i["name"]))
+                    if pick:
+                        sp[k] = pick[0]["sp"]
+            c["slotSp"] = sp
         for p in portals:
             n = cells.get(p["id"])
             if n is not None:
@@ -1214,6 +1267,13 @@ def main():
                     if cell is not None:
                         entry["sp"] = cell
                         break
+            if "sp" not in entry and entry["kind"] == "realm" and "realm white" in key.lower():
+                # The Realm portal - the globe players actually use to recognise a realm
+                # white. Better than a loot bag, which says rarity but not where.
+                cell = cells.get("realm:Realm Portal")
+                if cell is not None:
+                    entry["sp"] = cell
+                    entry["globe"] = True
             if "sp" not in entry and ("(event)" in key.lower() or entry["kind"] == "event"):
                 # Some events arrive as an ORG_ code rather than an event label
                 # (ORG_ORYXMAS -> "Oryxmas (event)"), so match the name too or they render

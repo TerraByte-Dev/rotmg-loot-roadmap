@@ -201,6 +201,22 @@ def portal_textures():
     return out
 
 
+def realm_textures():
+    """The Realm portal itself - the globe. It is <Class>Portal</Class> with
+    <IntergamePortal/>, NOT a <DungeonPortal>, so the dungeon-door extractor never saw
+    it. Players use this glyph to recognise a realm white, which is what it is for here."""
+    with io.open(os.path.join(XML, "portals.xml"), encoding="utf-8", errors="ignore") as f:
+        px = f.read()
+    out = {}
+    for pid, body in objects(px):
+        if pid not in ("Realm Portal", "Glowing Realm Portal"):
+            continue
+        art = own_art(body)
+        if art:
+            out["realm:" + pid] = art
+    return out
+
+
 def bag_textures():
     """BagType N is drawn by the object literally named "Loot Bag N" in containers.xml.
     These are the loot-rarity bags players actually recognise on the ground."""
@@ -341,6 +357,7 @@ def main():
                       ("dungeon bosses", boss_textures),
                       ("ST set skins", skin_textures),
                       ("class art", class_textures),
+                      ("realm globe", realm_textures),
                       ("loot / event chests", chest_textures)):
         got = fn()
         tex.update(got)

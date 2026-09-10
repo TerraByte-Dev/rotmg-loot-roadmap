@@ -42,6 +42,20 @@ button,input,select{font:inherit}
 .brand .sub{color:var(--ink-faint);font-size:10px;margin-top:2px;white-space:pre-line;line-height:1.35}
 .railscroll{overflow-y:auto;min-height:0;flex:1;padding:6px 0}
 .railhead{padding:9px 13px 4px;color:var(--ink-faint);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase}
+.slottabs{display:flex;gap:8px;padding:9px 13px;border-bottom:1px solid var(--line)}
+.slottab{flex:1;display:flex;align-items:center;gap:10px;padding:9px 12px;cursor:pointer;
+  background:none;border:1px solid var(--line);border-radius:var(--radius);
+  color:var(--ink-dim);font:inherit;text-align:left}
+.slottab .ico{--ico:38px}
+.slottab .txt{min-width:0;overflow:hidden}
+.slottab .lbl{display:block;font-size:13px;color:var(--ink);letter-spacing:.04em}
+.slottab .sub{display:block;font-size:10.5px;color:var(--ink-faint)}
+.slottab>div:last-child,.slottab .txt{min-width:0}
+.slottab:hover{border-color:var(--accent-dim);color:var(--ink)}
+.slottab[aria-selected=true]{border-color:var(--accent);background:var(--accent-glow)}
+.slottab[aria-selected=true] .lbl{color:var(--accent)}
+.slottab .n{margin-left:5px}
+
 .classgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;padding:4px 6px}
 .cls2{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 6px;
   background:none;border:0;border-radius:var(--radius);cursor:pointer;color:var(--ink-dim);
@@ -171,6 +185,24 @@ td .pips{display:inline-flex;gap:2px;align-items:center}
 .edesc{white-space:normal;line-height:1.45}
 .eexcl{margin-top:5px;color:var(--warn);font-size:10.5px;white-space:normal}
 .plan{padding:10px 13px;border-bottom:1px solid var(--line)}
+.dglist{padding:6px 9px}
+.dgrow{display:flex;align-items:center;gap:11px;width:100%;text-align:left;cursor:pointer;
+  background:none;border:1px solid var(--line-soft);border-radius:var(--radius);
+  padding:9px 12px;margin-bottom:5px;color:var(--ink-dim);font:inherit}
+.dgrow:hover{border-color:var(--accent-dim);background:var(--bg-hover)}
+.dgrow .art{display:inline-flex;gap:3px;flex:0 0 auto}
+.dgrow .art .ico{--ico:34px}
+.dgrow .txt{flex:1;min-width:0}
+.dgrow .nm{display:block;color:var(--ink);font-size:13.5px}
+.dgrow .dim{display:block;font-size:11px}
+.dgrow .diff{flex:0 0 auto;min-width:34px;text-align:center;color:var(--st);
+  background:var(--st-bg);border-radius:var(--radius);padding:2px 7px;font-size:12px}
+.dgrow .diff.none{color:var(--ink-faint);background:none}
+.dgrow .chev{color:var(--ink-faint);font-size:17px;flex:0 0 auto}
+.dghead{display:flex;align-items:center;gap:11px;padding:11px 13px 8px;border-bottom:1px solid var(--line-soft)}
+.dghead .art{display:inline-flex;gap:3px}
+.dghead .art .ico{--ico:40px}
+.dghead .nm{color:var(--ink);font-size:14px}
 .trackhead{display:flex;gap:10px;align-items:center;padding:11px 13px 7px;
   border-top:1px solid var(--line-soft);position:sticky;top:0;background:var(--bg-panel);z-index:1}
 .trackhead .ico{--ico:36px}
@@ -222,6 +254,9 @@ body.tauri .titlebar{display:flex;align-items:center;height:34px;background:var(
 .tb-btn:hover{background:var(--bg-hover);color:var(--ink)}
 .tb-btn.close:hover{background:#c0392b;color:#fff}
 .tb-btn.gear{width:38px;font-size:15px}
+.tb-btn.pop{width:auto;padding:0 12px;font-size:11px;letter-spacing:.08em;gap:5px;
+  color:var(--accent);text-transform:uppercase}
+.tb-btn.pop:hover{background:var(--accent-glow)}
 .tb-btn.gear.on{color:var(--accent)}
 
 .sheet{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.5);display:flex;
@@ -268,6 +303,8 @@ body.widget .app,body.widget .titlebar{display:none}
 <div class="titlebar">
   <span class="tb-title">Loot Roadmap</span>
   <div class="tb-drag" data-tauri-drag-region></div>
+  <button class="tb-btn pop" id="tb-pop" type="button"
+          title="Pop out a small always-on-top overlay listing what you are tracking">&#9195; Pop Out</button>
   <button class="tb-btn gear" id="tb-gear" type="button" title="Settings">&#9881;</button>
   <button class="tb-btn" id="tb-min" type="button" title="Minimise">&#8211;</button>
   <button class="tb-btn" id="tb-max" type="button" title="Maximise">&#9633;</button>
@@ -304,7 +341,7 @@ const LSet= (k,v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch
 
 const S = {
   cls: LS("rm.cls") || "Wizard",
-  view:"items", tab:0, sel:null, kitPick:null, lvl1:false, biome:null,
+  view:"items", tab:0, sel:null, kitPick:null, lvl1:false, biome:null, trackAt:null,
   theme: LS("rm.theme") || "roadmap",
   opacity: (typeof LS("rm.widgetOpacity")==="number") ? LS("rm.widgetOpacity") : 0.92,
   kit: (LS("rm.kit") && typeof LS("rm.kit")==="object" && !Array.isArray(LS("rm.kit")))?LS("rm.kit"):{},
@@ -464,11 +501,19 @@ function renderViews(){
 
 function itemsView(){
   const c=cls();
-  const tabs=c.slots.map((s,i)=>`<button class="tab" type="button" aria-selected="${S.tab===i}"
-      data-tab="${i}">${SLOTLBL[i]} · ${esc(c.slotNames[i])}<span class="n" data-count="${i}"></span></button>`).join("");
+  // Big, iconed slot buttons. The art is the class's OWN starting equipment out of
+  // players.xml, so each tab shows a real in-game item of exactly that slot type - the
+  // client ships no empty-slot placeholder sprites.
+  const sp = c.slotSp || [];
+  const tabs=c.slots.map((s,i)=>`<button class="slottab" type="button" aria-selected="${S.tab===i}"
+      data-tab="${i}" title="${esc(SLOTLBL[i])} — ${esc(c.slotNames[i])}">
+      ${sp[i]!=null?ico(sp[i]):`<div class="ico none"></div>`}
+      <span class="txt"><span class="lbl">${esc(SLOTLBL[i])}</span>
+      <span class="sub">${esc(c.slotNames[i])}<span class="n" data-count="${i}"></span></span></span>
+    </button>`).join("");
   return `${S.kitPick!=null?`<div class="picking">Choosing your ${SLOTLBL[S.kitPick]} —
       click an item to equip it. <a href="#" data-cancelpick style="color:inherit">cancel</a></div>`:""}
-   <div class="tabs">${tabs}</div>
+   <div class="slottabs">${tabs}</div>
    <div class="bar">
      <input type="search" id="q" placeholder="name, dungeon…" autocomplete="off">
      <select id="tier"><option value="">all types</option><option>UT</option><option>ST</option><option>Tiered</option></select>
@@ -688,29 +733,57 @@ click to choose &middot; right-click to ${lk?"unlock":"lock"} against rerolls">$
 
 function trackView(){
   if(!S.track.length) return `<div class="empty">Nothing tracked yet.<br>
-    Click an item in <b>Items</b> and it appears here, grouped by where to go and get it.</div>`;
+    Click an item in <b>Items</b> and the dungeon you need shows up here.</div>`;
+
+  // Group what you are hunting by PLACE, then list the places by how hard they are.
+  // The question this page answers is "what do I run tonight", so the dungeon is the
+  // unit, not the item.
   const g={};
   S.track.forEach(id=>{ const it=byId[id]; if(!it) return;
-    const s = it.sources[0];
-    const k = s ? (s.name || ("ORG_" + s.code)) : "Not recorded";
+    const s=it.sources[0]; const k=s?(s.name||("ORG_"+s.code)):"Not recorded";
     (g[k]=g[k]||[]).push(it); });
-  const groups = Object.keys(g).sort().map(k=>{
-    const e = SRCI[k] || {};
-    const bio = BIOME_OF[k];
-    return `<div class="trackhead${bio?" go":""}" ${bio?`data-biome="${esc(bio)}"`:""}
-        ${bio?`title="show ${esc(bio)} in the Bestiary"`:""}>
-      ${e.sp!=null?`<span class="doors">${ico(e.sp)}${e.boss!=null?ico(e.boss):""}</span>`:""}
-      <div style="min-width:0">
-        <div class="nm">${esc(k)}</div>
-        <div class="dim">${g[k].length} item${g[k].length==1?"":"s"}${
-          e.diff!=null?` &middot; difficulty ${e.diff}`:""}${
-          bio?` &middot; click for the bestiary`:""}</div>
-      </div></div>
-    <table class="items"><tbody>${g[k].map(trackRow).join("")}</tbody></table>`;
-  }).join("");
-  return `<div class="hint">Grouped by <b>where to go</b>. The second sprite is the enemy that
-    drops it. Click an enchant slot to plan what you want rolled on that item.</div>
-    <div class="scroll">${groups}</div>`;
+
+  if(S.trackAt && g[S.trackAt]) return trackDungeon(S.trackAt, g[S.trackAt]);
+  S.trackAt=null;
+
+  const keys=Object.keys(g).sort((a,b)=>{
+    const da=(SRCI[a]||{}).diff, db=(SRCI[b]||{}).diff;
+    // Anything with no difficulty - realm whites, events, ST sets - sits after the
+    // dungeons rather than pretending to be difficulty 0.
+    if(da==null && db==null) return a.localeCompare(b);
+    if(da==null) return 1;
+    if(db==null) return -1;
+    return da-db;
+  });
+
+  const rows=keys.map(k=>{
+    const e=SRCI[k]||{}, n=g[k].length;
+    return `<button class="dgrow" type="button" data-trackat="${esc(k)}">
+      <span class="art">${e.sp!=null?ico(e.sp):`<div class="ico none"></div>`}${
+        e.boss!=null?ico(e.boss):""}</span>
+      <span class="txt"><span class="nm">${esc(k)}</span>
+        <span class="dim">${n} item${n==1?"":"s"} you want here</span></span>
+      ${e.diff!=null?`<span class="diff" title="dungeon difficulty from the game files, 0-10">${e.diff}</span>`
+                    :`<span class="diff none" title="not a dungeon — no difficulty rating">&mdash;</span>`}
+      <span class="chev">&#8250;</span>
+    </button>`;}).join("");
+
+  return `<div class="hint">The dungeons you need, easiest first. Click one to see what you
+    are hunting there.</div><div class="scroll"><div class="dglist">${rows}</div></div>`;
+}
+
+function trackDungeon(key, list){
+  const e=SRCI[key]||{};
+  const bio=BIOME_OF[key];
+  return `<div class="hint"><button class="mini" data-trackback>&#8249; all dungeons</button></div>
+    <div class="dghead">
+      <span class="art">${e.sp!=null?ico(e.sp):""}${e.boss!=null?ico(e.boss):""}</span>
+      <div style="min-width:0"><div class="nm">${esc(key)}</div>
+        <div class="dim">${list.length} tracked${e.diff!=null?` &middot; difficulty ${e.diff}`:""}</div></div>
+      ${bio?`<button class="mini" data-biome="${esc(bio)}">show in bestiary</button>`:""}
+    </div>
+    <div class="scroll"><table class="items"><tbody>${
+      list.map(trackRow).join("")}</tbody></table></div>`;
 }
 
 function bestiaryView(){
@@ -1073,6 +1146,8 @@ document.addEventListener("contextmenu", e=>{
 document.addEventListener("click", e=>{
   // --- window chrome ------------------------------------------------------
   const T2 = globalThis.__TAURI__;
+  if(e.target.closest("#tb-pop") && T2){
+    T2.core.invoke("open_widget",{alpha:S.opacity}).catch(()=>{}); return; }
   if(e.target.closest("#tb-gear")){ $("#sheet")?closeSettings():openSettings(); return; }
   if(e.target.closest("#tb-min") && T2){ T2.window.getCurrentWindow().minimize(); return; }
   if(e.target.closest("#tb-max") && T2){ T2.window.getCurrentWindow().toggleMaximize(); return; }
@@ -1146,6 +1221,9 @@ document.addEventListener("click", e=>{
     const {id,slot}=S.enchPick;
     const a=S.ench[id]||[]; a[slot]=ecard.dataset.ench; S.ench[id]=a;
     LSet("rm.ench",S.ench); S.enchPick=null; S.view="track"; render(); return; }
+  const ta=e.target.closest("[data-trackat]");
+  if(ta){ S.trackAt=ta.dataset.trackat; render(); return; }
+  if(e.target.closest("[data-trackback]")){ S.trackAt=null; render(); return; }
   const bio=e.target.closest("[data-biome]");
   if(bio){ S.biome=bio.dataset.biome; S.view="bestiary"; render(); return; }
   const ec=e.target.closest("[data-ecat]");
@@ -1196,7 +1274,7 @@ if (!D.classes.some(c => c.name === S.cls)) S.cls = D.classes[0].name;
 // this class is never set and the title bar stays display:none.
 if (globalThis.__TAURI__) document.body.classList.add("tauri");
 applyTheme(S.theme);
-if (location.hash === "#widget") renderWidget(); else render();
+if (globalThis.__ROTMG_WIDGET__) renderWidget(); else render();
 </script>
 </body>
 </html>
