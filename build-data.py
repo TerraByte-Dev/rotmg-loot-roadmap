@@ -751,6 +751,54 @@ ACTIVATE_TRIGGERS = {
 }
 
 
+def load_forge_craft():
+    """How the Forge says to make an item, in the client's own words.
+
+    This is the answer to "where do ST sets come from", and it was sitting in a file the
+    build already opens for something else. A modern ST piece is not a drop at all - you
+    collect shards, trade them for tokens and craft it:
+
+        <ForgeProperties id="3TricksterST0">
+          <CanCraft />
+          <Description>Requires 2 [sprite='CollectionIcon' index=98] Spellbound
+                       Soulthief Set Tokens and 1 Weapon</Description>
+
+    Only recipes that NAME something are kept. 530 items carry a bare "Requires 3 items",
+    which is true and useless, and putting it on screen would bury the 83 that say what.
+    """
+    path = os.path.join(XML, "forgeProperties.xml")
+    if not os.path.exists(path):
+        return {}
+    with open(path, encoding="utf-8", errors="ignore") as f:
+        fp = f.read()
+    out = {}
+    for m in re.finditer(r"<ForgeProperties(?=[\s/>])([^>]*)>(.*?)</ForgeProperties>", fp, re.S):
+        a = attrs(m.group(1))
+        body = m.group(2)
+        if "id" not in a or "<CanCraft" not in body:
+            continue
+        d = tag(body, "Description")
+        if not d:
+            continue
+        # The description carries an inline sprite directive for the token icon.
+        d = re.sub(r"\[sprite='[^']*'\s*index=\d+\]\s*", "", d).strip()
+        if not d or not re.search(r"Token|Shard", d, re.I):
+            continue
+        out[a["id"]] = d
+    return out
+
+def has_place(sources):
+    """Does this item already have somewhere to GO?
+
+    A set is not a place. It says which four items go together, not where to farm them,
+    and letting it stop the resolution cascade threw away the one thing the question
+    "where do I get this" is actually asking. So the steps after set membership are gated
+    on this instead of on `not sources`: an ST item keeps its set AND picks up an event, a
+    forge requirement or a derived dungeon when one exists. The set still leads the list,
+    because it is the stronger fact about the item.
+    """
+    return any(s["kind"] != "set" for s in sources)
+
 def item_stat_extras(body):
     """(conditional grants, stats scaled off, ability MP discount) for one <Object> body.
 
@@ -1111,6 +1159,7 @@ def main():
     community = load_community_sources()
     derived = load_derived_sources()
     gone = load_unobtainable()
+    forge_craft = load_forge_craft()
     biome_bands = load_biome_bands()
     set_skins, set_skin_tokens = load_set_skins([c["name"] for c in classes])
     class_names = [c["name"] for c in classes]
@@ -1242,13 +1291,20 @@ def main():
             if nm:
                 sources.append({"kind": "set", "name": nm, "set": nm})
 
-        if not sources:
+        if not has_place(sources):
             # 5. event / campaign label.
             ev = next((l for l in labels if l in EVENT_LABELS), None)
             if ev:
                 sources.append({"kind": "event", "code": ev, "name": EVENT_LABELS[ev]})
 
-        if not sources:
+        if not has_place(sources) and iid in forge_craft:
+            # 5b. The Forge, in the client's own words. For a modern ST piece this IS the
+            #     answer - you do not farm the item, you farm shards and craft it - and
+            #     without it 83 set pieces showed a set name and no way to get one.
+            sources.append({"kind": "forge", "name": "Forge",
+                            "note": forge_craft[iid]})
+
+        if not has_place(sources):
             # 6. the dungeon the forge makes you dismantle in. Often a LIST
             #    ("ORG_LH,ORG_CULT,ORG_VOID") - show every one, never pick one.
             codes = forge_src.get(iid) or []
@@ -1258,7 +1314,7 @@ def main():
                                 "alts": named[1:] or None,
                                 "note": "The forge requires dismantling here."})
 
-        if not sources:
+        if not has_place(sources):
             # 7. community layer - RealmEye's untiered-items-by-dungeon page, captured
             #    once into data/. External knowledge, flagged as such, never blended
             #    into the client facts above.
@@ -1268,7 +1324,7 @@ def main():
                                 "note": "From RealmEye's Untiered Items by Dungeon page, "
                                         "captured once. Community knowledge, not game data."})
 
-        if not sources and iid in derived:
+        if not has_place(sources) and iid in derived:
             # 8. derived from the client's own files - a cross-reference, the item's own
             #    prose, its sprite-sheet neighbours. Weaker than a label the game states
             #    outright, so it is tagged `via: derived` and the UI says so on hover.
@@ -1278,7 +1334,7 @@ def main():
                             "conf": dv["confidence"],
                             "note": METHOD_NOTE.get(dv["method"], dv["method"])})
 
-        if not sources and "TIERED" in labels:
+        if not has_place(sources) and "TIERED" in labels:
             # Tiered gear is not dungeon-specific - Tate's own rule: "i can find tiered
             # items in any dungeon, while UT/ST are dungeon/enemy specific". That is a real
             # answer, not a gap; filing 418 tiered items under "none" made the coverage

@@ -409,11 +409,14 @@ body.tauri .titlebar{display:flex;align-items:center;height:34px;background:var(
 .sheet h2{margin:0 0 3px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
 .sheet .sub{color:var(--ink-faint);font-size:10.5px;margin-bottom:14px}
 .sheet .grp{margin:16px 0 6px;color:var(--ink-faint);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase}
-.themes{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+/* 15 of them now, so three across and a scroll rather than a two-wide column
+   that pushes Updates and About off the sheet. */
+.themes{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-height:232px;overflow:auto}
 .thm{display:flex;align-items:center;gap:8px;padding:8px 9px;border:1px solid var(--line);
   border-radius:var(--radius);background:none;color:var(--ink-dim);cursor:pointer;font:inherit;font-size:11px}
 .thm:hover{border-color:var(--accent-dim)}
 .thm[aria-pressed=true]{border-color:var(--accent);color:var(--accent);background:var(--accent-glow)}
+.door.set{outline:1px solid var(--st);outline-offset:-1px;border-radius:2px}
 .swatch{width:15px;height:15px;border-radius:3px;flex:0 0 auto;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
 .srow{display:flex;align-items:center;gap:9px;margin:9px 0;font-size:11.5px;color:var(--ink-dim)}
 .srow input[type=range]{flex:1;accent-color:var(--accent)}
@@ -605,17 +608,26 @@ function srcDoors(it){
     return {key, e, label, named: !!s.name};
   });
   const first = parts[0];
+  // An ST set's art is a CHARACTER, not a door, and at 16px the two are easy to confuse.
+  // Give it its own frame so a set reads as a set at a glance.
   const art = p => p.e.sp != null
-      ? `<span class="door" title="${esc(p.label)}">${ico(p.e.sp)}${p.e.boss!=null?ico(p.e.boss):""}</span>`
+      ? `<span class="door${p.e.kind==="set"?" set":""}" title="${esc(p.label)}">${
+          ico(p.e.sp)}${p.e.boss!=null?ico(p.e.boss):""}</span>`
       : "";
   const rest = parts.slice(1);
   // A source with no door art has nothing to show, so it keeps its name - an event or an
   // ST set would otherwise be a blank cell.
   const nameless = parts.filter(p => p.e.sp == null);
+  // A set on its own does not answer "where". 265 ST pieces have nothing else, and an
+  // empty cell reads as a missing feature rather than as a missing fact - so say it.
+  const setOnly = parts.length === 1 && parts[0].e.kind === "set";
   return `<span class="dropin">
       <span class="doors">${parts.map(art).join("")}</span>
       ${nameless.length?`<span class="dname" title="${esc(nameless[0].label)}">${
         esc(nameless[0].key)}</span>`:""}
+      ${setOnly?`<span class="dim" style="font-size:10.5px" title="${esc(parts[0].key)} — the
+        client files do not say where this set drops, and the one page captured into data/
+        is untiered items only.">set only</span>`:""}
     </span>`;
 }
 function tierTag(it){
@@ -1527,22 +1539,46 @@ function enchInCat(e, cat){
 // so switching one cannot break layout. The two brand palettes are the real values
 // from TerraByte-Dev/TerraPlayer and TerraByte-Dev/OpenEdu, not approximations.
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Themes.
+//
+// Twelve of these are TerraPlayer's palettes, ported. TerraPlayer only overrides four
+// tokens per theme - accent, a second accent, ink, and a deep accent - and lets black
+// backgrounds and alpha-derived greys do the rest. This app's token set is wider, so
+// mkTheme() derives the rest from those four the same way TerraPlayer's stylesheet does:
+// panels and rules are the accent at low alpha over black, dim and faint ink are the ink
+// colour at 55% and 32%.
+//
+// --good and --warn are deliberately NOT themed. They are semantic - green means a stat
+// went up, red means it went down - and recolouring them per theme would make a Crimson
+// user read every buff as a warning.
+// ---------------------------------------------------------------------------
+const hex2rgb = h => {
+  const n = parseInt(h.slice(1), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255].join(",");
+};
+function mkTheme(name, accent, ink, deep, font){
+  const a = hex2rgb(accent), i = hex2rgb(ink);
+  return { name, swatch: accent, v: {
+    "--bg": "#000000",
+    "--bg-panel": `rgba(${a},.035)`,
+    "--bg-hover": `rgba(${a},.09)`,
+    "--line": `rgba(${a},.20)`,
+    "--line-soft": `rgba(${a},.09)`,
+    "--ink": ink,
+    "--ink-dim": `rgba(${i},.58)`,
+    "--ink-faint": `rgba(${i},.34)`,
+    "--accent": accent,
+    "--accent-dim": deep,
+    "--accent-glow": `rgba(${a},.15)`,
+    ...(font ? { "--font": font } : {}),
+  } };
+}
+const PLEX = "'IBM Plex Mono', ui-monospace, SFMono-Regular, Consolas, monospace";
+
 const THEMES = {
+  // The two Tate picked out, kept exactly as they were.
   roadmap: { name:"Roadmap", swatch:"#4ee39a", v:{} },   // {} = the stylesheet defaults
-  mainframe: { name:"Mainframe", swatch:"#00FF88", v:{
-    "--bg":"#000000", "--bg-panel":"#020503", "--bg-hover":"rgba(0,255,136,.08)",
-    "--line":"rgba(0,255,136,.18)", "--line-soft":"rgba(0,255,136,.08)",
-    "--ink":"#9bf5b8", "--ink-dim":"rgba(155,245,184,.55)", "--ink-faint":"rgba(155,245,184,.30)",
-    "--accent":"#00FF88", "--accent-dim":"#1f5e3a", "--accent-glow":"rgba(0,255,136,.15)",
-    "--warn":"#FFB000", "--good":"#7CFF6B",
-    "--font":"'IBM Plex Mono', ui-monospace, SFMono-Regular, Consolas, monospace" } },
-  phosphor: { name:"Blue Phosphor", swatch:"#00C6FF", v:{
-    "--bg":"#000000", "--bg-panel":"#020409", "--bg-hover":"#050b12",
-    "--line":"rgba(0,198,255,.18)", "--line-soft":"rgba(0,198,255,.08)",
-    "--ink":"#6DD4EE", "--ink-dim":"rgba(109,212,238,.55)", "--ink-faint":"rgba(109,212,238,.42)",
-    "--accent":"#00C6FF", "--accent-dim":"#0a2840", "--accent-glow":"rgba(0,198,255,.20)",
-    "--warn":"#FFB000", "--good":"#2BFF88",
-    "--font":"'IBM Plex Mono', 'Share Tech Mono', ui-monospace, monospace" } },
   slate: { name:"Slate", swatch:"#4493f8", v:{
     "--bg":"#0d1117", "--bg-panel":"#11161d", "--bg-hover":"#161b22",
     "--line":"#2a313a", "--line-soft":"#20262d",
@@ -1550,6 +1586,21 @@ const THEMES = {
     "--accent":"#4493f8", "--accent-dim":"#1f4b7a", "--accent-glow":"rgba(68,147,248,.16)",
     "--warn":"#d29922", "--good":"#3fb950",
     "--font":"ui-monospace, SFMono-Regular, Consolas, monospace" } },
+
+  // ---- ported from TerraPlayer, in its own order round the colour wheel ----
+  mainframe:   mkTheme("Mainframe",   "#00FF88", "#9bf5b8", "#1f5e3a", PLEX),
+  matrix:      mkTheme("Matrix",      "#39FF14", "#9DFF8F", "#1f6e22", PLEX),
+  ice:         mkTheme("Ice",         "#6FE6FF", "#BFEFFF", "#2a6b80", PLEX),
+  phosphor:    mkTheme("Blue Phosphor","#00C6FF", "#6DD4EE", "#0a2840", PLEX),
+  aqua:        mkTheme("Aqua",        "#1EE8C4", "#9DEFDF", "#1d6e60", PLEX),
+  ultraviolet: mkTheme("Ultraviolet", "#A06BFF", "#D7C7FF", "#4a3a7a", PLEX),
+  synthwave:   mkTheme("Synthwave",   "#FF3AC8", "#93E6FF", "#7a2a66", PLEX),
+  vapor:       mkTheme("Vapor",       "#FF8AD8", "#93E6FF", "#7a4a70", PLEX),
+  crimson:     mkTheme("Crimson",     "#FF2E4D", "#FFB3BD", "#7a1020", PLEX),
+  tangerine:   mkTheme("Tangerine",   "#FF7A18", "#FFD2A8", "#7a3a08", PLEX),
+  amber:       mkTheme("Amber",       "#FFB000", "#FFD79E", "#6e4a00", PLEX),
+  gold:        mkTheme("Gold",        "#E8C46A", "#EADFB6", "#6e5a28", PLEX),
+  steel:       mkTheme("Steel",       "#7FA8D9", "#C3D0DE", "#3a4a5e", PLEX),
 };
 
 function applyTheme(id){
