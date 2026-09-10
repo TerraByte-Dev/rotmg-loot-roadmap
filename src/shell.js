@@ -18,19 +18,15 @@ if (T) {
   const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} };
 
   let pinned = read("rm.pin", true) !== false;   // on top by default: that is the point of it
-  let alpha = Math.min(1, Math.max(0.35, Number(read("rm.opacity", 1)) || 1));
 
   const applyPin = () => w.setAlwaysOnTop(pinned).catch(() => {});
-  const applyAlpha = () =>
-    T.core.invoke("set_window_opacity", { alpha }).catch(() => {});
 
   // --- the strip -----------------------------------------------------------
   // Deliberately tiny and bottom-left, out of the way of the class rail's top.
   const bar = document.createElement("div");
   bar.className = "shellbar";
   bar.innerHTML =
-    `<button id="shell-pin" type="button" title="keep this window above the game"></button>` +
-    `<input id="shell-op" type="range" min="35" max="100" step="5" title="window opacity">`;
+    `<button id="shell-pin" type="button" title="keep this window above the game"></button>`;
   document.body.appendChild(bar);
 
   const css = document.createElement("style");
@@ -46,7 +42,6 @@ if (T) {
   document.head.appendChild(css);
 
   const pinBtn = bar.querySelector("#shell-pin");
-  const opIn = bar.querySelector("#shell-op");
   const paint = () => {
     pinBtn.textContent = pinned ? "◉ on top" : "○ floating";
     pinBtn.classList.toggle("on", pinned);
@@ -55,39 +50,9 @@ if (T) {
   pinBtn.addEventListener("click", () => {
     pinned = !pinned; write("rm.pin", pinned); paint(); applyPin();
   });
-  opIn.addEventListener("input", () => {
-    alpha = opIn.value / 100; write("rm.opacity", alpha); applyAlpha();
-  });
-
-  opIn.value = Math.round(alpha * 100);
-  paint(); applyPin(); applyAlpha();
+  paint(); applyPin();
 
 
-  // TEMP DIAGNOSTIC - reports computed sprite geometry through the window title, which
-  // is readable from outside without attaching a debugger to the webview.
-  setTimeout(() => {
-    try {
-      const el = document.querySelector('table.items .ico') || document.querySelector('.ico');
-      const cs = el ? getComputedStyle(el) : null;
-      const root = getComputedStyle(document.documentElement);
-      const img = new Image();
-      img.onload = () => report(img.naturalWidth + 'x' + img.naturalHeight);
-      img.onerror = () => report('ATLAS-FAIL');
-      img.src = 'sprite-atlas.png';
-      function report(atlas) {
-        const D2 = window.D || {};
-        w.setTitle([
-          'cols=' + ((D2.sprites || {}).cols),
-          'dpr=' + window.devicePixelRatio,
-          'bgSize=' + (cs ? cs.backgroundSize : 'no-el'),
-          'bgPos=' + (cs ? cs.backgroundPosition : '-'),
-          'ico=' + root.getPropertyValue('--ico').trim(),
-          'atlas=' + atlas,
-          'url=' + (cs ? cs.backgroundImage.slice(0, 46) : '-'),
-        ].join(' | '));
-      }
-    } catch (e) { w.setTitle('DIAG-ERR ' + String(e).slice(0, 90)); }
-  }, 2500);
 
   // --- updates -------------------------------------------------------------
   // A non-modal strip, and it never installs on its own. A window that vanishes
