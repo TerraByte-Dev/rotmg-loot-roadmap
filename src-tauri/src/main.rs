@@ -185,19 +185,18 @@ fn center_on_primary(win: &WebviewWindow) -> tauri::Result<()> {
 // Opacity lives here rather than on the main window on purpose: a see-through main
 // window is unreadable, while a see-through overlay beside the game is the point.
 
-#[tauri::command]
-fn open_widget(app: AppHandle, alpha: f64) -> Result<(), String> {
-    if let Some(w) = app.get_webview_window("widget") {
-        let _ = w.show();
-        let _ = w.set_focus();
-        let _ = apply_opacity(&w, alpha);
-        return Ok(());
-    }
-
-    // A URL fragment does not survive WebviewUrl::App - "index.html#widget" is resolved as
-    // a PATH, the custom protocol finds no such file, and the window renders blank white.
-    // An init script runs before the document and carries the mode with no URL parsing.
-    let w = WebviewWindowBuilder::new(&app, "widget", WebviewUrl::App("index.html".into()))
+/// Build the overlay, then hide it. **Must be called from `setup()`.**
+///
+/// Creating a webview window after the event loop is running does not complete on this
+/// Tauri/WebView2 combination: the native window appears with the builder's title, the
+/// webview never initialises, `build()` never returns, and nothing after it runs - which
+/// is a frozen white overlay. Creating it during setup works, so the window is made once
+/// at startup and then only shown and hidden.
+fn create_widget(app: &AppHandle) -> tauri::Result<()> {
+    // A URL fragment does not survive WebviewUrl::App - "index.html#widget" resolves as a
+    // PATH, the custom protocol finds no such file, and the window renders blank. The init
+    // script runs before the document and needs no URL parsing.
+    WebviewWindowBuilder::new(app, "widget", WebviewUrl::App("index.html".into()))
         .initialization_script("window.__ROTMG_WIDGET__ = true;")
         .title("Loot Roadmap - overlay")
         .inner_size(340.0, 460.0)
@@ -206,13 +205,23 @@ fn open_widget(app: AppHandle, alpha: f64) -> Result<(), String> {
         .always_on_top(true)
         .skip_taskbar(true)
         .resizable(true)
-        .build()
-        .map_err(|e| e.to_string())?;
+        // Created up front but not shown. It must exist from startup: a webview window
+        // built after the event loop is running never finishes initialising, so Pop Out
+        // only shows a window that already exists.
+        .visible(false)
+        .build()?;
+    Ok(())
+}
 
-    // Opacity has to wait for the window to exist; setting it on the builder is not
-    // a thing, and a layered style applied before first paint can show as a flash.
-    let _ = apply_opacity(&w, alpha);
-    let _ = w.show();
+/// `invoke("open_widget", { alpha: 0.9 })` - show the overlay built at startup.
+#[tauri::command]
+fn open_widget(app: AppHandle, alpha: f64) -> Result<(), String> {
+    let w = app
+        .get_webview_window("widget")
+        .ok_or_else(|| "overlay window was not created at startup".to_string())?;
+    apply_opacity(&w, alpha)?;
+    w.show().map_err(|e| e.to_string())?;
+    let _ = w.set_focus();
     Ok(())
 }
 
@@ -234,8 +243,17 @@ fn main() {
         // process alive with no taskbar entry and no way to close it - it survived the
         // app being shut down and had to be killed from Task Manager.
         .on_window_event(|window, event| {
-            if window.label() == "main" && matches!(event, tauri::WindowEvent::Destroyed) {
-                window.app_handle().exit(0);
+            match (window.label(), event) {
+                // Closing the main window quits. Without this the chromeless overlay kept
+                // the process alive with no taskbar entry and no way to close it.
+                ("main", tauri::WindowEvent::Destroyed) => window.app_handle().exit(0),
+                // The overlay's X hides it. Destroying it would mean rebuilding a webview
+                // window at runtime to reopen it, which is exactly what does not work.
+                ("widget", tauri::WindowEvent::CloseRequested { api, .. }) => {
+                    api.prevent_close();
+                    let _ = window.hide();
+                }
+                _ => {}
             }
         })
         .plugin(tauri_plugin_updater::Builder::new().build())
@@ -276,6 +294,13 @@ fn main() {
 
             win.show()?;
             let _ = win.set_focus();
+
+            // Built now, shown later. A webview window created after the event loop is
+            // running never finishes initialising, so the overlay has to exist from
+            // startup - see create_widget.
+            if let Err(e) = create_widget(app.handle()) {
+                let _ = win.set_title(&format!("overlay unavailable: {e}"));
+            }
 
             Ok(())
         })

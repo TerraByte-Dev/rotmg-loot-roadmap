@@ -20,6 +20,7 @@ if (T) {
   // which reads as broken rather than useful. The small overlay widget is the piece
   // that floats, and it owns the opacity setting too.
 
+
   // --- updates -------------------------------------------------------------
   // A non-modal strip, and it never installs on its own. A window that vanishes
   // mid-run is worse than a version that is a week stale.
