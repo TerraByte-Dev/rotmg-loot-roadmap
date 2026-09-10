@@ -117,18 +117,49 @@ jobs:
           $setup = Get-ChildItem src-tauri/target/release/bundle/nsis/*-setup.exe | Select-Object -First 1
           $hSetup = (Get-FileHash $setup.FullName -Algorithm SHA256).Hash.ToLower()
           $hZip   = (Get-FileHash $zip           -Algorithm SHA256).Hash.ToLower()
+          $nl = [Environment]::NewLine
+          $body = (@(
+            '### Install - Windows 10/11, 64-bit',
+            '',
+            'Download **' + $setup.Name + '** and run it. It installs to your user folder,',
+            'so there is no UAC prompt.',
+            '',
+            '| File | SHA-256 |',
+            '| --- | --- |',
+            '| `' + $setup.Name + '` | `' + $hSetup + '` |',
+            '| `' + $zip + '` | `' + $hZip + '` |',
+            '',
+            '**This build is not code-signed.** The first time you run it, Windows shows',
+            '**"Windows protected your PC"**. Click **More info** then **Run anyway**.',
+            'That is expected, and it happens exactly once - in-app updates after this',
+            'never show it again.',
+            '',
+            'Check a download first with:',
+            '',
+            '```powershell',
+            'Get-FileHash .\' + $setup.Name + ' -Algorithm SHA256',
+            '```',
+            '',
+            '### Portable ZIP',
+            '',
+            'Run `Unblock-File .\' + $zip + '` **before** extracting, or Windows copies the',
+            'download mark onto the .exe inside and you get the same prompt anyway.',
+            'The portable build does not self-update.',
+            '',
+            '### No install at all',
+            '',
+            '`roadmap.html` is the whole thing in one file - open it in any browser.'
+          ) -join $nl)
 
-          $body = @"
-### Install — Windows 10/11, 64-bit
+          $body | Set-Content release-notes.md -Encoding utf8
+          gh release edit $tag --repo $repo --notes-file release-notes.md
 
-| File | SHA-256 |
-| --- | --- |
-| ``$($setup.Name)`` | ``$hSetup`` |
-| ``$zip`` | ``$hZip`` |
-
-**This build is not code-signed.** The first time you run it, Windows shows
-**"Windows protected your PC"**. Click **More info** -> **Run anyway**.
-That is expected, and it happens exactly once — in-app updates after this
-never show it again.
-
-Want to check the download first?
+      - name: Attach the standalone page
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          npm run build:standalone
+          npm run verify:standalone
+          gh release upload '${{ github.ref_name }}' roadmap.html --repo '${{ github.repository }}' --clobber
