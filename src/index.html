@@ -234,6 +234,8 @@ tbody tr.tracked .nm{color:var(--st)}
 .ehead{display:flex;gap:8px;align-items:center;margin-bottom:4px}
 .ehead .ico{--ico:24px}
 .tier{display:flex;align-items:center;gap:5px;font-size:10.5px;margin-top:1px}
+.tier .best{color:var(--accent);border:1px solid var(--accent-dim);border-radius:var(--radius);
+  padding:0 4px;font-size:9px;letter-spacing:.08em}
 .pips{display:inline-flex;gap:2px}
 .pips i{width:5px;height:5px;border-radius:50%;display:block}
 td .pips{display:inline-flex;gap:2px;align-items:center}
@@ -344,12 +346,21 @@ body.widget .app,body.widget .titlebar{display:none}
 .wdg .bar button{background:none;border:0;color:var(--ink-faint);cursor:pointer;font:inherit;
   font-size:12px;padding:0 4px}
 .wdg .bar button:hover{color:var(--ink)}
-.wdg .list{flex:1;overflow:auto;padding:2px 0}
-.wdg .grp{padding:7px 9px 3px;color:var(--ink-faint);font-size:9.5px;letter-spacing:.12em;
-  text-transform:uppercase;display:flex;align-items:center;gap:6px}
-.wdg .grp .ico{--ico:20px}
-.wdg .row{display:flex;align-items:center;gap:7px;padding:3px 9px;font-size:11.5px;color:var(--ink)}
-.wdg .row .ico{--ico:24px}
+.wdg .list{flex:1;overflow:auto;padding:3px 0;--wico:44px}
+/* One row per PLACE. The icon size is set from JS to the largest value at which the
+   whole list still fits the window - the point of the overlay is seeing it all at once. */
+.wdg .dg{display:flex;align-items:center;gap:8px;width:100%;padding:4px 8px;cursor:pointer;
+  background:none;border:0;color:var(--ink);font:inherit;text-align:left}
+.wdg .dg:hover{background:var(--bg-hover)}
+.wdg .dg[aria-expanded=true]{background:var(--accent-glow);color:var(--accent)}
+.wdg .dg .ico{--ico:var(--wico)}
+.wdg .dg .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-size:calc(9px + var(--wico) / 9)}
+.wdg .dg .n{flex:none;color:var(--ink-dim);font-size:10.5px;background:var(--bg);
+  border:1px solid var(--line-soft);border-radius:9px;min-width:17px;text-align:center;padding:1px 5px}
+.wdg .drops{padding:1px 0 6px 14px;border-left:1px solid var(--line-soft);margin-left:16px}
+.wdg .row{display:flex;align-items:center;gap:7px;padding:2px 9px;font-size:11.5px;color:var(--ink-dim)}
+.wdg .row .ico{--ico:22px}
 .wdg .row .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wdg .empty{padding:18px 12px;color:var(--ink-faint);font-size:11.5px;text-align:center;line-height:1.5}
 </style>
@@ -405,6 +416,7 @@ const S = {
   view:"home", tab:0, sel:null, kitPick:null, lvl1:false, biome:null, trackAt:null, dgAt:null,
   ptab: LS("rm.ptab")==="feed" ? "feed" : "ability",
   petGear: LS("rm.petGear")===true,
+  enchTop: LS("rm.enchTop")!==false,   // he only cares about the best roll; default on
   petFrom: null, petTo: null,
   theme: LS("rm.theme") || "roadmap",
   opacity: (typeof LS("rm.widgetOpacity")==="number") ? LS("rm.widgetOpacity") : 0.92,
@@ -430,8 +442,9 @@ function icoPair(it){
   const sh = it.shinyId ? byId[it.shinyId] : null;
   return `<span class="icopair">${ico(it.sp)}${sh?ico(sh.sp):""}</span>`;
 }
-// Items roll 0-4 enchant slots. The pips are the item's slot capacity, coloured
-// green/blue/purple/gold = Uncommon/Rare/Legendary/Divine, which is how the game reads them.
+// Items roll 0-4 enchant slots. The pips are the item's slot capacity; they borrow the
+// enchant-level colour ramp (green/blue/purple/gold) purely as a scale, and mean
+// "how many slots are guaranteed", not a rarity.
 function slotPips(it){
   const ch = it.chance;
   if(!ch || !ch.length) return `<span class="dim">&mdash;</span>`;
@@ -1204,6 +1217,9 @@ function enchView(){
     <div class="bar">
       <input type="search" id="q" placeholder="enchantment, stat, effect…" autocomplete="off">
       <label><input type="checkbox" id="fitkit"> only what fits my kit</label>
+      <label title="Every rollable enchantment ships as four levels, I to IV. The lower
+        three are just worse rolls of the same thing."><input type="checkbox" id="enchtop"
+        ${S.enchTop?"checked":""}> best roll of each only</label>
       <span class="dim">items roll 0&ndash;4 slots &middot; aim for 4</span>
       <span class="spacer" id="count"></span>
     </div>
@@ -1212,22 +1228,43 @@ function enchView(){
 
 // Grouping that matches how people actually think about enchants, built from the
 // EnchantmentLabels the client already ships.
+// Enchantment categories, as a player thinks about them rather than as the client files
+// them. Two rules make this work:
+//   * A stat tab already contains the dual-stat, trade-off and stat-proc versions - the
+//     client puts the ATTACK label on "Attack -Defense Tradeoff" too. So DUALSTAT and
+//     TRADEOFF are not categories; they are cross-cuts, and having tabs for them just
+//     split the same enchantments across two places.
+//   * A category is a SET of labels, not one label. "Weapon" is damage, fire rate and
+//     range together, because that is the question ("what do I want on this bow").
+// Anything none of them claim lands in Misc - 64 enchantments, mostly named uniques.
 const ECATS = [
   ["all",      "All",        null],
-  ["ATTACK",   "Attack",     "ATTACK"],
-  ["DEFENSE",  "Defense",    "DEFENSE"],
-  ["DEXTERITY","Dexterity",  "DEXTERITY"],
-  ["WISDOM",   "Wisdom",     "WISDOM"],
-  ["VITALITY", "Vitality",   "VITALITY"],
-  ["LIFE",     "Life",       "LIFE"],
-  ["MANA",     "Mana",       "MANA"],
-  ["SPEED",    "Speed",      "SPEED"],
-  ["DUALSTAT", "Dual stat",  "DUALSTAT"],
-  ["TRADEOFF", "Trade-off",  "TRADEOFF"],
-  ["CONVERSIONBONUS","Conversion","CONVERSIONBONUS"],
-  ["PROC",     "Proc",       "PROC"],
-  ["UNIQUE",   "Unique",     "UNIQUE"],
+  ["ATTACK",   "Attack",     ["ATTACK"]],
+  ["DEFENSE",  "Defense",    ["DEFENSE"]],
+  ["DEXTERITY","Dexterity",  ["DEXTERITY"]],
+  ["WISDOM",   "Wisdom",     ["WISDOM"]],
+  ["VITALITY", "Vitality",   ["VITALITY"]],
+  ["LIFE",     "Life",       ["LIFE"]],
+  ["MANA",     "Mana",       ["MANA"]],
+  ["SPEED",    "Speed",      ["SPEED"]],
+  ["WEAPON",   "Weapon",     ["WEAPONDAMAGE","WEAPONFIRERATE","WEAPONRANGE","DAMAGE",
+                              "PROJSPEED","LIFETIME"]],
+  ["PROC",     "Proc",       ["PROC","ONHIT","ONSHOOT","ONABILITY","BULLETCREATE"]],
+  ["RECOVERY", "Recovery",   ["RECOVERY","FLATREGEN","LIFEREGEN","MANAREGEN",
+                              "PERCENTAGEREGEN","HEAL","HEALING","MPCOSTREDUCTION"]],
+  ["BONUS",    "XP / dust / loot", ["XP","DUST","LOOT","REWARD","REWARDBONUS",
+                              "DUALREWARDBONUS"]],
+  ["misc",     "Misc",       []],
 ];
+// Everything a real category claims, so Misc can be "none of the above" rather than a
+// hand-kept list that drifts the moment the client adds a label.
+const ECAT_CLAIMED = new Set(ECATS.flatMap(([,,ls]) => ls || []));
+function enchInCat(e, cat){
+  if(cat === "all") return true;
+  if(cat === "misc") return !e.labels.some(l => ECAT_CLAIMED.has(l));
+  const ls = (ECATS.find(c => c[0] === cat) || [])[2] || [];
+  return e.labels.some(l => ls.includes(l));
+}
 
 // What may legally roll on a given item: label intersection minus both exclusion lists.
 // Which enchantments can legally sit on an item, and beside which others.
@@ -1364,17 +1401,22 @@ function kitItems(){
   return (S.kit[S.cls] || []).map(id => id && byId[id]).filter(Boolean);
 }
 
-// Uncommon / Rare / Legendary / Divine, 1-4 dots in the game's colour language.
-// These are DRAWN, not extracted - the rarity pips are UI chrome and are not present
-// in the object sprite sheets the extractor pulls.
-const TIERS = {1:["Uncommon","#4ee39a"], 2:["Rare","#4ec8e3"],
-               3:["Legendary","#b46ce8"], 4:["Divine","#ffcf4a"]};
-function tierDots(t){
-  const v = TIERS[String(t).replace("TIER","")]; if(!v) return `<div class="dim">&nbsp;</div>`;
+// Enchantment LEVEL, I to IV. Not a rarity - the client ships four objects per
+// enchantment and the tier label is which of the four you rolled, so "Divine" and
+// "Legendary" were the wrong words for it. Colour still climbs with the level, because
+// that reads faster than the numeral, but the label is the numeral.
+// The dots are DRAWN, not extracted: there is no pip art in the sprite sheets.
+const TIERS = {1:["I","#4ee39a"], 2:["II","#4ec8e3"],
+               3:["III","#b46ce8"], 4:["IV","#ffcf4a"]};
+function tierDots(t, top){
   const n = +String(t).replace("TIER","");
-  return `<div class="tier" title="${v[0]}"><span class="pips">` +
+  const v = TIERS[n];
+  if(!v) return `<div class="tier"><span class="dim">one level only</span></div>`;
+  return `<div class="tier" title="Level ${v[0]} of IV${top?" — the best roll of this enchantment":""}">` +
+    `<span class="pips">` +
     Array.from({length:n},()=>`<i style="background:${v[1]}"></i>`).join("") +
-    `</span><span style="color:${v[1]}">${v[0]}</span></div>`;
+    `</span><span style="color:${v[1]}">${v[0]}</span>${
+      top?`<span class="best">BEST</span>`:""}</div>`;
 }
 
 function drawEnch(){
@@ -1387,6 +1429,7 @@ function drawEnch(){
   const q=($("#q").value||"").trim().toLowerCase();
   const cat=S.ecat||"all";
   const fit=$("#fitkit") && $("#fitkit").checked;
+  const topOnly=$("#enchtop") && $("#enchtop").checked;
   const equipped=kitItems();
 
   // Picking a slot for a tracked item narrows the 1,016 enchantments to the ones that
@@ -1404,7 +1447,10 @@ function drawEnch(){
     equipped.forEach(it => legalFor(it).forEach(e => legalIds.add(e.id)));
     pool=pool.filter(e=>legalIds.has(e.id));
   }
-  if(cat!=="all") pool=pool.filter(e=>e.labels.includes(cat));
+  // Only ever hides rows. legalFor() and the roller still see all four levels, because
+  // the game rolls all four - this is about what is worth reading, not what can happen.
+  if(topOnly) pool=pool.filter(e=>e.top);
+  if(cat!=="all") pool=pool.filter(e=>enchInCat(e,cat));
   if(q) pool=pool.filter(e=>(e.name+" "+e.desc+" "+e.labels.join(" ")).toLowerCase().includes(q));
 
   $("#count").textContent=`${pool.length} of ${D.counts.enchants}`+
@@ -1426,7 +1472,7 @@ function drawEnch(){
     <div class="ecard" data-ench="${esc(e.id)}" ${pick?'style="cursor:pointer"':""}>
       <div class="ehead">${e.sp!=null?ico(e.sp):""}<div>
         <div class="nm">${esc(e.name)}</div>
-        ${tierDots(e.tier)}</div></div>
+        ${tierDots(e.tier, e.top && !topOnly)}</div></div>
       <div class="dim edesc">${esc(e.desc)}</div>
       ${e.excl.length?`<div class="eexcl">cannot share a slot with: ${esc(e.excl.join(", "))}</div>`:""}
     </div>`).join("")}</div>
@@ -1438,35 +1484,107 @@ function drawEnch(){
 // Overlay widget. The Rust side opens a second window on index.html#widget; the
 // page notices the hash and renders this instead of the whole app, so there is
 // only ever one frontend.
+//
+// The unit here is the PLACE, not the item. The question the overlay answers while
+// you are playing is "what am I running next", so the dungeon is what you see -
+// big, all of them at once - and the items you want there are one click away.
 // ---------------------------------------------------------------------------
+
+// Largest first. fitWidget() walks down this until the collapsed list stops
+// overflowing, so a short list gets big art and a long one still fits the window.
+// It stops at 26px: past that the icon is no longer something you can recognise
+// across a room, which is the entire point of the overlay, so a very long list
+// scrolls at a readable size instead of fitting at an unreadable one.
+const WICO = [72, 60, 50, 42, 36, 30, 26];
+let wOpen = null;        // the one place expanded, or null. One at a time stays readable.
+let wWired = false;      // storage/resize listeners are global; bind them exactly once
+
+function widgetGroups(){
+  const g = {};
+  S.track.forEach(id => { const it = byId[id]; if(!it) return;
+    const s = it.sources[0];
+    const k = s ? (s.name || ("ORG_" + s.code)) : "Not recorded";
+    (g[k] = g[k] || []).push(it); });
+  // Same order as the Track page: easiest first, and anything with no difficulty at all
+  // - realm whites, events, ST sets - after the dungeons rather than pretending to be 0.
+  const keys = Object.keys(g).sort((a,b) => {
+    const da = (SRCI[a]||{}).diff, db = (SRCI[b]||{}).diff;
+    if(da == null && db == null) return a.localeCompare(b);
+    if(da == null) return 1;
+    if(db == null) return -1;
+    return da - db;
+  });
+  return { g, keys };
+}
+
+function fitWidget(){
+  const list = document.getElementById("wlist");
+  if(!list) return;
+  // Measure the COLLAPSED list. Sizing to fit an expanded one would shrink every icon
+  // to nothing the moment you opened a dungeon with a lot in it.
+  // Restore each one to what it WAS. Un-hiding them all unconditionally is how the
+  // first version of this expanded every dungeon the moment it measured anything.
+  const drops = [...list.querySelectorAll(".drops")].map(d => [d, d.hidden]);
+  drops.forEach(([d]) => { d.hidden = true; });
+  for(const px of WICO){
+    list.style.setProperty("--wico", px + "px");
+    if(list.scrollHeight <= list.clientHeight) break;
+  }
+  drops.forEach(([d, was]) => { d.hidden = was; });
+}
+
 function renderWidget(){
   document.body.className = "widget";
-  const g={};
-  S.track.forEach(id=>{ const it=byId[id]; if(!it) return;
-    const s=it.sources[0]; const k=s?(s.name||("ORG_"+s.code)):"Not recorded";
-    (g[k]=g[k]||[]).push(it); });
+  const { g, keys } = widgetGroups();
   const body = S.track.length
-    ? Object.keys(g).sort().map(k=>{
-        const e=SRCI[k]||{};
-        return `<div class="grp">${e.sp!=null?ico(e.sp):""}${
-          e.boss!=null?ico(e.boss):""}<span>${esc(k)}</span></div>` +
-          g[k].map(i=>`<div class="row">${ico(i.sp)}<span class="n">${esc(i.name)}</span></div>`).join("");
+    ? keys.map(k => {
+        const e = SRCI[k] || {}, n = g[k].length, open = wOpen === k;
+        // The dungeon's own door, and nothing else. The boss portrait beside it made
+        // two small pictures where one big one reads better across a room.
+        const art = e.sp != null ? ico(e.sp)
+                  : e.boss != null ? ico(e.boss)
+                  : `<div class="ico none"></div>`;
+        return `<button class="dg" type="button" data-wdg="${esc(k)}"
+            aria-expanded="${open}" title="${esc(k)}${e.diff!=null?` — difficulty ${e.diff}`:""}">
+            ${art}<span class="nm">${esc(k)}</span><span class="n">${n}</span></button>` +
+          `<div class="drops"${open?"":" hidden"}>${g[k].map(i =>
+            `<div class="row">${ico(i.sp)}<span class="n">${esc(i.name)}</span></div>`).join("")}</div>`;
       }).join("")
     : `<div class="empty">Nothing tracked.<br>Click items in the main window and they show up here.</div>`;
+
+  const places = keys.length;
   document.body.innerHTML = `<div class="wdg">
     <div class="bar" data-tauri-drag-region>
-      <span class="t" data-tauri-drag-region>Tracking ${S.track.length}</span>
+      <span class="t" data-tauri-drag-region>${places} place${places===1?"":"s"} &middot;
+        ${S.track.length} item${S.track.length===1?"":"s"}</span>
       <button id="wdg-x" type="button" title="Close overlay">&#10005;</button>
     </div>
-    <div class="list">${body}</div>
+    <div class="list" id="wlist">${body}</div>
   </div>`;
+
   document.getElementById("wdg-x").onclick = () => {
     if(globalThis.__TAURI__) __TAURI__.window.getCurrentWindow().close();
   };
-  // The main window owns the tracked list; pick up its edits without a refresh.
-  addEventListener("storage", ev => {
-    if(ev.key === "rm.track"){ S.track = LS("rm.track") || []; renderWidget(); }
+  const list = document.getElementById("wlist");
+  list.addEventListener("click", e => {
+    const b = e.target.closest("[data-wdg]");
+    if(!b) return;
+    wOpen = wOpen === b.dataset.wdg ? null : b.dataset.wdg;
+    renderWidget();
   });
+  fitWidget();
+
+  if(!wWired){
+    wWired = true;
+    // The main window owns the tracked list; pick up its edits without a refresh.
+    // Bound once - re-binding inside renderWidget added a listener per render, so by
+    // the tenth click one storage event fired ten re-renders.
+    addEventListener("storage", ev => {
+      if(ev.key === "rm.track"){ S.track = LS("rm.track") || []; renderWidget(); }
+    });
+    // The overlay is resizable, and the whole point is that it all fits.
+    addEventListener("resize", fitWidget);
+  }
 }
 
 function render(){
@@ -1499,6 +1617,7 @@ document.addEventListener("change", e=>{
 document.addEventListener("input", e=>{
   if(e.target.id==="lvl1"){ S.lvl1=e.target.checked; render(); return; }
   if(e.target.id==="fitkit"){ drawEnch(); return; }
+  if(e.target.id==="enchtop"){ S.enchTop=e.target.checked; LSet("rm.enchTop",S.enchTop); drawEnch(); return; }
   if(e.target.id==="petfrom"){ S.petFrom=+e.target.value; drawPets(); return; }
   if(e.target.id==="petto"){ S.petTo=+e.target.value; drawPets(); return; }
   if(e.target.id==="petgear"){ S.petGear=e.target.checked; LSet("rm.petGear",S.petGear); drawPets(); return; }

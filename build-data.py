@@ -1418,6 +1418,29 @@ def main():
             "weight": tag(body, "Weight"),
             "mut": ench_mutations(body),
         })
+    # Enchantment LEVELS, not rarities. The client ships each rollable enchantment as
+    # four objects - Attack_Defense_Tradeoff_1..4 - and the id suffix is exactly its
+    # TIER label every single time (verified: 0 mismatches across all 1,016). So the
+    # family is the id with that suffix removed, and "top" is the best roll of that
+    # enchantment. 203 families of four, plus 204 single-level enchantments that are
+    # their own top.
+    fam_top = {}
+    for e in enchants:
+        m = re.match(r"^(.*)_([1-9]\d*)$", e["id"])
+        lv = int(e["tier"][4:]) if (e["tier"] or "").startswith("TIER") else None
+        if m and lv is not None:
+            if int(m.group(2)) != lv:
+                FAILURES.append("enchant %s: id says level %s, label says %d"
+                                % (e["id"], m.group(2), lv))
+            e["fam"], e["lv"] = m.group(1), lv
+        else:
+            e["fam"], e["lv"] = e["id"], 1
+        fam_top[e["fam"]] = max(fam_top.get(e["fam"], 0), e["lv"])
+    for e in enchants:
+        if e["lv"] == fam_top[e["fam"]]:
+            e["top"] = True
+    print("  enchantment families: %d  (%d are the best roll of their kind)"
+          % (len(fam_top), sum(1 for e in enchants if e.get("top"))))
     enchants.sort(key=lambda e: ((e["tier"] or "zz"), e["name"]))
     ench_xml = read("enchantments.xml")
     guard(ench_xml, "Enchantment", len(enchants), "enchantments.xml")
