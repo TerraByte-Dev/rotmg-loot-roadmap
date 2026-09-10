@@ -935,6 +935,7 @@ def main():
                 proc = value
 
         type_to_id[(oattr.get("type") or "").lower()] = iid
+        coll_icon = oattr.get("collectionIcon")
         items.append({
             "id": iid,
             "name": tag(body, "DisplayId") or iid,
@@ -950,6 +951,7 @@ def main():
             "sk": sources[0]["kind"] if sources else "none",
             "soulbound": "<Soulbound" in body,
             "admin": ("<AdminOnly" in body) or None,
+            "ci": coll_icon,
             # Curated, not derived - the client has no flag for this. Hidden by default.
             "gone": (gone[iid]["reason"] if iid in gone else None),
             "tradeable": "TRADEABLE" in labels,
@@ -996,6 +998,40 @@ def main():
           % (before - len(items), TIER_FLOOR["WEAPON"], TIER_FLOOR["ABILITY"]))
     for i in items:
         i.pop("admin", None)
+
+    # collectionIcon groups items by the dungeon collection they appear in. 49 of the 50
+    # groups that have three or more already-resolved members are UNANIMOUS about which
+    # dungeon that is, which makes it a real resolver rather than a coincidence. An item
+    # with no source of its own inherits the group's, but only when every resolved member
+    # agrees and there are at least three of them.
+    #
+    # Found by an agent deriving The Heart of the Dragon: all 7 other items carrying
+    # collectionIcon="142" have ORG_ENCORE, and forgeProperties.xml independently pairs
+    # icon index 142 with ORG_ENCORE.
+    by_icon = {}
+    for i in items:
+        if i.get("ci"):
+            by_icon.setdefault(i["ci"], []).append(i)
+    coll_hits = 0
+    for ci, members in by_icon.items():
+        agreed = {m["sources"][0]["name"] for m in members
+                  if m["sk"] in ("dungeon", "boss") and m["sources"]}
+        resolved = sum(1 for m in members if m["sk"] in ("dungeon", "boss"))
+        if len(agreed) != 1 or resolved < 3:
+            continue
+        name = agreed.pop()
+        for m in members:
+            if m["sk"] != "none":
+                continue
+            m["sources"] = [{"kind": "dungeon", "name": name, "via": "collection",
+                             "conf": "high",
+                             "note": ("Every one of the %d items in this dungeon's collection "
+                                      "that names a source names this one." % resolved)}]
+            m["sk"] = "dungeon"
+            coll_hits += 1
+    print("  resolved by collection icon: %d" % coll_hits)
+    for i in items:
+        i.pop("ci", None)          # served its purpose; not worth shipping in the payload
 
     # 8. inheritance - the last resort. A Shiny or (SB) printing of an item drops
     #    exactly where the item does; nothing else may be inherited.

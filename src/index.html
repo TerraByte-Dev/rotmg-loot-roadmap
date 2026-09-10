@@ -605,6 +605,7 @@ function drawDetail(){
   const PROV = {
     community: "Player knowledge (RealmEye), not from the game files:",
     derived:   "Inferred from the client files, not stated outright:",
+    collection: "Every other item in this dungeon's collection agrees:",
     inherit:   "Taken from this item's base printing:",
   };
   const prov = s => PROV[s.via] || PROV[s.kind] || "From the game files:";
