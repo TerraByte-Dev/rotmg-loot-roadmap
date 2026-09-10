@@ -1,7 +1,7 @@
 {
   "name": "rotmg-loot-roadmap",
   "private": true,
-  "version": "1.0.12",
+  "version": "1.0.13",
   "type": "module",
   "description": "RotMG loot roadmap - one source, two products: the standalone roadmap.html and a Tauri 2 desktop overlay.",
   "engines": {
@@ -10,10 +10,9 @@
   "scripts": {
     "data": "python build-data.py",
     "dev": "vite --mode app",
-    "build:app": "vite build --mode app && npm run verify:parse",
-    "verify:parse": "node .build/check-bundle.js dist-app/index.html roadmap.html",
+    "build:app": "vite build --mode app && node scripts/check-bundle.js dist-app/index.html",
     "build:standalone": "vite build --mode standalone",
-    "verify:standalone": "node --input-type=module -e \"import fs from 'node:fs'; const h=fs.readFileSync('roadmap.html','utf8'); const left=['__ROTMG_DATA__','__SPRITE_ATLAS__','__BESTIARY__'].filter(t=>h.includes(t)); if(left.length) throw new Error('unsubstituted placeholder: '+left.join(', ')); for(const [what,needle] of [['sprite atlas','data:image/png;base64,'],['bestiary','data:image/jpeg;base64,'],['item data','id=\\\"rotmg-data\\\"'],['app code','function render()']]) if(!h.includes(needle)) throw new Error(what+' missing from roadmap.html'); if(h.length < 5e6) throw new Error('roadmap.html is only '+h.length+' bytes - a payload did not inline'); console.log('  standalone ok: '+(h.length/1048576).toFixed(2)+' MB');\"",
+    "verify:standalone": "node --input-type=module -e \"import fs from 'node:fs'; const h=fs.readFileSync('roadmap.html','utf8'); const left=['__ROTMG_DATA__','__SPRITE_ATLAS__','__BESTIARY__'].filter(t=>h.includes(t)); if(left.length) throw new Error('unsubstituted placeholder: '+left.join(', ')); for(const [what,needle] of [['sprite atlas','data:image/png;base64,'],['bestiary','data:image/jpeg;base64,'],['item data','id=\\\"rotmg-data\\\"'],['app code','function render()']]) if(!h.includes(needle)) throw new Error(what+' missing from roadmap.html'); if(h.length < 5e6) throw new Error('roadmap.html is only '+h.length+' bytes - a payload did not inline'); console.log('  standalone ok: '+(h.length/1048576).toFixed(2)+' MB');\" && node scripts/check-bundle.js roadmap.html",
     "build": "npm run build:standalone && npm run verify:standalone && npm run build:app",
     "tauri": "tauri",
     "app:dev": "tauri dev",
