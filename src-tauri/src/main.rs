@@ -146,6 +146,34 @@ fn set_window_opacity(window: WebviewWindow, alpha: f64) -> Result<(), String> {
     apply_opacity(&window, alpha)
 }
 
+/// Put the window in the middle of the PRIMARY monitor.
+///
+/// Only used on a first run, where there is no saved geometry to honour. Tauri's
+/// `center: true` centres on whichever monitor it thinks the window is on, and on a
+/// stacked multi-monitor desktop that came out as the display ABOVE the primary - the
+/// app opened somewhere the user was not looking.
+fn center_on_primary(win: &WebviewWindow) -> tauri::Result<()> {
+    let Some(primary) = win.primary_monitor()? else {
+        return win.center();
+    };
+    let (mp, ms) = (primary.position(), primary.size());
+    let cur = win.outer_size()?;
+
+    // The configured size is in logical pixels; on a scaled display it can come out
+    // taller than the screen it is being centred on. 1180x860 became 1493x1085 on a
+    // 1920x1080 panel, so the title bar sat off the top edge. Fit first, then centre.
+    let w = cur.width.min(ms.width.saturating_sub(80)).max(640);
+    let h = cur.height.min(ms.height.saturating_sub(80)).max(400);
+    if w != cur.width || h != cur.height {
+        win.set_size(PhysicalSize::new(w, h))?;
+    }
+
+    win.set_position(PhysicalPosition::new(
+        mp.x + ((ms.width.saturating_sub(w)) / 2) as i32,
+        mp.y + ((ms.height.saturating_sub(h)) / 2) as i32,
+    ))
+}
+
 // ---------------------------------------------------------------------------
 // The overlay widget
 // ---------------------------------------------------------------------------
@@ -217,10 +245,20 @@ fn main() {
                 .get_webview_window("main")
                 .expect("window 'main' is declared in tauri.conf.json");
 
+            // Is this a first run? Ask before restore_state creates the file.
+            let first_run = app
+                .path()
+                .app_config_dir()
+                .map(|d| !d.join(".window-state.json").exists())
+                .unwrap_or(true);
+
             // Order matters: restore -> validate -> rescue -> show.
             let _ = win.restore_state(state_flags());
 
-            if !is_recoverable(&win) {
+            if first_run {
+                // Nothing to honour, so put it where the user is actually looking.
+                let _ = center_on_primary(&win);
+            } else if !is_recoverable(&win) {
                 let _ = rescue(&win);
             }
 

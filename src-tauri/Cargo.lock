@@ -2676,7 +2676,7 @@ dependencies = [
 
 [[package]]
 name = "rotmg-loot-roadmap"
-version = "1.0.0"
+version = "1.0.2"
 dependencies = [
  "serde",
  "serde_json",

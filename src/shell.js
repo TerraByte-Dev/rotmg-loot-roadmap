@@ -7,52 +7,18 @@
 
 const T = globalThis.__TAURI__;
 if (T) {
-  const w = T.window.getCurrentWindow();
-
   const read = (k, fallback) => {
     try {
       const v = localStorage.getItem(k);
       return v == null ? fallback : JSON.parse(v);
     } catch (_) { return fallback; }        // private window, cleared storage, corrupt value
   };
-  const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} };
-
-  let pinned = read("rm.pin", true) !== false;   // on top by default: that is the point of it
-
-  const applyPin = () => w.setAlwaysOnTop(pinned).catch(() => {});
-
-  // --- the strip -----------------------------------------------------------
-  // Deliberately tiny and bottom-left, out of the way of the class rail's top.
-  const bar = document.createElement("div");
-  bar.className = "shellbar";
-  bar.innerHTML =
-    `<button id="shell-pin" type="button" title="keep this window above the game"></button>`;
-  document.body.appendChild(bar);
-
-  const css = document.createElement("style");
-  css.textContent = `
-    .shellbar{position:fixed;left:9px;bottom:9px;z-index:99;display:flex;gap:7px;
-      align-items:center;background:var(--bg-panel);border:1px solid var(--line);
-      border-radius:var(--radius);padding:4px 7px;opacity:.55;transition:opacity .12s}
-    .shellbar:hover{opacity:1}
-    .shellbar button{background:none;border:0;color:var(--ink-faint);cursor:pointer;
-      font:inherit;font-size:13px;line-height:1;padding:0}
-    .shellbar button.on{color:var(--accent)}
-    .shellbar input[type=range]{width:74px;accent-color:var(--accent)}`;
-  document.head.appendChild(css);
-
-  const pinBtn = bar.querySelector("#shell-pin");
-  const paint = () => {
-    pinBtn.textContent = pinned ? "◉ on top" : "○ floating";
-    pinBtn.classList.toggle("on", pinned);
-  };
-
-  pinBtn.addEventListener("click", () => {
-    pinned = !pinned; write("rm.pin", pinned); paint(); applyPin();
-  });
-  paint(); applyPin();
 
 
+  // No pin strip here on purpose. The MAIN window is an ordinary window - making the
+  // whole app always-on-top meant it sat over the game, over Discord, over everything,
+  // which reads as broken rather than useful. The small overlay widget is the piece
+  // that floats, and it owns the opacity setting too.
 
   // --- updates -------------------------------------------------------------
   // A non-modal strip, and it never installs on its own. A window that vanishes

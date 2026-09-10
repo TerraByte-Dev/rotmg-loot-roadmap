@@ -1,6 +1,6 @@
 [package]
 name = "rotmg-loot-roadmap"
-version = "1.0.2"
+version = "1.0.3"
 description = "RotMG loot roadmap, kit planner and enchant browser."
 authors = ["TerraByte"]
 edition = "2021"
