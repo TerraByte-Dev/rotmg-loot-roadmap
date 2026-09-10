@@ -475,6 +475,41 @@ def ench_mutations(body):
     return out
 
 
+# Everything inside <Mutators> that is a plain multiplier on the weapon itself. These are
+# the numbers behind "Increases Weapon Damage by 5%" - the percentage is ONLY in the
+# English description, but the multiplier is right here as 1.05, machine-readable, and
+# the build had never read it. INSTANCE #12 of this project's recurring bug class: a whole
+# element family sitting in a file the build already opens.
+#
+# projectileId="-1" and subAttackIndex="-1" both mean "all of them", and 84 of the 85
+# occurrences say -1. The one exception is Ice Rush, whose MultiplyLifetimeMS targets
+# projectile 0 - so the target is recorded alongside the value rather than assumed away,
+# and the UI can say which projectile it applies to.
+MUTATOR_FIELDS = {
+    "MultiplyMinDamage": "dmgMin", "MultiplyMaxDamage": "dmgMax",
+    "MultiplyRateOfFire": "rof",   "MultiplySpeed": "speed",
+    "MultiplyLifetimeMS": "life",  "MultiplySize": "size",
+    "MultiplyMPCost": "mp",
+}
+
+
+def ench_multipliers(body, eid):
+    """The multiplicative half of an enchantment: what it does to the weapon, not to you."""
+    out = {}
+    for m in re.finditer(r"<Mutators>(.*?)</Mutators>", body, re.S):
+        for name, field in MUTATOR_FIELDS.items():
+            for a, inner in elems(m.group(1), name):
+                target = a.get("projectileId") or a.get("subAttackIndex")
+                try:
+                    out[field] = round(float(inner.strip()), 6)
+                except ValueError:
+                    FAILURES.append("%s: %s is not a number (%r)" % (eid, name, inner))
+                    continue
+                if target is not None and target != "-1":
+                    out.setdefault("only", {})[field] = target
+    return out
+
+
 METHOD_NOTE = {
     "xml-crossref": "Traced through the client's own cross-references between XML files.",
     "description": "Stated in the item's own description or effect text.",
@@ -1117,7 +1152,7 @@ def main():
             # items in any dungeon, while UT/ST are dungeon/enemy specific". That is a real
             # answer, not a gap; filing 418 tiered items under "none" made the coverage
             # table read far worse than the data actually is.
-            sources.append({"kind": "tiered", "name": "Any dungeon",
+            sources.append({"kind": "tiered", "name": "Many dungeons",
                             "note": "Tiered gear drops from enemies everywhere. Higher "
                                     "tiers are weighted toward harder content."})
 
@@ -1417,6 +1452,7 @@ def main():
             "noIds": [x.strip() for x in (tag(body, "IncompatibleWithItemIds") or "").split(",") if x.strip()],
             "weight": tag(body, "Weight"),
             "mut": ench_mutations(body),
+            "mx": ench_multipliers(body, eid) or None,
         })
     # Enchantment LEVELS, not rarities. The client ships each rollable enchantment as
     # four objects - Attack_Defense_Tradeoff_1..4 - and the id suffix is exactly its
@@ -1535,7 +1571,11 @@ def main():
         # from what the atlas already holds.
         beast = next((v for k, v in cells.items() if k.startswith("boss:undeadLair")), None)
         t4 = next((e for e in enchants if e.get("tier") == "TIER4" and e.get("sp") is not None), None)
+        # Stat icon + colour, both from the game's own potion art. The client states
+        # which bottle raises which stat, so this is a join and not a guess.
+        statcells = {k.split(":", 1)[1]: v for k, v in cells.items() if k.startswith("stat:")}
         sprites = {"cell": sidx["cell"], "cols": sidx["cols"], "bags": bagcells,
+                   "stats": statcells, "statColors": sidx.get("statColors") or {},
                    "ui": {"realm": cells.get("realm:Realm Portal"),
                           "ench": (t4 or {}).get("sp"),
                           "beast": beast,
@@ -1619,7 +1659,7 @@ def main():
                 # everything from this source lands in the same loot bag, show that bag.
                 # 100 of the 101 realm whites drop in bag 6, so "Event / realm white"
                 # correctly becomes the white bag. Tiered gear spans every bag, so
-                # "Any dungeon" correctly stays iconless rather than being given a lie.
+                # "Many dungeons" correctly stays iconless rather than being given a lie.
                 bags = src_bags.get(key)
                 if bags and sum(bags.values()) >= 3:
                     # >= 3 members, or "80% of one item" is trivially true and a lone item's

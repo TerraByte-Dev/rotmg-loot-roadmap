@@ -16,6 +16,7 @@ Writes:
     .build/sprite-index.json  object id -> cell number
 """
 
+import colorsys
 import csv
 import io
 import json
@@ -314,6 +315,31 @@ def chest_textures():
     return out
 
 
+def stat_textures():
+    """The stat potions, keyed by the stat each one raises.
+
+    The pairing is not guessed: every potion states it itself, as
+        <Activate amount="1" stat="ATT">IncrementStat</Activate>
+    so "which bottle is Attack" comes out of the file rather than out of the name. Eight
+    stats, eight bottles, all on one sheet - which makes them the natural icon for any
+    row in the app that talks about a stat.
+    """
+    with io.open(os.path.join(XML, "equip.xml"), encoding="utf-8", errors="ignore") as f:
+        eq = f.read()
+    out, seen = {}, 0
+    for iid, body in objects(eq):
+        if not re.match(r"^Potion of \w+$", iid):
+            continue
+        m = re.search(r"<Activate[^>]*stat=\"([A-Z]+)\"[^>]*>IncrementStat</Activate>", body)
+        if not m:
+            continue
+        seen += 1
+        art = own_art(body)
+        if art:
+            out.setdefault("stat:" + m.group(1), art)
+    guard(seen, len(out), "stat potions")
+    return out
+
 def food_textures():
     """Dedicated pet food, and pet eggs.
 
@@ -379,6 +405,45 @@ def boss_textures():
     return out
 
 
+
+def fit_content(im, always=False):
+    """Rescue art that was authored small inside a big tile.
+
+    Most sprites are 8x8 tiles that fill themselves and get doubled into the 16px cell.
+    A few dungeon-object sheets store an 8x8 door inside a 16x16 tile - the Lair of
+    Draconis portal is one - and those came out half-size with dead space around them,
+    which reads as the wrong sprite having been grabbed.
+
+    Narrow on purpose. It fires only when the tile is 16px or bigger AND the art fills
+    less than half of it in BOTH axes, which across the whole packed set is three
+    sprites. It also refuses slivers under 4px, because a 3x8 fragment of a 64x64 tile
+    is a bad extraction and blowing it up would only make it louder.
+
+    The crop is square and centred on the art, so nothing is stretched.
+
+    always=True drops the "less than half" test. Dungeon doors are the one set where
+    every sprite is shown alone at a large size and none of them mean anything by being
+    relatively bigger than another, so they are all normalised to fill the cell - an 8x8
+    door gets doubled into it while a 16x16 one keeps its own pixels, and the two ended
+    up looking like different sizes of the same thing.
+    """
+    w, h = im.size
+    if w < CELL or h < CELL:
+        return im
+    bb = im.getbbox()
+    if not bb:
+        return im
+    bw, bh = bb[2] - bb[0], bb[3] - bb[1]
+    if bw < 4 or bh < 4:
+        return im            # a sliver is a bad extraction; magnifying it only shouts
+    if not always and (bw > w // 2 or bh > h // 2):
+        return im
+    side = max(bw, bh)
+    cx, cy = (bb[0] + bb[2]) // 2, (bb[1] + bb[3]) // 2
+    x0 = max(0, min(w - side, cx - side // 2))
+    y0 = max(0, min(h - side, cy - side // 2))
+    return im.crop((x0, y0, x0 + side, y0 + side))
+
 def main():
     os.makedirs(BUILD, exist_ok=True)
     idx = load_index()
@@ -391,7 +456,8 @@ def main():
                       ("class art", class_textures),
                       ("realm globe", realm_textures),
                       ("loot / event chests", chest_textures),
-                      ("pet food & eggs", food_textures)):
+                      ("pet food & eggs", food_textures),
+                      ("stat potions", stat_textures)):
         got = fn()
         tex.update(got)
         print("%s: %d" % (label, len(got)))
@@ -407,6 +473,9 @@ def main():
     # Deduplicate by (sheet, index), not by id. All 1,016 enchantments share ~83 icons
     # and every Shiny reuses its base art, so one cell per id made the atlas several
     # times larger than the art it actually holds.
+    # Dungeon doors get normalised to fill their cell; everything else keeps its own
+    # proportions, because a dagger being smaller than a greatsword is information.
+    fit_keys = {k for iid, k in tex.items() if iid.startswith("portal:")}
     cell_of, missing, blank = {}, 0, 0
     for iid, key in sorted(tex.items()):
         if key in cell_of:
@@ -428,6 +497,7 @@ def main():
         if best is None:
             blank += 1
             continue
+        best = fit_content(best, always=key in fit_keys)
         if best.size != (CELL, CELL):                  # nearest-neighbour keeps pixel art crisp
             best = best.resize((CELL, CELL), Image.NEAREST)
         cell_of[key] = best
@@ -446,8 +516,40 @@ def main():
 
     out_png = os.path.join(BUILD, "sprite-atlas.png")
     sheet.save(out_png, optimize=True)
+    # Each stat's colour, taken from its own potion sprite: the most common opaque pixel
+    # in the bottle. The game colours ATT pink, DEF yellow and so on, and reading it off
+    # the art means the app matches whatever the client currently ships rather than a
+    # palette somebody typed in from memory.
+    stat_colors = {}
+    for iid, key in tex.items():
+        # cell_of is keyed by (sheet, index) - the DEDUPED art - so the id has to be
+        # resolved through tex, not read off cell_of.
+        cell = cell_of.get(key)
+        if cell is None or not iid.startswith("stat:"):
+            continue
+        counts = {}
+        for r, g, b_, al in cell.getdata():
+            if al < 200:
+                continue
+            # Skip the near-black outline every RotMG sprite is drawn with, or every
+            # stat comes out the same colour.
+            if r + g + b_ < 120:
+                continue
+            counts[(r, g, b_)] = counts.get((r, g, b_), 0) + 1
+        if counts:
+            top = max(counts.items(), key=lambda kv: kv[1])[0]
+            # Lifted to a readable lightness, hue kept. Defense's bottle is a mid grey
+            # and Vitality's a deep red; both are unreadable as text on this background,
+            # and every one of these is going to be read as text.
+            h, l, sat = colorsys.rgb_to_hls(*[c / 255.0 for c in top])
+            r2, g2, b2 = colorsys.hls_to_rgb(h, max(l, 0.62), sat)
+            stat_colors[iid[5:]] = "#%02x%02x%02x" % (int(r2 * 255), int(g2 * 255), int(b2 * 255))
+    print("  stat colours from the potion art: %s"
+          % ", ".join("%s %s" % kv for kv in sorted(stat_colors.items())))
+
     with io.open(os.path.join(BUILD, "sprite-index.json"), "w", encoding="utf-8") as f:
-        json.dump({"cell": CELL, "cols": COLS, "index": index}, f, separators=(",", ":"))
+        json.dump({"cell": CELL, "cols": COLS, "index": index,
+                   "statColors": stat_colors}, f, separators=(",", ":"))
 
     print("wrote %s  %dx%d  (%.0f KB, %d cells serving %d ids)"
           % (out_png, sheet.size[0], sheet.size[1], os.path.getsize(out_png) / 1024.0,

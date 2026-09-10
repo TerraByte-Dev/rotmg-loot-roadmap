@@ -84,6 +84,58 @@ button,input,select{font:inherit}
 .navbtn.pop:hover{background:var(--accent-glow)}
 .navsep{border-top:1px solid var(--line-soft);margin:6px 2px 3px}
 
+/* ---- bestiary: the biome rail lives OUTSIDE the picture ---- */
+.bestiary{display:grid;grid-template-columns:196px 1fr;flex:1;min-height:0}
+.brail{border-right:1px solid var(--line);background:var(--bg-panel);overflow:auto;padding-bottom:8px}
+.brail .railhead{color:var(--ink-faint);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+  padding:9px 10px 5px}
+.brow{display:flex;align-items:center;gap:3px;padding:1px 8px}
+.brow .bname{flex:1;min-width:0;text-align:left;background:none;border:0;cursor:pointer;
+  color:var(--ink-dim);font:inherit;font-size:11.5px;padding:3px 4px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;border-radius:var(--radius)}
+.brow .bname:hover{background:var(--bg-hover);color:var(--ink)}
+.brow .approx{color:var(--ink-faint);padding-left:3px}
+.brow.on .bname{color:var(--good)}
+.brow.off .bname{color:var(--ink-faint);text-decoration:line-through}
+.bmark{width:19px;height:19px;flex:none;cursor:pointer;background:none;border:1px solid var(--line);
+  border-radius:var(--radius);color:var(--ink-faint);font:inherit;font-size:10px;line-height:1;padding:0}
+.bmark:hover{border-color:var(--ink-faint);color:var(--ink)}
+.bmark.g[aria-pressed=true]{border-color:var(--good);color:var(--good);background:rgba(78,227,154,.14)}
+.bmark.r[aria-pressed=true]{border-color:#ff6b6b;color:#ff6b6b;background:rgba(255,107,107,.14)}
+/* The shade rides the same transform as the image, so it stays glued while panning. */
+.bshade{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.bdim,.blit{position:absolute;top:0;left:0;transform-origin:0 0}
+.bdim{background:rgba(4,6,8,.68)}
+.bdim.red{background:rgba(26,4,6,.88)}
+.blit{box-shadow:inset 0 0 0 2px var(--good);background:rgba(78,227,154,.06)}
+
+/* ---- stat chips: the game's own potion art + its own colours ---- */
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin:5px 0}
+.chips.tight{margin:0;gap:3px}
+.chips.tight .chip{padding:0 5px 0 2px;font-size:11px}
+.chips.tight .chip .ico{--ico:13px}
+.chip{display:inline-flex;align-items:center;gap:4px;background:#000;
+  border:1px solid var(--line);border-radius:var(--radius);padding:1px 6px 1px 3px;
+  font-size:11.5px;line-height:1.5}
+.chip .ico{--ico:14px}
+.chip b{font-weight:600;letter-spacing:.04em;
+  text-shadow:0 1px 0 #000,1px 0 0 #000,-1px 0 0 #000,0 -1px 0 #000}
+.chip i{font-style:normal;font-variant-numeric:tabular-nums;color:var(--ink-dim)}
+.chip i.up{color:var(--good)}
+.chip i.down{color:#ff6b6b}
+.chip .of{color:var(--ink-faint);font-size:10px}
+
+/* ---- damage table ---- */
+table.dmg{width:100%;border-collapse:collapse;margin-top:3px}
+table.dmg th{color:var(--ink-faint);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+  font-weight:400;padding:2px 5px;text-align:right}
+table.dmg td{padding:2px 5px;border-top:1px solid var(--line-soft);font-size:12.5px}
+table.dmg td.k{color:var(--ink-faint);font-size:11.5px;text-align:left}
+table.dmg td.num{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink)}
+table.dmg td.num.hi{color:var(--accent)}
+table.dmg td.up{color:var(--good)}
+table.dmg td.down{color:#ff6b6b}
+
 /* ---- pets ---- */
 .pettabs{display:flex;gap:6px;padding:9px 13px 0}
 .pettab{background:none;border:1px solid var(--line);border-radius:var(--radius);cursor:pointer;
@@ -372,19 +424,31 @@ body.widget .app,body.widget .titlebar{display:none}
 .wdg .bar button{background:none;border:0;color:var(--ink-faint);cursor:pointer;font:inherit;
   font-size:12px;padding:0 4px}
 .wdg .bar button:hover{color:var(--ink)}
-.wdg .list{flex:1;overflow:auto;padding:3px 0;--wico:44px}
-/* One row per PLACE. The icon size is set from JS to the largest value at which the
-   whole list still fits the window - the point of the overlay is seeing it all at once. */
-.wdg .dg{display:flex;align-items:center;gap:8px;width:100%;padding:4px 8px;cursor:pointer;
-  background:none;border:0;color:var(--ink);font:inherit;text-align:left}
-.wdg .dg:hover{background:var(--bg-hover)}
-.wdg .dg[aria-expanded=true]{background:var(--accent-glow);color:var(--accent)}
+.wdg .list{flex:1;overflow:auto;padding:4px;--wico:44px}
+/* A wall of doors. The icon size is set from JS to the largest value at which they all
+   still fit - the point of the overlay is seeing every place at once, from across the
+   room. The NAME is not on screen until you hover: at this size the art is the label,
+   and a column of text beside it is what made the old version feel like a list. */
+.wdg .dgs{display:flex;flex-wrap:wrap;gap:4px}
+.wdg .dg{position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer;
+  background:none;border:1px solid transparent;border-radius:var(--radius);padding:3px;
+  color:var(--ink);font:inherit}
+.wdg .dg:hover{background:var(--bg-hover);border-color:var(--line)}
+.wdg .dg[aria-expanded=true]{background:var(--accent-glow);border-color:var(--accent-dim)}
 .wdg .dg .ico{--ico:var(--wico)}
-.wdg .dg .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  font-size:calc(9px + var(--wico) / 9)}
-.wdg .dg .n{flex:none;color:var(--ink-dim);font-size:10.5px;background:var(--bg);
-  border:1px solid var(--line-soft);border-radius:9px;min-width:17px;text-align:center;padding:1px 5px}
-.wdg .drops{padding:1px 0 6px 14px;border-left:1px solid var(--line-soft);margin-left:16px}
+/* The name only exists on hover, and it floats over the neighbours rather than
+   reflowing them - a grid that reshuffles under the pointer is unusable. */
+.wdg .dg .nm{position:absolute;left:50%;bottom:-2px;transform:translateX(-50%);
+  max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  background:#000;border:1px solid var(--line);border-radius:var(--radius);
+  padding:1px 6px;font-size:11px;color:var(--ink);opacity:0;pointer-events:none;
+  transition:opacity .08s;z-index:2}
+.wdg .dg:hover .nm,.wdg .dg:focus-visible .nm{opacity:1}
+.wdg .dg .n{position:absolute;top:0;right:0;color:var(--accent);font-size:10px;line-height:1;
+  background:#000;border:1px solid var(--accent-dim);border-radius:8px;padding:1px 4px}
+.wdg .drops{margin-top:5px;border-top:1px solid var(--line);padding:5px 2px 2px}
+.wdg .dtitle{color:var(--accent);font-size:10px;letter-spacing:.13em;text-transform:uppercase;
+  padding:0 7px 3px}
 .wdg .row{display:flex;align-items:center;gap:7px;padding:2px 9px;font-size:11.5px;color:var(--ink-dim)}
 .wdg .row .ico{--ico:22px}
 .wdg .row .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -429,6 +493,9 @@ const esc = s => String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;")
 const SP = D.sprites || {};
 const byId = Object.fromEntries(D.items.map(i => [i.id, i]));
 const enchById = Object.fromEntries((D.enchants||[]).map(e => [e.id, e]));
+// The slots that hold something that shoots. Same six the build uses to decide whether
+// an item's damage number is a weapon DPS or an ability proc.
+const WEAPON_SLOT_SET = new Set([1,2,3,8,17,24]);
 // source name -> bestiary biome, for the "click a place, see its mobs" jump. The
 // infographic is organised by realm BIOME, not by dungeon, so only realm/biome sources
 // can link into it - a Lost Halls door has nowhere to go.
@@ -444,6 +511,10 @@ const S = {
   petGear: LS("rm.petGear")===true,
   enchTop: LS("rm.enchTop")!==false,   // he only cares about the best roll; default on
   petFrom: null, petTo: null,
+  // biome name -> "g" (hunting here) or "r" (done). Kept out of S.biome, which is just
+  // where the view is scrolled to.
+  biomeMark: (LS("rm.biomeMark") && typeof LS("rm.biomeMark")==="object"
+              && !Array.isArray(LS("rm.biomeMark"))) ? LS("rm.biomeMark") : {},
   theme: LS("rm.theme") || "roadmap",
   opacity: (typeof LS("rm.widgetOpacity")==="number") ? LS("rm.widgetOpacity") : 0.92,
   kit: (LS("rm.kit") && typeof LS("rm.kit")==="object" && !Array.isArray(LS("rm.kit")))?LS("rm.kit"):{},
@@ -515,8 +586,8 @@ function srcDoors(it){
   if (!it.sources.length){
     return `<span class="dim" title="nothing in the client files, the RealmEye capture or the derived layer says where this drops — for a UT or ST that is a genuine gap">—</span>`;
   }
-  // Icons alone looked good and told you nothing you could act on. The point of this
-  // column is WHERE TO GO, so the first source names itself; the rest stay as art.
+  // Art only, name on hover. Spelling out "Cnidarian Reef" in every row ate 330px of a
+  // table whose other columns needed it, and the door is what you recognise anyway.
   const parts = it.sources.map(s => {
     const key = s.name || ("ORG_" + s.code);
     const e = SRCI[key] || {};
@@ -529,10 +600,13 @@ function srcDoors(it){
       ? `<span class="door" title="${esc(p.label)}">${ico(p.e.sp)}${p.e.boss!=null?ico(p.e.boss):""}</span>`
       : "";
   const rest = parts.slice(1);
+  // A source with no door art has nothing to show, so it keeps its name - an event or an
+  // ST set would otherwise be a blank cell.
+  const nameless = parts.filter(p => p.e.sp == null);
   return `<span class="dropin">
-      <span class="doors">${art(first)}${rest.map(art).join("")}</span>
-      <span class="dname" title="${esc(first.label)}">${esc(first.key)}</span>
-      ${rest.length?`<span class="more" title="${esc(rest.map(p=>p.key).join(" · "))}">+${rest.length}</span>`:""}
+      <span class="doors">${parts.map(art).join("")}</span>
+      ${nameless.length?`<span class="dname" title="${esc(nameless[0].label)}">${
+        esc(nameless[0].key)}</span>`:""}
     </span>`;
 }
 function tierTag(it){
@@ -561,8 +635,12 @@ function filterFn(){
     if (sf === "gap" && (it.sk !== "none" || (it.tier !== "UT" && it.tier !== "ST"))) return false;
     // Unobtainable items are out of the way unless you ask for them. The list is
     // curated in data/unobtainable.json because the client does not mark them.
-    if (!sg && it.gone) return false;
-    if (hr && (it.reskin || it.shiny || it.legacy)) return false;
+    //
+    // Legacy re-releases ride the same switch. They cannot be obtained either, and an
+    // OLD badge next to a name you recognise is worse than not showing it: it reads as
+    // a farmable item until you notice the tag.
+    if (!sg && (it.gone || it.legacy)) return false;
+    if (hr && (it.reskin || it.shiny)) return false;
     if (q){
       const hay = (it.name+" "+it.desc+" "+it.sources.map(s=>s.name||s.code).join(" ")).toLowerCase();
       if (!hay.includes(q)) return false;
@@ -651,8 +729,8 @@ function itemsView(){
        <option value="known">has a dungeon</option>
        <option value="gap">missing (UT/ST only)</option>
      </select>
-     <label><input type="checkbox" id="hidere"> hide reskins, shinies &amp; legacy<span class="dim" id="hidn"></span></label>
-     <label title="Items that can no longer be obtained. The game files do not mark these, so the list is curated by hand in data/unobtainable.json."><input type="checkbox" id="showgone"> show unobtainable<span class="dim" id="gonen"></span></label>
+     <label><input type="checkbox" id="hidere"> hide reskins &amp; shinies<span class="dim" id="hidn"></span></label>
+     <label title="Items that can no longer be obtained: the curated list in data/unobtainable.json, plus every legacy re-release. Hidden by default. The client files do not record which legacy items the Time Chamber still drops, so if you have keys, switch this on."><input type="checkbox" id="showgone"> show unobtainable &amp; legacy<span class="dim" id="gonen"></span></label>
      <span class="spacer" id="count"></span>
    </div>
    <div class="body">
@@ -668,10 +746,10 @@ function drawItems(){
   $("#count").textContent = `${rows.length} of ${slotItems(slot).length}`+
       (slot===9?" · rings shared by all classes":"");
   const hn=$("#hidn");
-  if(hn){ const hidden=slotItems(slot).filter(i=>i.reskin||i.shiny||i.legacy).length;
+  if(hn){ const hidden=slotItems(slot).filter(i=>i.reskin||i.shiny).length;
           hn.textContent = hidden?` (${hidden})`:""; }
   const gn=$("#gonen");
-  if(gn){ const g=slotItems(slot).filter(i=>i.gone).length;
+  if(gn){ const g=slotItems(slot).filter(i=>i.gone||i.legacy).length;
           gn.textContent = g?` (${g})`:""; }
   // No Slots column: it is 4 dots that mean nothing until you are actually planning
   // enchants, and that now lives in Track and in the detail pane.
@@ -679,15 +757,18 @@ function drawItems(){
   // left. Without it the Item column absorbed all the slack and opened a canyon between
   // an item's name and its bag.
   $("#list").innerHTML = rows.length ? `<table class="items"><thead><tr>
-      <th style="width:82px"></th><th style="width:300px">Item</th>
+      <th style="width:82px"></th><th style="width:252px">Item</th>
       <th style="width:46px" title="loot bag rarity">Bag</th>
-      <th style="width:66px" class="num">DPS*</th>
-      <th style="width:330px">Drops in</th><th></th></tr></thead><tbody>${
+      <th style="width:62px" class="num">DPS*</th>
+      <th title="what the item gives you while it is equipped">On equip</th>
+      <th style="width:104px" title="hover a door for the place it drops">Drops in</th>
+      <th></th></tr></thead><tbody>${
     rows.map(i=>`<tr data-id="${esc(i.id)}" aria-selected="${S.sel===i.id}"
       class="${S.track.includes(i.id)?'tracked':''}" title="click to track / untrack">
       <td>${icoPair(i)}</td>
       <td class="nm">${esc(i.name)} ${tierTag(i)}</td><td>${bagIco(i)}</td>
       <td class="num ${i.rel?"hi":""}">${i.rel!=null?Math.round(i.rel):""}${i.multi?'<span class="dim" title="fires several sub-attacks">~</span>':""}</td>
+      <td>${itemChips(i)}</td>
       <td>${srcDoors(i)}</td><td></td>
     </tr>`).join("")}</tbody></table>`
     : `<div class="empty">Nothing matches.<br>Clear the search or the type filter.</div>`;
@@ -702,10 +783,15 @@ function drawDetail(){
   const shinyDiffers = sh && (sh.rel !== it.rel || JSON.stringify(sh.dmg) !== JSON.stringify(it.dmg));
   const rows=[]; const add=(k,v)=>{ if(v!=null&&v!=="") rows.push(`<div class="drow"><span>${k}</span><span>${v}</span></div>`); };
   add("Slot", it.slotName); add("Type", it.tier||"—");
-  if(it.dmg) add("Damage", `${it.dmg[0]}–${it.dmg[1]}`);
-  if(it.rof!=null) add("Rate of fire", it.rof+"×");
-  if(it.shots!=null) add("Shots", it.shots);
-  if(it.rel!=null) add("Relative DPS*", Math.round(it.rel));
+  // Weapons get the full damage table below instead; repeating the same four numbers
+  // here just made the reader check whether they agreed.
+  const isWeapon = WEAPON_SLOT_SET.has(it.slot);
+  if(!isWeapon){
+    if(it.dmg) add("Damage", `${it.dmg[0]}–${it.dmg[1]}`);
+    if(it.rof!=null) add("Rate of fire", it.rof+"×");
+    if(it.shots!=null) add("Shots", it.shots);
+    if(it.rel!=null) add("Proc damage*", Math.round(it.rel));
+  }
   if(it.mp!=null) add("MP cost", it.mp);
   if(it.chance) add("Slot odds", it.chance.map((x,k)=>
       `${k+1}:${x>=1?"100":x<=0?"0":Math.round(x*100)}%`).join(" "));
@@ -748,18 +834,19 @@ function drawDetail(){
       ${esc(sh.name)}: ${sh.dmg?`${sh.dmg[0]}–${sh.dmg[1]} dmg`:""}${
       sh.rel!=null?`, DPS* ${Math.round(sh.rel)} vs ${it.rel!=null?Math.round(it.rel):"?"}`:""}.</span>`:""}
     <div class="dsec">Stats</div>${rows.join("")}
+    ${damagePanel(it)}
     ${bonus?`<div class="dsec">On equip — flat</div>${bonus}`:""}
     ${scaled?`<div class="dsec">On equip — scaled off another stat</div>${scaled}
        <div class="dim" style="margin-top:4px">These are not flat points and are <b>not</b> added to
        the Kit totals.</div>`:""}
     ${effects?`<div class="dsec">Effects</div>${effects}`:""}
     <div class="dsec">Source</div><div>${srcText(it)}</div>${notes}
-    <div class="dsec">Notes</div>
-    <div class="dim">* Relative DPS = average damage × rate of fire × shots, summed across every
+    ${isWeapon?"":`<div class="dsec">Notes</div>`}
+    ${isWeapon?"":`<div class="dim">* Proc damage = average damage × rate of fire × shots, summed across every
     sub-attack the item declares. Good for ranking weapons of the same class against each other.
     It is <b>not</b> scaled by your ATT or DEX, and it is not the number the game shows you.
     ${it.multi?`This item fires <b>${it.multi} sub-attacks</b>, so treat it as an estimate.`:""}
-    ${it.relAssumed?`This item declares no rate of fire, so 1× was assumed.`:""}</div>
+    ${it.relAssumed?`This item declares no rate of fire, so 1× was assumed.`:""}</div>`}
     ${it.ptag?`<div class="dim" style="margin-top:8px">The game's power tag (${esc(it.ptag)}) is
     <b>not</b> a quality ranking — tiers overlap heavily and some strong items carry none at all.
     Use DPS and the on-equip bonuses instead.</div>`:""}`;
@@ -800,8 +887,8 @@ function kitView(){
       ? `<div class="dim">Equip something above first.</div>`
       : `<table class="items"><tbody>${kit.map(id=>id&&byId[id]).filter(Boolean)
             .map(trackRow).join("")}</tbody></table>`}
-    <div class="dsec">Weapon</div>
-    <div class="dim">${w&&w.rel!=null?`${esc(w.name)} — relative DPS* ${Math.round(w.rel)}`:"No weapon equipped."}</div>
+    ${w?damagePanel(w):`<div class="dsec">Damage</div>
+      <div class="dim">No weapon equipped.</div>`}
     <div class="dsec">Honest limits</div>
     <div class="dim">Class stats are read straight from the game files — both the level-1 base and the
       <b>maxed</b> value (the <code>max</code> attribute on each stat). Gear bonuses are exact, from each
@@ -1182,17 +1269,42 @@ function trackDungeon(key, list){
       list.map(trackRow).join("")}</tbody></table></div>`;
 }
 
+// The bands are drawn top-to-bottom in the infographic, so list them that way rather
+// than alphabetically: the rail then reads in the same order as the picture beside it.
+function biomeOrder(){
+  return Object.keys(BIOME_BANDS).sort((a,b) => BIOME_BANDS[a].y0 - BIOME_BANDS[b].y0);
+}
+
 function bestiaryView(){
+  const rows = biomeOrder().map(b => {
+    const st = S.biomeMark[b] || "";
+    return `<div class="brow ${st==="g"?"on":st==="r"?"off":""}">
+      <button class="bmark g" type="button" data-bmark="g|${esc(b)}"
+        aria-pressed="${st==="g"}" title="Hunting here — light it up">&#10003;</button>
+      <button class="bmark r" type="button" data-bmark="r|${esc(b)}"
+        aria-pressed="${st==="r"}" title="Done with it — darken it">&#10005;</button>
+      <button class="bname" type="button" data-bgo="${esc(b)}"
+        title="Jump to ${esc(b)}${BIOME_BANDS[b].exact===false?" — this band's top edge is inferred":""}">${
+        esc(b)}${BIOME_BANDS[b].exact===false?`<span class="approx" title="the top edge of this band is inferred, not measured">~</span>`:""}</button>
+    </div>`;
+  }).join("");
+  const marked = Object.values(S.biomeMark).filter(Boolean).length;
   return `<div class="hint">Realm bestiary &mdash; which mobs drop which biome whites, set pieces and
     biome events. <b>Community infographic by GHZD</b>, not game data, so it is not cross-checked
     against the client. Scroll to zoom, drag to pan.
     <button class="mini" data-bfit>fit</button><button class="mini" data-b100>100%</button>
-    ${Object.keys(BIOME_BANDS).length?`<select id="bgo" title="jump to a biome">
-      <option value="">jump to a biome…</option>${Object.keys(BIOME_BANDS).sort().map(b=>
-        `<option ${S.biome===b?"selected":""}>${esc(b)}</option>`).join("")}</select>`:""}</div>
-    <div class="bwrap" id="bwrap"><img id="bimg" alt="Realm bestiary" draggable="false">
-      <div class="bband" id="bband" hidden></div></div>`;
+    ${marked?`<button class="mini" data-bclear>clear ${marked} mark${marked===1?"":"s"}</button>`:""}</div>
+    <div class="bestiary">
+      <div class="brail">
+        <div class="railhead">Biomes</div>
+        ${rows||`<div class="dim" style="padding:8px 10px">No bands measured.</div>`}
+      </div>
+      <div class="bwrap" id="bwrap"><img id="bimg" alt="Realm bestiary" draggable="false">
+        <div class="bshade" id="bshade"></div>
+        <div class="bband" id="bband" hidden></div></div>
+    </div>`;
 }
+
 function wireBestiary(){
   const wrap=$("#bwrap"), img=$("#bimg");
   if(!img.src){                                   // decode on first open, not on page load
@@ -1208,7 +1320,34 @@ function wireBestiary(){
       band.style.transform=`translate(${x}px,${y+b.y0*z}px)`;
       band.style.width=(img.naturalWidth*z)+"px";
       band.style.height=((b.y1-b.y0)*z)+"px";
-    } else if(band){ band.hidden=true; } };
+    } else if(band){ band.hidden=true; }
+    drawShade(); };
+
+  // Green = hunting here, red = done with it. A band is dimmed if it is red, or if
+  // anything at all is green and this one is not - so marking one biome green fades the
+  // whole rest of the sheet, which is the point of marking it.
+  const shade=$("#bshade");
+  function drawShade(){
+    if(!shade || !img.naturalWidth) return;
+    const anyGreen=Object.values(S.biomeMark).some(v=>v==="g");
+    const parts=biomeOrder().filter(n2=>{
+      const m2=S.biomeMark[n2];
+      return m2==="r" || (anyGreen && m2!=="g");
+    }).map(n2=>{
+      const bb=BIOME_BANDS[n2];
+      // A band you marked red is darker than one that is merely not-green, or "done
+      // with it" and "not chosen yet" would look identical.
+      return `<div class="bdim${S.biomeMark[n2]==="r"?" red":""}"
+        style="transform:translate(${x}px,${y+bb.y0*z}px);
+        width:${img.naturalWidth*z}px;height:${(bb.y1-bb.y0)*z}px"></div>`;
+    });
+    const lit=biomeOrder().filter(n2=>S.biomeMark[n2]==="g").map(n2=>{
+      const bb=BIOME_BANDS[n2];
+      return `<div class="blit" style="transform:translate(${x}px,${y+bb.y0*z}px);
+        width:${img.naturalWidth*z}px;height:${(bb.y1-bb.y0)*z}px"></div>`;
+    });
+    shade.innerHTML=parts.join("")+lit.join("");
+  }
   const fit=()=>{ if(!img.naturalWidth) return;
     z=Math.min(wrap.clientWidth/img.naturalWidth, wrap.clientHeight/img.naturalHeight);
     x=(wrap.clientWidth-img.naturalWidth*z)/2; y=0; apply(); };
@@ -1232,10 +1371,28 @@ function wireBestiary(){
   wrap.addEventListener("pointercancel", ()=>{ drag=null; });
   const bar=wrap.parentNode;
   bar.addEventListener("click", e=>{
+    if(e.target.closest("[data-bclear]")){ S.biomeMark={}; LSet("rm.biomeMark",{}); render(); return; }
     if(e.target.closest("[data-bfit]")){ S.biome=null; fit(); }
     else if(e.target.closest("[data-b100]")){ z=1; x=0; y=0; apply(); } });
-  const sel=$("#bgo");
-  if(sel) sel.addEventListener("change", ()=>{ if(sel.value) goto_(sel.value); else { S.biome=null; fit(); } });
+  const rail=$(".brail");
+  if(rail) rail.addEventListener("click", e=>{
+    const go=e.target.closest("[data-bgo]");
+    if(go){ goto_(go.dataset.bgo); return; }
+    const mk=e.target.closest("[data-bmark]");
+    if(!mk) return;
+    const [want,name]=mk.dataset.bmark.split("|");
+    // Clicking the mark it already has clears it, so a biome can go back to neutral
+    // without a third button to explain.
+    if(S.biomeMark[name]===want) delete S.biomeMark[name]; else S.biomeMark[name]=want;
+    LSet("rm.biomeMark", S.biomeMark);
+    // Repaint the rail in place: re-rendering the view would reload the 2 MB image and
+    // throw away the pan and zoom.
+    const row=mk.closest(".brow");
+    row.className="brow "+(S.biomeMark[name]==="g"?"on":S.biomeMark[name]==="r"?"off":"");
+    row.querySelectorAll("[data-bmark]").forEach(bt=>
+      bt.setAttribute("aria-pressed", String(S.biomeMark[name]===bt.dataset.bmark.split("|")[0])));
+    drawShade();
+  });
 }
 
 function enchView(){
@@ -1434,6 +1591,165 @@ function kitItems(){
 // The dots are DRAWN, not extracted: there is no pip art in the sprite sheets.
 const TIERS = {1:["I","#4ee39a"], 2:["II","#4ec8e3"],
                3:["III","#b46ce8"], 4:["IV","#ffcf4a"]};
+// ---------------------------------------------------------------------------
+// Stat chips.
+//
+// A row of "+6.6 VIT / -3 ATT" reads at a glance in a way an English sentence never
+// will, which is the whole reason to prefer it over the enchantment's own description.
+//
+// The bottle is the game's own stat-potion sprite and the three-letter colour is taken
+// from that bottle's own pixels, so nothing here is a palette somebody typed in: the
+// client says which potion raises which stat, and the art says what colour it is.
+// The sign is what turns green or red - a debuff on an otherwise good enchantment is
+// the thing you actually need to spot.
+// ---------------------------------------------------------------------------
+const STATSP = (SP.stats) || {};
+const STATCOL = (SP.statColors) || {};
+// Three letters, so a column of them lines up. MAXHP/MAXMP are what the files call
+// them; nobody says that out loud.
+const STAT3 = { MAXHP: "LIF", MAXMP: "MAN", ATT: "ATT", DEF: "DEF", SPD: "SPD",
+                DEX: "DEX", VIT: "VIT", WIS: "WIS" };
+
+// The on-equip stats of an ITEM, for the table. Flat only: a scaled bonus is a different
+// kind of number and the detail pane keeps the two apart for a reason.
+function itemChips(it){
+  const flat = it.bonus ? Object.entries(it.bonus) : [];
+  if(!flat.length && !(it.scaled||[]).length) return "";
+  return `<span class="chips tight">${
+    flat.map(([k,v]) => statChip(k, v)).join("")}${
+    (it.scaled||[]).length ? `<span class="chip" title="${esc((it.scaled||[]).map(x=>
+      `${x.stat} ${x.amt>0?"+":""}${x.amt}${x.of?` of ${x.of}`:""}`).join(" · "))}"><b
+      style="color:var(--shiny)">%</b><i>${it.scaled.length}</i></span>` : ""}</span>`;
+}
+
+function statChip(stat, amt, of){
+  const key = String(stat || "").toUpperCase();
+  const label = STAT3[key] || key.slice(0, 3);
+  const col = STATCOL[key] || "var(--ink)";
+  const n = +amt;
+  const sign = isNaN(n) ? "" : (n > 0 ? "+" : "");
+  const cls = isNaN(n) ? "" : (n > 0 ? "up" : n < 0 ? "down" : "");
+  return `<span class="chip" title="${esc(key)}${of ? ` — scaled off ${esc(of)}` : ""}">${
+    STATSP[key] != null ? ico(STATSP[key]) : ""
+  }<b style="color:${col}">${label}</b><i class="${cls}">${sign}${esc(String(amt))}${
+    of ? `<span class="of">% of ${esc(STAT3[of] || of)}</span>` : ""}</i></span>`;
+}
+
+// Every stat an enchantment moves, as chips. Flat and scaled are kept visually apart
+// for the same reason the item detail keeps them apart: they cannot be added together.
+function enchChips(e){
+  if (!e.mut || !e.mut.length) return "";
+  return `<div class="chips">${e.mut.map(m =>
+    statChip(m.stat, m.amt != null ? m.amt : m.mult, m.of)).join("")}</div>`;
+}
+
+// The multiplier half - "Damage x1.05" - which is not a stat and gets its own shape.
+const MXLABEL = { dmgMin: "min dmg", dmgMax: "max dmg", rof: "fire rate",
+                  speed: "proj speed", life: "proj range", size: "proj size", mp: "MP cost" };
+function enchMultChips(e){
+  if (!e.mx) return "";
+  const rows = Object.entries(e.mx).filter(([k]) => k !== "only");
+  if (!rows.length) return "";
+  return `<div class="chips">${rows.map(([k, v]) => {
+    const up = v > 1;
+    return `<span class="chip"><b>${MXLABEL[k] || k}</b><i class="${up ? "up" : "down"}">${
+      up ? "+" : ""}${Math.round((v - 1) * 1000) / 10}%</i></span>`;
+  }).join("")}</div>`;
+}
+
+// ---------------------------------------------------------------------------
+// Damage, with the enchantments you have planned.
+//
+// The <Mutators> block of an enchantment carries the multiplier the description only
+// states in English: "Increases Weapon Damage by 5%" ships as MultiplyMinDamage 1.05.
+// 55 enchantments carry one, they all apply to every projectile (projectileId="-1"),
+// and they multiply, so the whole calculation here is exact arithmetic on numbers the
+// client states outright.
+//
+// What is NOT here, and cannot be: the client contains no formula relating your Attack
+// or Dexterity to damage, and no defense model. So the absolute DPS below is the same
+// pre-stat number the Items table ranks on. The PERCENTAGES are unaffected by that -
+// a missing constant factor cancels out of a ratio - so "+10% with these enchants" is
+// exactly right even though "123 DPS" is a comparison number rather than a game number.
+// ---------------------------------------------------------------------------
+
+// Enchantments planned for an item, as objects, in slot order.
+function planned(it){
+  return (S.ench[it.id] || []).map(id => id && enchById[id]).filter(Boolean);
+}
+
+function weaponMath(it, ench){
+  const m = { dmgMin:1, dmgMax:1, rof:1, speed:1, life:1, size:1, mp:1 };
+  (ench || []).forEach(e => Object.entries(e.mx || {}).forEach(([k, v]) => {
+    if (k !== "only" && k in m) m[k] *= v;
+  }));
+  const dmg = it.dmg || null;
+  // The damage multipliers hit every projectile, so their effect on DPS is a plain ratio
+  // on the average - which lets this scale it.rel rather than re-deriving it. That matters
+  // for the multi-mode weapons, whose rel sums several sub-attacks with different rates.
+  const avgMult = dmg && (dmg[0] + dmg[1])
+    ? (dmg[0]*m.dmgMin + dmg[1]*m.dmgMax) / (dmg[0] + dmg[1])
+    : m.dmgMax;
+  return {
+    m,
+    dmg,
+    newDmg: dmg ? [dmg[0]*m.dmgMin, dmg[1]*m.dmgMax] : null,
+    rof: it.rof, newRof: it.rof != null ? it.rof * m.rof : null,
+    rel: it.rel, newRel: it.rel != null ? it.rel * avgMult * m.rof : null,
+    dpsMult: avgMult * m.rof,
+    // Range is speed x lifetime: the projectile's own distance is one times the other.
+    rangeMult: m.speed * m.life,
+    mpMult: m.mp,
+    sizeMult: m.size,
+  };
+}
+
+const pct = x => `${x >= 1 ? "+" : ""}${Math.round((x - 1) * 1000) / 10}%`;
+// Rate of fire lives around 0.3; one decimal place turned 0.33 into 0.3 and made a 5%
+// enchantment look like it did nothing at all.
+const n1 = x => Math.round(x * (Math.abs(x) < 10 ? 100 : 10)) / (Math.abs(x) < 10 ? 100 : 10);
+
+function damagePanel(it){
+  if (!it || !WEAPON_SLOT_SET.has(it.slot)) return "";
+  const ench = planned(it);
+  const w = weaponMath(it, ench);
+  const changed = ench.some(e => e.mx);
+  const col = (label, base, after, mult) =>
+    `<tr><td class="k">${label}</td><td class="num">${base}</td>` +
+    (changed ? `<td class="num hi">${after}</td>
+      <td class="num ${mult > 1 ? "up" : mult < 1 ? "down" : "dim"}">${
+        mult === 1 ? "&mdash;" : pct(mult)}</td>` : "") + `</tr>`;
+
+  const rows = [
+    w.dmg ? col("Damage per shot", `${n1(w.dmg[0])}–${n1(w.dmg[1])}`,
+                `${n1(w.newDmg[0])}–${n1(w.newDmg[1])}`,
+                (w.m.dmgMin + w.m.dmgMax) / 2) : "",
+    it.shots != null ? col("Shots", it.shots, it.shots, 1) : "",
+    it.rof != null ? col("Rate of fire", `${n1(it.rof)}×`, `${n1(w.newRof)}×`, w.m.rof) : "",
+    it.rel != null ? col("<b>DPS*</b>", Math.round(it.rel), Math.round(w.newRel), w.dpsMult) : "",
+    w.rangeMult !== 1 ? col("Range", "1×", `${n1(w.rangeMult)}×`, w.rangeMult) : "",
+    it.mp != null && w.mpMult !== 1 ? col("MP cost", it.mp, n1(it.mp * w.mpMult), w.mpMult) : "",
+  ].filter(Boolean).join("");
+
+  const head = changed
+    ? `<thead><tr><th></th><th class="num">base</th>
+        <th class="num">with your ${ench.filter(e=>e.mx).length === 1 ? "enchant" : "enchants"}</th>
+        <th class="num"></th></tr></thead>` : "";
+
+  const which = ench.filter(e => e.mx).map(e => esc(e.name)).join(" · ");
+
+  return `<div class="dsec">Damage</div>
+    <table class="dmg">${head}<tbody>${rows}</tbody></table>
+    ${which ? `<div class="dim" style="margin-top:5px">Applying: ${which}</div>` : ""}
+    ${!changed && it.ench ? `<div class="dim" style="margin-top:5px">Plan enchantments for this
+      item in <b>Kit</b> and this table gains a second column.</div>` : ""}
+    <div class="dim" style="margin-top:6px;line-height:1.5">* The client carries no formula
+      relating your <b>Attack</b> or <b>Dexterity</b> to damage, and no defense model, so the
+      absolute number is a comparison figure rather than what the game will show you. The
+      <b>percentages are exact</b> either way &mdash; the missing factor cancels out of a
+      ratio.</div>`;
+}
+
 function tierDots(t, top){
   const n = +String(t).replace("TIER","");
   const v = TIERS[n];
@@ -1499,7 +1815,8 @@ function drawEnch(){
       <div class="ehead">${e.sp!=null?ico(e.sp):""}<div>
         <div class="nm">${esc(e.name)}</div>
         ${tierDots(e.tier, e.top && !topOnly)}</div></div>
-      <div class="dim edesc">${esc(e.desc)}</div>
+      ${enchChips(e)}${enchMultChips(e)}
+      ${(e.mut&&e.mut.length)||e.mx?"":`<div class="dim edesc">${esc(e.desc)}</div>`}
       ${e.excl.length?`<div class="eexcl">cannot share a slot with: ${esc(e.excl.join(", "))}</div>`:""}
     </div>`).join("")}</div>
     ${pool.length>500?`<div class="empty">Showing 500 of ${pool.length}. Narrow it down.</div>`:""}
@@ -1548,8 +1865,8 @@ function fitWidget(){
   if(!list) return;
   // Measure the COLLAPSED list. Sizing to fit an expanded one would shrink every icon
   // to nothing the moment you opened a dungeon with a lot in it.
-  // Restore each one to what it WAS. Un-hiding them all unconditionally is how the
-  // first version of this expanded every dungeon the moment it measured anything.
+  // Measure the doors alone. Sizing to fit an expanded panel too would shrink every
+  // icon to nothing the moment you opened a place with a lot in it.
   const drops = [...list.querySelectorAll(".drops")].map(d => [d, d.hidden]);
   drops.forEach(([d]) => { d.hidden = true; });
   for(const px of WICO){
@@ -1572,20 +1889,25 @@ function renderWidget(){
                   : `<div class="ico none"></div>`;
         return `<button class="dg" type="button" data-wdg="${esc(k)}"
             aria-expanded="${open}" title="${esc(k)}${e.diff!=null?` — difficulty ${e.diff}`:""}">
-            ${art}<span class="nm">${esc(k)}</span><span class="n">${n}</span></button>` +
-          `<div class="drops"${open?"":" hidden"}>${g[k].map(i =>
-            `<div class="row">${ico(i.sp)}<span class="n">${esc(i.name)}</span></div>`).join("")}</div>`;
+            ${art}<span class="nm">${esc(k)}</span>${n>1?`<span class="n">${n}</span>`:""}</button>`;
       }).join("")
     : `<div class="empty">Nothing tracked.<br>Click items in the main window and they show up here.</div>`;
 
   const places = keys.length;
+  // The expanded list sits under the whole grid, not inside it: an inline panel would
+  // break the wrap and shove every later door onto a new line.
+  const cur = wOpen && g[wOpen];
+  const open = cur
+    ? `<div class="drops"><div class="dtitle">${esc(wOpen)}</div>${cur.map(i =>
+        `<div class="row">${ico(i.sp)}<span class="n">${esc(i.name)}</span></div>`).join("")}</div>`
+    : "";
   document.body.innerHTML = `<div class="wdg">
     <div class="bar" data-tauri-drag-region>
       <span class="t" data-tauri-drag-region>${places} place${places===1?"":"s"} &middot;
         ${S.track.length} item${S.track.length===1?"":"s"}</span>
       <button id="wdg-x" type="button" title="Close overlay">&#10005;</button>
     </div>
-    <div class="list" id="wlist">${body}</div>
+    <div class="list" id="wlist"><div class="dgs">${body}</div>${open}</div>
   </div>`;
 
   document.getElementById("wdg-x").onclick = () => {
