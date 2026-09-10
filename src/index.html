@@ -9,6 +9,10 @@
    THEME TOKENS — this block is the entire skin. Nothing below hardcodes a colour.
    ========================================================================= */
 :root{
+  /* Every theme here is dark. Saying so lets the platform draw its own widgets - select
+     popups, the search field's clear button, text carets, and the fallback scrollbar -
+     in dark rather than the bright default. */
+  color-scheme: dark;
   --bg:#0a0c0f; --bg-panel:#0f1318; --bg-hover:#19212a;
   --line:#212b35; --line-soft:#171f27;
   --ink:#c9d4de; --ink-dim:#7c8b99; --ink-faint:#4d5b68;
@@ -28,6 +32,28 @@
   --atlas:url("__SPRITE_ATLAS__");
   --ico:32px;                       /* 16px art; use multiples of 16 to stay crisp */
 }
+/* ---- scrollbars -----------------------------------------------------------
+   Drawn from the same tokens as everything else, so each theme gets its own. The
+   thumb is a 5px bar floating inside an 11px gutter: the transparent border plus
+   background-clip is what insets it, since a scrollbar thumb has no margin.
+
+   Chromium ignores ::-webkit-scrollbar entirely once the standard scrollbar-width /
+   scrollbar-color are set on the same element, so those are gated to engines with no
+   ::-webkit-scrollbar at all - Firefox, which only ever sees the shipped single-file
+   roadmap.html. WebView2 keeps the custom one. */
+::-webkit-scrollbar{width:11px;height:11px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px;min-height:28px;
+  border:3px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-thumb:hover{background:var(--accent-dim);background-clip:padding-box}
+::-webkit-scrollbar-corner{background:transparent}
+@supports not selector(::-webkit-scrollbar){
+  *{scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+}
+/* The overlay is 340px wide; a full-size gutter is a real fraction of it. */
+body.widget ::-webkit-scrollbar{width:8px}
+body.widget ::-webkit-scrollbar-thumb{border-width:2px}
+
 *{box-sizing:border-box}
 html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:var(--fs)/1.45 var(--font);-webkit-font-smoothing:antialiased}
