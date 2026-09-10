@@ -11,11 +11,11 @@ and it happens exactly once: in-app updates after this never show it again.
 | `{{SETUP}}` | `{{HSETUP}}` |
 | `{{ZIP}}` | `{{HZIP}}` |
 
-Check a download first with `Get-FileHash .\{{SETUP}} -Algorithm SHA256`.
+Check a download first with `Get-FileHash ".\{{SETUP}}" -Algorithm SHA256`.
 
 ### Portable ZIP
 
-Run `Unblock-File .\{{ZIP}}` **before** extracting, or Windows copies the download mark onto
+Run `Unblock-File ".\{{ZIP}}"` **before** extracting, or Windows copies the download mark onto
 the .exe inside and you get the same prompt anyway. The portable build does not self-update.
 
 ### No install at all

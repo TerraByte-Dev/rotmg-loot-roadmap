@@ -16,7 +16,7 @@ first launch shows **"Windows protected your PC"** — click **More info → Run
 happens exactly once; in-app updates after that never show it again. Every release lists the
 SHA-256 of both files if you want to check the download first.
 
-There is also a portable ZIP. Run `Unblock-File .\RotMG-Loot-Roadmap_*_x64_portable.zip`
+There is also a portable ZIP. Run `Unblock-File ".\RotMG-Loot-Roadmap_*_x64_portable.zip"`
 **before** extracting it, or Windows copies its download mark onto the .exe inside and you get
 the same prompt anyway. The portable build does not self-update.
 
