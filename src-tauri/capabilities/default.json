@@ -1,0 +1,16 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Local-only overlay window. Reads its own geometry, toggles always-on-top for the pin button, and nothing else. Opacity is an app command and is deliberately not in this list - app commands are not ACL-gated unless the app ships its own permissions manifest, and this one does not.",
+  "platforms": [
+    "windows"
+  ],
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "core:default",
+    "core:window:allow-set-always-on-top",
+    "updater:default"
+  ]
+}

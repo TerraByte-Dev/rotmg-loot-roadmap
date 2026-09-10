@@ -1,0 +1,878 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RotMG Loot Roadmap</title>
+<style>
+/* ============================================================================
+   THEME TOKENS — this block is the entire skin. Nothing below hardcodes a colour.
+   ========================================================================= */
+:root{
+  --bg:#0a0c0f; --bg-panel:#0f1318; --bg-hover:#19212a;
+  --line:#212b35; --line-soft:#171f27;
+  --ink:#c9d4de; --ink-dim:#7c8b99; --ink-faint:#4d5b68;
+  --accent:#4ee39a; --accent-dim:#1f6b48; --accent-glow:rgba(78,227,154,.13);
+
+  /* item types — coloured the way the game colours them */
+  --ut:#b46ce8;    --ut-bg:rgba(180,108,232,.14);   /* UT reads purple in game */
+  --st:#ffab4a;    --st-bg:rgba(255,171,74,.14);
+  --td:#8794a1;    --td-bg:rgba(135,148,161,.10);
+  --shiny:#5fd8ff; --shiny-bg:rgba(95,216,255,.14);
+
+  --warn:#ffb347; --warn-bg:rgba(255,179,71,.10);
+  --good:#4ee39a;
+
+  --font: ui-monospace,"Cascadia Mono","JetBrains Mono","SF Mono",Consolas,monospace;
+  --fs:13.5px; --radius:3px;
+  --atlas:url("__SPRITE_ATLAS__");
+  --ico:32px;                       /* 16px art; use multiples of 16 to stay crisp */
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:var(--fs)/1.45 var(--font);-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit}
+
+.app{display:grid;grid-template-columns:180px 1fr;height:100vh}
+@media(max-width:900px){.app{grid-template-columns:1fr;height:auto}}
+
+.rail{background:var(--bg-panel);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.brand{padding:12px 13px 9px;border-bottom:1px solid var(--line)}
+.brand h1{margin:0;font-size:12px;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.brand .sub{color:var(--ink-faint);font-size:10px;margin-top:2px;white-space:pre-line;line-height:1.35}
+.railscroll{overflow-y:auto;min-height:0;flex:1;padding:6px 0}
+.railhead{padding:9px 13px 4px;color:var(--ink-faint);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase}
+.cls{display:flex;align-items:center;gap:7px;width:100%;text-align:left;background:none;border:0;
+     border-left:2px solid transparent;color:var(--ink-dim);padding:4px 13px;cursor:pointer}
+.cls:hover{background:var(--bg-hover);color:var(--ink)}
+.cls[aria-pressed=true]{background:var(--accent-glow);border-left-color:var(--accent);color:var(--accent)}
+.cls small{color:var(--ink-faint);font-size:9.5px;margin-left:auto}
+
+.main{display:flex;flex-direction:column;min-width:0;min-height:0}
+.topbar{display:flex;border-bottom:1px solid var(--line);background:var(--bg-panel);flex-wrap:wrap}
+.vtab{background:none;border:0;border-bottom:2px solid transparent;color:var(--ink-dim);
+      padding:9px 15px;cursor:pointer;letter-spacing:.05em}
+.vtab:hover{color:var(--ink);background:var(--bg-hover)}
+.vtab[aria-selected=true]{color:var(--accent);border-bottom-color:var(--accent)}
+.vtab .n{color:var(--ink-faint);font-size:9.5px;margin-left:6px}
+
+.tabs{display:flex;border-bottom:1px solid var(--line-soft);background:var(--bg-panel);flex-wrap:wrap}
+.tab{background:none;border:0;border-bottom:2px solid transparent;color:var(--ink-dim);
+     padding:7px 13px;cursor:pointer}
+.tab:hover{color:var(--ink);background:var(--bg-hover)}
+.tab[aria-selected=true]{color:var(--accent);border-bottom-color:var(--accent)}
+.tab .n{color:var(--ink-faint);font-size:9.5px;margin-left:6px}
+
+.bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:7px 13px;
+     border-bottom:1px solid var(--line-soft);background:var(--bg-panel)}
+.bar input[type=search],.bar select{background:var(--bg);border:1px solid var(--line);color:var(--ink);
+     padding:4px 7px;border-radius:var(--radius);outline:0}
+.bar input[type=search]{min-width:170px}
+.bar input:focus,.bar select:focus{border-color:var(--accent-dim)}
+.bar label{color:var(--ink-dim);display:flex;gap:5px;align-items:center;cursor:pointer;font-size:11.5px}
+.bar .spacer{margin-left:auto;color:var(--ink-faint);font-size:10.5px}
+
+.body{display:flex;flex:1;min-height:0}
+.scroll{overflow:auto;flex:1;min-height:0}
+
+/* sprites sit on nothing — the art is the thing */
+.ico{width:var(--ico);height:var(--ico);flex:0 0 auto;background-image:var(--atlas);
+     background-repeat:no-repeat;image-rendering:pixelated}
+.ico.none{background-image:none}
+.icopair{display:inline-flex;align-items:center;gap:2px;vertical-align:middle}
+.doors{display:inline-flex;align-items:center;gap:3px;flex-wrap:wrap}
+.door{display:inline-flex;cursor:help}
+.door .ico{--ico:26px}
+.doors .src{cursor:help}
+
+table{width:100%;border-collapse:collapse}
+thead th{position:sticky;top:0;z-index:2;background:var(--bg-panel);text-align:left;font-weight:500;
+  color:var(--ink-faint);letter-spacing:.13em;text-transform:uppercase;
+  padding:7px 10px;border-bottom:1px solid var(--line);white-space:nowrap;font-size:10.5px}
+tbody td{padding:4px 10px;border-bottom:1px solid var(--line-soft);white-space:nowrap;
+  overflow:hidden}   /* ellipsis lives on .nm / .dname, not here - on a sprite cell it
+                        rendered a stray dash next to every shiny pair */
+/* The item list is long by nature, so it is laid out FIXED. On auto layout the Item
+   column absorbed every spare pixel and left a canyon between a name and its bag. */
+table.items{table-layout:fixed}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--bg-hover)}
+tbody tr[aria-selected=true]{background:var(--accent-glow)}
+tbody tr.tracked{box-shadow:inset 3px 0 0 var(--st), inset 0 0 0 1px rgba(255,171,74,.20)}
+tbody tr.tracked .nm{color:var(--st)}
+.nm{color:var(--ink);overflow:hidden;text-overflow:ellipsis}
+/* door + boss + the dungeon's name, on one line, name allowed to truncate */
+.dropin{display:flex;align-items:center;gap:6px;min-width:0}
+.dropin .doors{flex:0 0 auto}
+.dropin .dname{color:var(--ink-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dropin .more{color:var(--ink-faint);flex:0 0 auto}
+.num{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink-dim)}
+.num.hi{color:var(--good)}
+.src{color:var(--ink-dim);font-size:12.5px}
+.src.raw{color:var(--ink-faint);font-style:italic}
+.dim{color:var(--ink-faint)}
+
+.tg{display:inline-block;font-size:10px;padding:0 5px;border-radius:var(--radius);letter-spacing:.06em;font-weight:600}
+.tg-UT{color:var(--ut);background:var(--ut-bg)}
+.tg-ST{color:var(--st);background:var(--st-bg)}
+.tg-Tiered{color:var(--td);background:var(--td-bg)}
+.tg-sh{color:var(--shiny);background:var(--shiny-bg)}
+.tg-old{color:var(--ink-faint);border:1px solid var(--line)}
+.star{background:none;border:0;color:var(--ink-faint);cursor:pointer;padding:0 2px;font-size:13px;line-height:1}
+.star.on{color:var(--st)}
+
+.detail{width:320px;flex:0 0 auto;border-left:1px solid var(--line);background:var(--bg-panel);
+        overflow:auto;padding:13px}
+.detail.empty{color:var(--ink-faint);display:flex;align-items:center;justify-content:center;text-align:center}
+.detail h3{margin:0 0 2px;font-size:15px;color:var(--ink)}
+.dhead{display:flex;gap:9px;align-items:flex-start;margin-bottom:9px}
+.dhead .ico{--ico:48px}
+.drow{display:flex;justify-content:space-between;gap:10px;padding:2px 0;border-bottom:1px solid var(--line-soft)}
+.drow span:first-child{color:var(--ink-faint)}
+.ddesc{color:var(--ink-dim);margin:9px 0;line-height:1.5}
+.dsec{color:var(--ink-faint);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;margin:13px 0 5px}
+.note{display:block;color:var(--warn);background:var(--warn-bg);border-left:2px solid var(--warn);
+      padding:4px 7px;margin-top:5px;font-size:11px;line-height:1.45}
+
+.kit{padding:13px;overflow:auto;flex:1}
+.kitslots{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:6px}
+.kitslot{border:1px solid var(--line);border-radius:var(--radius);background:var(--bg-panel);padding:9px;min-height:74px}
+.kitslot.filled{border-color:var(--accent-dim)}
+.kitslot .lbl{color:var(--ink-faint);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;margin-bottom:5px}
+.kitslot .pick{display:flex;gap:8px;align-items:center;cursor:pointer}
+.kitslot .pick .ico{--ico:32px}
+.statgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:6px}
+.stat{border:1px solid var(--line-soft);border-radius:var(--radius);padding:5px 8px;background:var(--bg-panel)}
+.stat .k{color:var(--ink-faint);font-size:9.5px;letter-spacing:.1em}
+.stat .v{font-size:15px;color:var(--ink)}
+.stat .b{color:var(--good);font-size:11px}
+
+.dungeon{display:flex;gap:9px;align-items:center;padding:4px 13px;border-bottom:1px solid var(--line-soft);cursor:pointer}
+.dungeon:hover{background:var(--bg-hover)}
+.dungeon .ico{--ico:32px}
+.empty{padding:34px 14px;color:var(--ink-faint);text-align:center;line-height:1.7}
+.egrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:7px;padding:11px 13px}
+.ecard{border:1px solid var(--line);border-radius:var(--radius);background:var(--bg-panel);padding:8px 10px}
+.ehead{display:flex;gap:8px;align-items:center;margin-bottom:4px}
+.ehead .ico{--ico:24px}
+.tier{display:flex;align-items:center;gap:5px;font-size:10.5px;margin-top:1px}
+.pips{display:inline-flex;gap:2px}
+.pips i{width:5px;height:5px;border-radius:50%;display:block}
+td .pips{display:inline-flex;gap:2px;align-items:center}
+.edesc{white-space:normal;line-height:1.45}
+.eexcl{margin-top:5px;color:var(--warn);font-size:10.5px;white-space:normal}
+.plan{padding:10px 13px;border-bottom:1px solid var(--line)}
+.trackhead{display:flex;gap:10px;align-items:center;padding:11px 13px 7px;
+  border-top:1px solid var(--line-soft);position:sticky;top:0;background:var(--bg-panel);z-index:1}
+.trackhead .ico{--ico:36px}
+.trackhead.go{cursor:pointer}
+.trackhead.go:hover .nm{color:var(--accent)}
+.eslots{display:inline-flex;gap:4px;align-items:center}
+.eslot{background:none;border:1px dashed var(--line);color:var(--ink-faint);cursor:pointer;
+  width:30px;height:30px;border-radius:var(--radius);padding:0;
+  display:inline-flex;align-items:center;justify-content:center;font-size:14px;line-height:1}
+.eslot:hover{border-color:var(--accent-dim);color:var(--accent)}
+.eslot.on{border-style:solid;border-color:var(--accent-dim)}
+.eslot .ico{--ico:24px}
+.planrow{display:flex;gap:9px;align-items:center;padding:3px 0}
+.planrow .ico{--ico:28px}
+.hint{padding:6px 13px;color:var(--ink-faint);font-size:11px;border-bottom:1px solid var(--line-soft)}
+.mini{background:var(--bg);border:1px solid var(--line);color:var(--ink-dim);border-radius:var(--radius);
+      padding:1px 7px;margin-left:6px;cursor:pointer;font-size:11px}
+.mini:hover{color:var(--accent);border-color:var(--accent-dim)}
+.bwrap{flex:1;min-height:0;overflow:hidden;position:relative;cursor:grab;background:#07090b;touch-action:none}
+.bwrap:active{cursor:grabbing}
+.bband{position:absolute;top:0;left:0;transform-origin:0 0;pointer-events:none;
+  box-shadow:inset 0 0 0 2px var(--accent), 0 0 0 9999px rgba(7,9,11,.62)}
+#bimg{position:absolute;top:0;left:0;transform-origin:0 0;image-rendering:pixelated;max-width:none;
+      user-select:none;-webkit-user-drag:none;pointer-events:none}
+.picking{background:var(--warn-bg);color:var(--warn);padding:6px 13px;font-size:11.5px;border-bottom:1px solid var(--line-soft)}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="rail">
+    <div class="brand"><h1>Loot Roadmap</h1><div class="sub" id="brandsub"></div></div>
+    <div class="railscroll"><div class="railhead">Class</div><div id="classlist"></div></div>
+  </aside>
+  <main class="main">
+    <div class="topbar" id="views"></div>
+    <div id="panel" style="display:flex;flex-direction:column;flex:1;min-height:0"></div>
+  </main>
+</div>
+
+<script id="rotmg-data" type="application/json">__ROTMG_DATA__</script>
+<script id="bestiary-src" type="text/plain">__BESTIARY__</script>
+<script>
+"use strict";
+const D = JSON.parse(document.getElementById("rotmg-data").textContent);
+const $ = s => document.querySelector(s);
+const esc = s => String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const SP = D.sprites || {};
+const byId = Object.fromEntries(D.items.map(i => [i.id, i]));
+const enchById = Object.fromEntries((D.enchants||[]).map(e => [e.id, e]));
+// source name -> bestiary biome, for the "click a place, see its mobs" jump. The
+// infographic is organised by realm BIOME, not by dungeon, so only realm/biome sources
+// can link into it - a Lost Halls door has nowhere to go.
+const BIOME_OF = D.biomeOf || {};
+const BIOME_BANDS = D.biomeBands || {};
+const LS  = k => { try { return JSON.parse(localStorage.getItem(k)||"null"); } catch(e){ return null; } };
+const LSet= (k,v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} };
+
+const S = {
+  cls: LS("rm.cls") || "Wizard",
+  view:"items", tab:0, sel:null, kitPick:null, lvl1:false, biome:null,
+  kit: (LS("rm.kit") && typeof LS("rm.kit")==="object" && !Array.isArray(LS("rm.kit")))?LS("rm.kit"):{},
+  track: (Array.isArray(LS("rm.track"))?LS("rm.track"):[]).filter(x=>typeof x==="string"),
+  // itemId -> [enchantId | null, ...] — what you WANT rolled on it, not what you have.
+  ench: (LS("rm.ench") && typeof LS("rm.ench")==="object" && !Array.isArray(LS("rm.ench")))?LS("rm.ench"):{},
+  enchPick: null,   // {id, slot} while choosing
+};
+const cls = () => D.classes.find(c => c.name === S.cls) || D.classes[0];
+const SLOTLBL = ["Weapon","Ability","Armor","Ring"];
+
+function ico(n, extra){
+  if (SP.cols == null || n == null) return `<div class="ico none"></div>`;
+  const c = n % SP.cols, r = Math.floor(n / SP.cols);
+  return `<div class="ico" style="background-size:calc(var(--ico) * ${SP.cols}) auto;`+
+         `background-position:calc(var(--ico) * -${c}) calc(var(--ico) * -${r})"></div>`;
+}
+function icoPair(it){
+  const sh = it.shinyId ? byId[it.shinyId] : null;
+  return `<span class="icopair">${ico(it.sp)}${sh?ico(sh.sp):""}</span>`;
+}
+// Items roll 0-4 enchant slots. The pips are the item's slot capacity, coloured
+// green/blue/purple/gold = Uncommon/Rare/Legendary/Divine, which is how the game reads them.
+function slotPips(it){
+  const ch = it.chance;
+  if(!ch || !ch.length) return `<span class="dim">&mdash;</span>`;
+  const guaranteed = ch.filter(x=>x>=1).length;
+  // Colour by how many slots are GUARANTEED - that is what separates a great drop
+  // from an average one. Solid pip = always rolls. Hollow = a chance. Dark = never.
+  const v = TIERS[Math.max(1,guaranteed)] || TIERS[4];
+  const pct = x => (x>=1?"always":x<=0?"never":Math.round(x*100)+"%");
+  const tip = ch.map((x,k)=>`slot ${k+1}: ${pct(x)}`).join(" · ") +
+              (it.dust?` · ${it.dust.type}`:"");
+  return `<span class="pips" title="${esc(tip)}">` + Array.from({length:4},(_,k)=>{
+    const x = ch[k]==null?0:ch[k];
+    if(x>=1)  return `<i style="background:${v[1]}"></i>`;
+    if(x>0)   return `<i style="background:transparent;box-shadow:inset 0 0 0 1px ${v[1]}"></i>`;
+    return `<i style="background:transparent;box-shadow:inset 0 0 0 1px var(--line-soft)"></i>`;
+  }).join("") + `</span>`;
+}
+function bagIco(it){
+  const b = SP.bags && it.bag != null ? SP.bags[String(it.bag)] : null;
+  if (b == null) return "";
+  return ico(b);
+}
+function srcText(it){
+  if (!it.sources.length) return `<span class="dim">—</span>`;
+  return it.sources.map(s => s.name ? `<span class="src">${esc(s.name)}</span>`
+      : `<span class="src raw">${esc("ORG_"+s.code)}</span>`).join(", ");
+}
+// Table version: show the dungeon's own door sprite, name it on hover.
+// Sources with no portal (event whites, alien invasion, unmapped codes) keep a text chip
+// rather than borrowing some other dungeon's door.
+const SRCI = D.sourceIcons || {};
+function srcDoors(it){
+  // Tiered gear now resolves to its own "Any dungeon" source in the data, so it never
+  // reaches here. Only a real gap does - and for a UT or ST that gap is the honest answer.
+  if (!it.sources.length){
+    return `<span class="dim" title="nothing in the client files, the RealmEye capture or the derived layer says where this drops — for a UT or ST that is a genuine gap">—</span>`;
+  }
+  // Icons alone looked good and told you nothing you could act on. The point of this
+  // column is WHERE TO GO, so the first source names itself; the rest stay as art.
+  const parts = it.sources.map(s => {
+    const key = s.name || ("ORG_" + s.code);
+    const e = SRCI[key] || {};
+    const label = key + (e.diff != null ? `  ·  difficulty ${e.diff}` : "") +
+                  (s.note ? `  ·  ${s.note}` : "");
+    return {key, e, label, named: !!s.name};
+  });
+  const first = parts[0];
+  const art = p => p.e.sp != null
+      ? `<span class="door" title="${esc(p.label)}">${ico(p.e.sp)}${p.e.boss!=null?ico(p.e.boss):""}</span>`
+      : "";
+  const rest = parts.slice(1);
+  return `<span class="dropin">
+      <span class="doors">${art(first)}${rest.map(art).join("")}</span>
+      <span class="dname" title="${esc(first.label)}">${esc(first.key)}</span>
+      ${rest.length?`<span class="more" title="${esc(rest.map(p=>p.key).join(" · "))}">+${rest.length}</span>`:""}
+    </span>`;
+}
+function tierTag(it){
+  let h = it.tier ? `<span class="tg tg-${it.tier}">${esc(it.tier)}</span>` : "";
+  if (it.shinyId) h += ` <span class="tg tg-sh">SH</span>`;
+  if (it.legacy) h += ` <span class="tg tg-old" title="legacy re-release; shares its name with the current item">OLD</span>`;
+  return h;
+}
+// A shiny is shown as a second sprite on its base row, so it must not also be its own
+// row. Shinies with no base (nothing to fold into) still appear.
+const slotItems = slot => D.items.filter(i => i.slot === slot && !i.baseOf);
+
+function filterFn(){
+  const q  = ($("#q") && $("#q").value || "").trim().toLowerCase();
+  const tr = $("#tier") ? $("#tier").value : "";
+  const sf = $("#srcf") ? $("#srcf").value : "";
+  const hr = $("#hidere") && $("#hidere").checked;
+  const sg = $("#showgone") && $("#showgone").checked;
+  return it => {
+    if (tr && it.tier !== tr) return false;
+    // Read it.sk, NOT sources.length. Since source resolution landed, almost every item
+    // carries SOME source - set, event, community, inherited, or "any dungeon" for tiered.
+    // Testing sources.length would make "has a dungeon" pass RealmEye guesses and make
+    // "missing" return nothing at all.
+    if (sf === "known" && it.sk !== "dungeon" && it.sk !== "boss") return false;
+    if (sf === "gap" && (it.sk !== "none" || (it.tier !== "UT" && it.tier !== "ST"))) return false;
+    // Unobtainable items are out of the way unless you ask for them. The list is
+    // curated in data/unobtainable.json because the client does not mark them.
+    if (!sg && it.gone) return false;
+    if (hr && (it.reskin || it.shiny || it.legacy)) return false;
+    if (q){
+      const hay = (it.name+" "+it.desc+" "+it.sources.map(s=>s.name||s.code).join(" ")).toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  };
+}
+
+/* ------------------------------- views ------------------------------- */
+function renderRail(){
+  const r = $("#classlist"); r.innerHTML = "";
+  D.classes.forEach(c => {
+    const b = document.createElement("button");
+    b.className="cls"; b.type="button";
+    b.setAttribute("aria-pressed", String(c.name===S.cls));
+    b.innerHTML = `<span>${c.name}</span><small>${c.slotNames[0]}</small>`;
+    b.onclick = () => { S.cls=c.name; LSet("rm.cls",c.name); S.sel=null; render(); };
+    r.appendChild(b);
+  });
+  $("#brandsub").textContent = `${D.counts.items} items · ${D.counts.portals} dungeons
+built ${D.built||"?"} · assets ${D.assetsBuilt||"?"}`;
+}
+function renderViews(){
+  const v=$("#views"); v.innerHTML="";
+  [["items","Items",""],["kit","Kit",""],["dungeons","Dungeons",D.counts.portals],
+   ["track","Track",S.track.length],["ench","Enchants",D.counts.enchants],
+   ["bestiary","Bestiary",""]].forEach(([k,l,n])=>{
+    const b=document.createElement("button");
+    b.className="vtab"; b.type="button";
+    b.setAttribute("aria-selected", String(S.view===k));
+    b.innerHTML = l + (n!==""?`<span class="n">${n}</span>`:"");
+    b.onclick=()=>{ S.view=k; S.sel=null; render(); };
+    v.appendChild(b);
+  });
+}
+
+function itemsView(){
+  const c=cls();
+  const tabs=c.slots.map((s,i)=>`<button class="tab" type="button" aria-selected="${S.tab===i}"
+      data-tab="${i}">${SLOTLBL[i]} · ${esc(c.slotNames[i])}<span class="n" data-count="${i}"></span></button>`).join("");
+  return `${S.kitPick!=null?`<div class="picking">Choosing your ${SLOTLBL[S.kitPick]} —
+      click an item to equip it. <a href="#" data-cancelpick style="color:inherit">cancel</a></div>`:""}
+   <div class="tabs">${tabs}</div>
+   <div class="bar">
+     <input type="search" id="q" placeholder="name, dungeon…" autocomplete="off">
+     <select id="tier"><option value="">all types</option><option>UT</option><option>ST</option><option>Tiered</option></select>
+     <select id="srcf">
+       <option value="">any source</option>
+       <option value="known">has a dungeon</option>
+       <option value="gap">missing (UT/ST only)</option>
+     </select>
+     <label><input type="checkbox" id="hidere"> hide reskins, shinies &amp; legacy<span class="dim" id="hidn"></span></label>
+     <label title="Items that can no longer be obtained. The game files do not mark these, so the list is curated by hand in data/unobtainable.json."><input type="checkbox" id="showgone"> show unobtainable<span class="dim" id="gonen"></span></label>
+     <span class="spacer" id="count"></span>
+   </div>
+   <div class="body">
+     <div class="scroll" id="list"></div>
+     <aside class="detail empty" id="detail">Click an item for its stats and description.</aside>
+   </div>`;
+}
+function drawItems(){
+  const c=cls(), slot=c.slots[S.tab], f=filterFn();
+  const rows=slotItems(slot).filter(f);
+  c.slots.forEach((s,i)=>{ const el=document.querySelector(`[data-count="${i}"]`);
+    if(el) el.textContent = slotItems(s).filter(f).length; });
+  $("#count").textContent = `${rows.length} of ${slotItems(slot).length}`+
+      (slot===9?" · rings shared by all classes":"");
+  const hn=$("#hidn");
+  if(hn){ const hidden=slotItems(slot).filter(i=>i.reskin||i.shiny||i.legacy).length;
+          hn.textContent = hidden?` (${hidden})`:""; }
+  const gn=$("#gonen");
+  if(gn){ const g=slotItems(slot).filter(i=>i.gone).length;
+          gn.textContent = g?` (${g})`:""; }
+  // No Slots column: it is 4 dots that mean nothing until you are actually planning
+  // enchants, and that now lives in Track and in the detail pane.
+  // Every column is sized; the LAST one is an unsized spacer that soaks up whatever is
+  // left. Without it the Item column absorbed all the slack and opened a canyon between
+  // an item's name and its bag.
+  $("#list").innerHTML = rows.length ? `<table class="items"><thead><tr>
+      <th style="width:82px"></th><th style="width:300px">Item</th>
+      <th style="width:46px" title="loot bag rarity">Bag</th>
+      <th style="width:66px" class="num">DPS*</th>
+      <th style="width:330px">Drops in</th><th></th></tr></thead><tbody>${
+    rows.map(i=>`<tr data-id="${esc(i.id)}" aria-selected="${S.sel===i.id}"
+      class="${S.track.includes(i.id)?'tracked':''}" title="click to track / untrack">
+      <td>${icoPair(i)}</td>
+      <td class="nm">${esc(i.name)} ${tierTag(i)}</td><td>${bagIco(i)}</td>
+      <td class="num ${i.rel?"hi":""}">${i.rel!=null?Math.round(i.rel):""}${i.multi?'<span class="dim" title="fires several sub-attacks">~</span>':""}</td>
+      <td>${srcDoors(i)}</td><td></td>
+    </tr>`).join("")}</tbody></table>`
+    : `<div class="empty">Nothing matches.<br>Clear the search or the type filter.</div>`;
+  drawDetail();
+}
+function drawDetail(){
+  const el=$("#detail"); if(!el) return;
+  const it = S.sel && byId[S.sel];
+  if(!it){ el.className="detail empty"; el.textContent="Click an item for its stats and description."; return; }
+  el.className="detail";
+  const sh = it.shinyId ? byId[it.shinyId] : null;
+  const shinyDiffers = sh && (sh.rel !== it.rel || JSON.stringify(sh.dmg) !== JSON.stringify(it.dmg));
+  const rows=[]; const add=(k,v)=>{ if(v!=null&&v!=="") rows.push(`<div class="drow"><span>${k}</span><span>${v}</span></div>`); };
+  add("Slot", it.slotName); add("Type", it.tier||"—");
+  if(it.dmg) add("Damage", `${it.dmg[0]}–${it.dmg[1]}`);
+  if(it.rof!=null) add("Rate of fire", it.rof+"×");
+  if(it.shots!=null) add("Shots", it.shots);
+  if(it.rel!=null) add("Relative DPS*", Math.round(it.rel));
+  if(it.mp!=null) add("MP cost", it.mp);
+  if(it.chance) add("Slot odds", it.chance.map((x,k)=>
+      `${k+1}:${x>=1?"100":x<=0?"0":Math.round(x*100)}%`).join(" "));
+  add("Enchant slots", it.ench); add("Feed power", it.feed);
+  if(it.dust) add("Enchant dust", `${esc(it.dust.type||"?")} · ${esc(it.dust.amounts||"?")}`);
+  if(it.bag!=null) add("Loot bag", `<span class="icopair" style="--ico:20px">${bagIco(it)}</span>`);
+  if(it.pw!=null) add("PowerLevel", it.pw);
+  if(it.mps!=null) add("MP drain", it.mps+"/sec");
+  if(it.multi) add("Sub-attacks", it.multi);
+  add("Soulbound", it.soulbound?"yes":"no"); add("Tradeable", it.tradeable?"yes":"no");
+  if(it.ptag) add("Game power tag", esc(it.ptag));
+  const bonus = it.bonus ? Object.entries(it.bonus).map(([k,v])=>
+      `<div class="drow"><span>${esc(k)}</span><span class="num hi">${v>0?"+":""}${v}</span></div>`).join("") : "";
+  // Scaled bonuses are a different kind of number and must never be summed with flat ones.
+  const scaled = it.scaled ? it.scaled.map(x=>
+      `<div class="drow"><span>${esc(x.stat)}</span><span class="num" style="color:var(--shiny)">${
+        x.amt>0?"+":""}${x.amt}${x.of?` of ${esc(x.of)}`:""}</span></div>`).join("") : "";
+  const effects = it.effects ? it.effects.map(x=>
+      `<div style="margin:5px 0"><div class="nm">${esc(x.name||"Effect")}</div>
+       <div class="dim" style="white-space:normal">${esc(x.desc)}</div></div>`).join("") : "";
+  // Provenance, per source. This used to label EVERY note "player knowledge" - which was
+  // true when the only note was ORG_NOTES/UMI, and became an outright inversion once the
+  // client's own <EffectInfo name="Drop location"> text and forgeProperties.xml started
+  // supplying notes. The one genuinely external layer is kind:"community"; it now says so,
+  // and nothing else claims to.
+  const PROV = {
+    community: "Player knowledge (RealmEye), not from the game files:",
+    derived:   "Inferred from the client files, not stated outright:",
+    inherit:   "Taken from this item's base printing:",
+  };
+  const prov = s => PROV[s.via] || PROV[s.kind] || "From the game files:";
+  const notes = it.sources.filter(s=>s.note).map(s=>
+      `<span class="note ${s.via==="derived"||s.kind==="community"?"soft":""}"><b>${prov(s)}</b> ${
+        esc(s.note)}${s.conf?` (confidence: ${esc(s.conf)})`:""}</span>`).join("");
+  el.innerHTML = `<div class="dhead">${ico(it.sp)}${sh?ico(sh.sp):""}
+      <div><h3>${esc(it.name)}</h3><div>${tierTag(it)}</div></div></div>
+    ${it.desc?`<div class="ddesc">${esc(it.desc)}</div>`:""}
+    ${shinyDiffers?`<span class="note"><b>The shiny version is not just cosmetic here.</b>
+      ${esc(sh.name)}: ${sh.dmg?`${sh.dmg[0]}–${sh.dmg[1]} dmg`:""}${
+      sh.rel!=null?`, DPS* ${Math.round(sh.rel)} vs ${it.rel!=null?Math.round(it.rel):"?"}`:""}.</span>`:""}
+    <div class="dsec">Stats</div>${rows.join("")}
+    ${bonus?`<div class="dsec">On equip — flat</div>${bonus}`:""}
+    ${scaled?`<div class="dsec">On equip — scaled off another stat</div>${scaled}
+       <div class="dim" style="margin-top:4px">These are not flat points and are <b>not</b> added to
+       the Kit totals.</div>`:""}
+    ${effects?`<div class="dsec">Effects</div>${effects}`:""}
+    <div class="dsec">Source</div><div>${srcText(it)}</div>${notes}
+    <div class="dsec">Notes</div>
+    <div class="dim">* Relative DPS = average damage × rate of fire × shots, summed across every
+    sub-attack the item declares. Good for ranking weapons of the same class against each other.
+    It is <b>not</b> scaled by your ATT or DEX, and it is not the number the game shows you.
+    ${it.multi?`This item fires <b>${it.multi} sub-attacks</b>, so treat it as an estimate.`:""}
+    ${it.relAssumed?`This item declares no rate of fire, so 1× was assumed.`:""}</div>
+    ${it.ptag?`<div class="dim" style="margin-top:8px">The game's power tag (${esc(it.ptag)}) is
+    <b>not</b> a quality ranking — tiers overlap heavily and some strong items carry none at all.
+    Use DPS and the on-equip bonuses instead.</div>`:""}`;
+}
+
+function kitView(){
+  const c=cls(), kit=S.kit[S.cls]||[null,null,null,null];
+  const slots=c.slots.map((s,i)=>{ const it=kit[i]&&byId[kit[i]];
+    return `<div class="kitslot ${it?"filled":""}"><div class="lbl">${SLOTLBL[i]} · ${esc(c.slotNames[i])}</div>
+      <div class="pick" data-kitslot="${i}">${it?ico(it.sp):`<div class="ico none"></div>`}
+      <div>${it?`<div class="nm">${esc(it.name)}</div><div class="dim">${it.rel!=null?"DPS* "+Math.round(it.rel):""}</div>`
+      :`<div class="dim">click to choose</div>`}</div></div></div>`; }).join("");
+  const tot={}; D.stats.forEach(s=>tot[s]=0);
+  kit.forEach(id=>{ const it=id&&byId[id];
+    if(it&&it.bonus) Object.entries(it.bonus).forEach(([k,v])=>{ if(k in tot) tot[k]+=v; }); });
+  const base=c.base||{}, mx=c.max||{};
+  const useMax = !S.lvl1;
+  const src = useMax ? mx : base;
+  const stats=D.stats.map(s=>`<div class="stat"><div class="k">${s}</div>
+      <div class="v">${Math.round((src[s]||0)+tot[s])}</div>
+      <div class="dim" style="font-size:10.5px">${Math.round(src[s]||0)} ${useMax?"maxed":"base"}${tot[s]?` <span class="b">+${tot[s]}</span>`:""}</div>
+      </div>`).join("");
+  const w = kit[0]&&byId[kit[0]];
+  return `<div class="kit">
+    <div class="dsec">Kit · ${esc(S.cls)}</div><div class="kitslots">${slots}</div>
+    <div class="dim" style="margin-bottom:10px">Click a slot, then click an item to equip it.
+      Saved in this browser.</div>
+    <div class="dsec">Totals — class stats + gear</div>
+    <label class="dim" style="display:flex;gap:6px;align-items:center;margin-bottom:8px;cursor:pointer">
+      <input type="checkbox" id="lvl1" ${S.lvl1?"checked":""}> show level-1 base instead of maxed</label>
+    <div class="statgrid">${stats}</div>
+    <div class="dsec">Weapon</div>
+    <div class="dim">${w&&w.rel!=null?`${esc(w.name)} — relative DPS* ${Math.round(w.rel)}`:"No weapon equipped."}</div>
+    <div class="dsec">Honest limits</div>
+    <div class="dim">Class stats are read straight from the game files — both the level-1 base and the
+      <b>maxed</b> value (the <code>max</code> attribute on each stat). Gear bonuses are exact, from each
+      item's <b>flat</b> on-equip effects. <b>Not counted:</b> percentage/scaled bonuses (shown separately
+      on each item), enchantments, exaltations, or the pet.</div></div>`;
+}
+
+function dungeonsView(){
+  // Count by SOURCE CODE, not display string - a name join silently missed most dungeons.
+  // Count only sources that really are this dungeon's own tag. Community matches, boss
+  // prose, forge dismantle requirements and inherited sources are not tags, and counting
+  // them made the "N items carry this dungeon's tag" line false.
+  const counts={}, loose={};
+  D.items.forEach(i=>i.sources.forEach(s=>{
+    const k=s.name||("ORG_"+s.code);
+    loose[k]=(loose[k]||0)+1;
+    if (s.kind==="dungeon") counts[k]=(counts[k]||0)+1; }));
+  const rows=D.portals.slice().sort((a,b)=>{
+      const ca=loose[a.name]||0, cb=loose[b.name]||0;
+      if(cb!==ca) return cb-ca;                      // dungeons with loot first
+      return a.name.localeCompare(b.name); })
+    .map(p=>{
+      const n=counts[p.name]||0, ln=loose[p.name]||0;
+      const d=p.diff;
+      return `<div class="dungeon" ${n?`data-dungeon="${esc(p.name)}"`:""}>${ico(p.sp)}
+        <div style="flex:1"><div class="nm">${esc(p.name)}
+          ${d!=null?`<span class="tg" style="color:var(--st);background:var(--st-bg)"
+             title="dungeon difficulty from the game files, 0-10">${d}</span>`:""}</div>
+        <div class="dim">${n?n+" items carry this dungeon's tag":"no items carry this dungeon's tag"}${
+          ln>n?` &middot; ${ln-n} more traced here`:""}</div>
+        </div></div>`;}).join("");
+  return `<div class="hint">Dungeon doors, names and <b>difficulty</b> come straight from the client
+    (difficulty is on the dungeon keys in <code>equipKeys.xml</code>, 0-10 &mdash; present for
+    ${D.portals.filter(p=>p.diff!=null).length} of ${D.portals.length} dungeons).
+    Rows with loot are listed first; a row with no tagged items is not clickable.</div>
+    <div class="scroll">${rows}</div>`;
+}
+
+// The point of Track is not "look at my nice items". It is: where do I go, what kills it,
+// and what do I want rolled on it when it drops. So it groups by PLACE, headed by that
+// dungeon's door and its boss, and every row carries its enchant plan.
+function trackRow(i){
+  const n = i.ench || 0;
+  const plan = S.ench[i.id] || [];
+  const slots = n > 0
+    ? `<span class="eslots">${Array.from({length:n},(_,k)=>{
+        const e = plan[k] && enchById[plan[k]];
+        return e
+          ? `<button class="eslot on" data-eslot="${esc(i.id)}|${k}"
+               title="${esc(e.name)} — click to change">${e.sp!=null?ico(e.sp):"&#9679;"}</button>`
+          : `<button class="eslot" data-eslot="${esc(i.id)}|${k}"
+               title="choose an enchantment for slot ${k+1}">+</button>`;
+      }).join("")}</span>`
+    : `<span class="dim">no enchant slots</span>`;
+  return `<tr data-id="${esc(i.id)}">
+    <td style="width:82px">${icoPair(i)}</td>
+    <td class="nm" style="width:300px">${esc(i.name)} ${tierTag(i)}</td>
+    <td style="width:104px" class="dim">${esc(i.slotName)}</td>
+    <td style="width:172px">${slots}</td>
+    <td style="width:96px">${slotPips(i)}</td>
+    <td style="width:36px"><button class="star on" data-star="${esc(i.id)}" title="stop tracking">&#9733;</button></td>
+    <td></td>
+  </tr>`;
+}
+
+function trackView(){
+  if(!S.track.length) return `<div class="empty">Nothing tracked yet.<br>
+    Click an item in <b>Items</b> and it appears here, grouped by where to go and get it.</div>`;
+  const g={};
+  S.track.forEach(id=>{ const it=byId[id]; if(!it) return;
+    const s = it.sources[0];
+    const k = s ? (s.name || ("ORG_" + s.code)) : "Not recorded";
+    (g[k]=g[k]||[]).push(it); });
+  const groups = Object.keys(g).sort().map(k=>{
+    const e = SRCI[k] || {};
+    const bio = BIOME_OF[k];
+    return `<div class="trackhead${bio?" go":""}" ${bio?`data-biome="${esc(bio)}"`:""}
+        ${bio?`title="show ${esc(bio)} in the Bestiary"`:""}>
+      ${e.sp!=null?`<span class="doors">${ico(e.sp)}${e.boss!=null?ico(e.boss):""}</span>`:""}
+      <div style="min-width:0">
+        <div class="nm">${esc(k)}</div>
+        <div class="dim">${g[k].length} item${g[k].length==1?"":"s"}${
+          e.diff!=null?` &middot; difficulty ${e.diff}`:""}${
+          bio?` &middot; click for the bestiary`:""}</div>
+      </div></div>
+    <table class="items"><tbody>${g[k].map(trackRow).join("")}</tbody></table>`;
+  }).join("");
+  return `<div class="hint">Grouped by <b>where to go</b>. The second sprite is the enemy that
+    drops it. Click an enchant slot to plan what you want rolled on that item.</div>
+    <div class="scroll">${groups}</div>`;
+}
+
+function bestiaryView(){
+  return `<div class="hint">Realm bestiary &mdash; which mobs drop which biome whites, set pieces and
+    biome events. <b>Community infographic by GHZD</b>, not game data, so it is not cross-checked
+    against the client. Scroll to zoom, drag to pan.
+    <button class="mini" data-bfit>fit</button><button class="mini" data-b100>100%</button>
+    ${Object.keys(BIOME_BANDS).length?`<select id="bgo" title="jump to a biome">
+      <option value="">jump to a biome…</option>${Object.keys(BIOME_BANDS).sort().map(b=>
+        `<option ${S.biome===b?"selected":""}>${esc(b)}</option>`).join("")}</select>`:""}</div>
+    <div class="bwrap" id="bwrap"><img id="bimg" alt="Realm bestiary" draggable="false">
+      <div class="bband" id="bband" hidden></div></div>`;
+}
+function wireBestiary(){
+  const wrap=$("#bwrap"), img=$("#bimg");
+  if(!img.src){                                   // decode on first open, not on page load
+    const src=(document.getElementById("bestiary-src")||{}).textContent||"";
+    if(src.trim()) img.src=src.trim(); else wrap.innerHTML='<div class="empty">Bestiary image not bundled.</div>';
+  }
+  const band=$("#bband");
+  let z=0.3,x=0,y=0,drag=null;
+  const apply=()=>{ img.style.transform=`translate(${x}px,${y}px) scale(${z})`;
+    // The highlight rides the same transform, so it stays glued to its band while panning.
+    const b=BIOME_BANDS[S.biome];
+    if(b && band){ band.hidden=false;
+      band.style.transform=`translate(${x}px,${y+b.y0*z}px)`;
+      band.style.width=(img.naturalWidth*z)+"px";
+      band.style.height=((b.y1-b.y0)*z)+"px";
+    } else if(band){ band.hidden=true; } };
+  const fit=()=>{ if(!img.naturalWidth) return;
+    z=Math.min(wrap.clientWidth/img.naturalWidth, wrap.clientHeight/img.naturalHeight);
+    x=(wrap.clientWidth-img.naturalWidth*z)/2; y=0; apply(); };
+  // Jumping to a biome: fill the width, then put that band's top near the top of the view.
+  const goto_=(name)=>{ const b=BIOME_BANDS[name]; if(!b||!img.naturalWidth) return;
+    S.biome=name;
+    z=Math.min(6, wrap.clientWidth/img.naturalWidth);
+    x=(wrap.clientWidth-img.naturalWidth*z)/2;
+    y=Math.min(0, -(b.y0*z) + 12);
+    apply(); };
+  img.addEventListener("load",()=>{ if(S.biome && BIOME_BANDS[S.biome]) goto_(S.biome); else fit(); });
+  if(img.complete){ if(S.biome && BIOME_BANDS[S.biome]) goto_(S.biome); else fit(); }
+  wrap.addEventListener("wheel", e=>{ e.preventDefault();
+    const f=e.deltaY<0?1.15:1/1.15, nz=Math.min(6,Math.max(0.03,z*f));
+    const r=wrap.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
+    x=mx-(mx-x)*(nz/z); y=my-(my-y)*(nz/z); z=nz; apply(); }, {passive:false});
+  wrap.addEventListener("pointerdown", e=>{ e.preventDefault(); drag={sx:e.clientX-x,sy:e.clientY-y};
+    try{ wrap.setPointerCapture(e.pointerId); }catch(_){} });
+  wrap.addEventListener("pointermove", e=>{ if(!drag) return; x=e.clientX-drag.sx; y=e.clientY-drag.sy; apply(); });
+  wrap.addEventListener("pointerup", ()=>{ drag=null; });
+  wrap.addEventListener("pointercancel", ()=>{ drag=null; });
+  const bar=wrap.parentNode;
+  bar.addEventListener("click", e=>{
+    if(e.target.closest("[data-bfit]")){ S.biome=null; fit(); }
+    else if(e.target.closest("[data-b100]")){ z=1; x=0; y=0; apply(); } });
+  const sel=$("#bgo");
+  if(sel) sel.addEventListener("change", ()=>{ if(sel.value) goto_(sel.value); else { S.biome=null; fit(); } });
+}
+
+function enchView(){
+  return `<div class="tabs" id="ecats"></div>
+    <div class="bar">
+      <input type="search" id="q" placeholder="enchantment, stat, effect…" autocomplete="off">
+      <label><input type="checkbox" id="fitkit"> only what fits my kit</label>
+      <span class="dim">items roll 0&ndash;4 slots &middot; aim for 4</span>
+      <span class="spacer" id="count"></span>
+    </div>
+    <div class="scroll" id="list"></div>`;
+}
+
+// Grouping that matches how people actually think about enchants, built from the
+// EnchantmentLabels the client already ships.
+const ECATS = [
+  ["all",      "All",        null],
+  ["ATTACK",   "Attack",     "ATTACK"],
+  ["DEFENSE",  "Defense",    "DEFENSE"],
+  ["DEXTERITY","Dexterity",  "DEXTERITY"],
+  ["WISDOM",   "Wisdom",     "WISDOM"],
+  ["VITALITY", "Vitality",   "VITALITY"],
+  ["LIFE",     "Life",       "LIFE"],
+  ["MANA",     "Mana",       "MANA"],
+  ["SPEED",    "Speed",      "SPEED"],
+  ["DUALSTAT", "Dual stat",  "DUALSTAT"],
+  ["TRADEOFF", "Trade-off",  "TRADEOFF"],
+  ["CONVERSIONBONUS","Conversion","CONVERSIONBONUS"],
+  ["PROC",     "Proc",       "PROC"],
+  ["UNIQUE",   "Unique",     "UNIQUE"],
+];
+
+// What may legally roll on a given item: label intersection minus both exclusion lists.
+function legalFor(item){
+  const L = new Set(item.labels || []);
+  return D.enchants.filter(e =>
+    (!e.compat.length || e.compat.some(c => L.has(c))) &&
+    !(e.noItem || []).some(c => L.has(c)) &&
+    !(e.noIds || []).includes(item.id));
+}
+function kitItems(){
+  return (S.kit[S.cls] || []).map(id => id && byId[id]).filter(Boolean);
+}
+
+// Uncommon / Rare / Legendary / Divine, 1-4 dots in the game's colour language.
+// These are DRAWN, not extracted - the rarity pips are UI chrome and are not present
+// in the object sprite sheets the extractor pulls.
+const TIERS = {1:["Uncommon","#4ee39a"], 2:["Rare","#4ec8e3"],
+               3:["Legendary","#b46ce8"], 4:["Divine","#ffcf4a"]};
+function tierDots(t){
+  const v = TIERS[String(t).replace("TIER","")]; if(!v) return `<div class="dim">&nbsp;</div>`;
+  const n = +String(t).replace("TIER","");
+  return `<div class="tier" title="${v[0]}"><span class="pips">` +
+    Array.from({length:n},()=>`<i style="background:${v[1]}"></i>`).join("") +
+    `</span><span style="color:${v[1]}">${v[0]}</span></div>`;
+}
+
+function drawEnch(){
+  const cats=$("#ecats");
+  if(cats && !cats.dataset.built){
+    cats.dataset.built="1";
+    cats.innerHTML = ECATS.map(([k,l])=>`<button class="tab" type="button" data-ecat="${k}"
+        aria-selected="${(S.ecat||"all")===k}">${l}</button>`).join("");
+  }
+  const q=($("#q").value||"").trim().toLowerCase();
+  const cat=S.ecat||"all";
+  const fit=$("#fitkit") && $("#fitkit").checked;
+  const equipped=kitItems();
+
+  // Picking a slot for a tracked item narrows the 1,016 enchantments to the ones that
+  // can legally roll on THAT item - which is the only version of this list that helps.
+  const pick = S.enchPick && byId[S.enchPick.id] ? byId[S.enchPick.id] : null;
+  let pool=D.enchants;
+  let legalIds=null;
+  if(pick){
+    const ok=new Set(legalFor(pick).map(e=>e.id));
+    pool=pool.filter(e=>ok.has(e.id));
+  }
+  if(fit && equipped.length){
+    legalIds=new Set();
+    equipped.forEach(it => legalFor(it).forEach(e => legalIds.add(e.id)));
+    pool=pool.filter(e=>legalIds.has(e.id));
+  }
+  if(cat!=="all") pool=pool.filter(e=>e.labels.includes(cat));
+  if(q) pool=pool.filter(e=>(e.name+" "+e.desc+" "+e.labels.join(" ")).toLowerCase().includes(q));
+
+  $("#count").textContent=`${pool.length} of ${D.counts.enchants}`+
+      (fit?(equipped.length?" · legal on your kit":" · equip something in Kit first"):"");
+
+  const planner = fit && equipped.length ? `<div class="plan">${equipped.map(it=>{
+      const n=legalFor(it).length;
+      return `<div class="planrow">${ico(it.sp)}<div><div class="nm">${esc(it.name)}</div>
+        <div class="dim">${it.ench!=null?it.ench+" slot"+(it.ench==1?"":"s"):"slots unknown"} ·
+        ${n} enchantments can roll here</div></div></div>`;}).join("")}</div>` : "";
+
+  const pickBar = pick ? `<div class="picking">Choosing enchantment
+      <b>slot ${S.enchPick.slot+1}</b> for <b>${esc(pick.name)}</b> &mdash;
+      ${pool.length} can legally roll here.
+      <a href="#" data-eclear style="color:inherit">clear this slot</a> &middot;
+      <a href="#" data-ecancel style="color:inherit">cancel</a></div>` : "";
+
+  $("#list").innerHTML = pickBar + planner + `<div class="egrid">${pool.slice(0,500).map(e=>`
+    <div class="ecard" data-ench="${esc(e.id)}" ${pick?'style="cursor:pointer"':""}>
+      <div class="ehead">${e.sp!=null?ico(e.sp):""}<div>
+        <div class="nm">${esc(e.name)}</div>
+        ${tierDots(e.tier)}</div></div>
+      <div class="dim edesc">${esc(e.desc)}</div>
+      ${e.excl.length?`<div class="eexcl">cannot share a slot with: ${esc(e.excl.join(", "))}</div>`:""}
+    </div>`).join("")}</div>
+    ${pool.length>500?`<div class="empty">Showing 500 of ${pool.length}. Narrow it down.</div>`:""}
+    ${pool.length===0?`<div class="empty">Nothing matches.</div>`:""}`;
+}
+
+function render(){
+  renderRail(); renderViews();
+  const p=$("#panel");
+  if(S.view==="items"){ p.innerHTML=itemsView(); drawItems(); }
+  else if(S.view==="kit"){ p.innerHTML=kitView(); }
+  else if(S.view==="dungeons"){ p.innerHTML=dungeonsView(); }
+  else if(S.view==="track"){ p.innerHTML=trackView(); }
+  else if(S.view==="bestiary"){ p.innerHTML=bestiaryView(); wireBestiary(); }
+  else { p.innerHTML=enchView(); drawEnch(); }
+}
+
+document.addEventListener("change", e=>{
+  if(e.target.id==="srcf"){ drawItems(); }
+});
+document.addEventListener("input", e=>{
+  if(e.target.id==="lvl1"){ S.lvl1=e.target.checked; render(); return; }
+  if(e.target.id==="fitkit"){ drawEnch(); return; }
+  if(["q","tier","srcf","hidere","showgone"].includes(e.target.id)){
+    if(S.view==="items") drawItems(); else if(S.view==="ench") drawEnch(); }
+});
+document.addEventListener("click", e=>{
+  if(e.target.closest("[data-cancelpick]")){ e.preventDefault(); S.kitPick=null; render(); return; }
+  const star=e.target.closest("[data-star]");
+  if(star){ e.stopPropagation();
+    const id=star.dataset.star, i=S.track.indexOf(id);
+    if(i>=0) S.track.splice(i,1); else S.track.push(id);
+    LSet("rm.track",S.track);
+    // Mutate in place. Calling render() here wiped the search box, both filters and the
+    // scroll position on every star - which is the core loop.
+    const on=S.track.includes(id);
+    star.classList.toggle("on",on); star.textContent=on?"★":"☆";
+    const badge=[...document.querySelectorAll(".vtab")].find(b=>b.textContent.trim().startsWith("Track"));
+    if(badge){ const n=badge.querySelector(".n"); if(n) n.textContent=S.track.length; }
+    if(S.view==="track") render();
+    return; }
+  const es=e.target.closest("[data-eslot]");
+  if(es){ e.stopPropagation();
+    const [id,slot]=es.dataset.eslot.split("|");
+    S.enchPick={id, slot:+slot}; S.view="ench"; render(); return; }
+  if(e.target.closest("[data-ecancel]")){ e.preventDefault(); S.enchPick=null; S.view="track"; render(); return; }
+  if(e.target.closest("[data-eclear]")){ e.preventDefault();
+    const {id,slot}=S.enchPick||{};
+    if(id){ const a=S.ench[id]||[]; a[slot]=null; S.ench[id]=a; LSet("rm.ench",S.ench); }
+    S.enchPick=null; S.view="track"; render(); return; }
+  const ecard=e.target.closest("[data-ench]");
+  if(ecard && S.enchPick){
+    const {id,slot}=S.enchPick;
+    const a=S.ench[id]||[]; a[slot]=ecard.dataset.ench; S.ench[id]=a;
+    LSet("rm.ench",S.ench); S.enchPick=null; S.view="track"; render(); return; }
+  const bio=e.target.closest("[data-biome]");
+  if(bio){ S.biome=bio.dataset.biome; S.view="bestiary"; render(); return; }
+  const ec=e.target.closest("[data-ecat]");
+  if(ec){ S.ecat=ec.dataset.ecat;
+    document.querySelectorAll("[data-ecat]").forEach(b=>
+      b.setAttribute("aria-selected", String(b.dataset.ecat===S.ecat)));
+    drawEnch(); return; }
+  const tab=e.target.closest("[data-tab]");
+  if(tab){ S.tab=+tab.dataset.tab; S.sel=null; render(); return; }
+  const ks=e.target.closest("[data-kitslot]");
+  if(ks){ S.kitPick=+ks.dataset.kitslot; S.tab=S.kitPick; S.view="items"; render(); return; }
+  const dg=e.target.closest("[data-dungeon]");
+  if(dg){ S.view="items"; render(); const q=$("#q"); if(q){ q.value=dg.dataset.dungeon; drawItems(); } return; }
+  const row=e.target.closest("tr[data-id]");
+  if(row){
+    // Equipping is a SINGLE click while a kit slot is armed. The old dblclick could never
+    // fire: the first click rebuilt the table, so click two landed on a different node.
+    if(S.kitPick!=null && S.view==="items"){
+      const kit=S.kit[S.cls]||[null,null,null,null];
+      kit[S.kitPick]=row.dataset.id; S.kit[S.cls]=kit; LSet("rm.kit",S.kit);
+      S.kitPick=null; S.view="kit"; render(); return;
+    }
+    const id=row.dataset.id;
+    S.sel=id;
+    if(S.view==="items"){
+      // One click does both jobs: track it and open its detail.
+      const at=S.track.indexOf(id);
+      if(at>=0) S.track.splice(at,1); else S.track.push(id);
+      LSet("rm.track",S.track);
+      row.classList.toggle("tracked", S.track.includes(id));
+      document.querySelectorAll("tr[data-id]").forEach(r=>
+        r.setAttribute("aria-selected", String(r.dataset.id===id)));
+      const badge=[...document.querySelectorAll(".vtab")].find(b=>b.textContent.trim().startsWith("Track"));
+      if(badge){ const n=badge.querySelector(".n"); if(n) n.textContent=S.track.length; }
+      drawDetail();
+    } else { render(); }
+    return; }
+});
+
+// A rebuild can retire an item id; drop stale tracked ids so the badge cannot lie.
+S.track = S.track.filter(id => byId[id]);
+LSet("rm.track", S.track);
+if (!D.classes.some(c => c.name === S.cls)) S.cls = D.classes[0].name;
+
+render();
+</script>
+</body>
+</html>

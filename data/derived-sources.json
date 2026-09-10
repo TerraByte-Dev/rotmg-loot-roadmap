@@ -1,0 +1,543 @@
+{
+ "_README": "Drop sources derived from the CLIENT'S OWN XML for items that state no source directly. Nothing here was scraped: realmeye.com/robots.txt disallows Claude-Code, and the only RealmEye data in this project is the single page capture in realmeye-untiered-by-dungeon.tsv. Each entry below was produced by one agent reading the 246 local XML files and then had to survive TWO independent adversarial refuters, both instructed to default to refuted. 107 claims were made; 26 were killed outright, 14 split 1-1 and were discarded, 67 survived. The `evidence` field is the exact quoted local text - check any of them.",
+ "_generated_from": "150 items that resolved to no source in build-data.py",
+ "_survived": 67,
+ "sources": {
+  "MV Intermediate Fishing Rod": {
+   "source": "Moonlight Village",
+   "kind": "dungeon",
+   "boss": null,
+   "method": "description",
+   "confidence": "high",
+   "evidence": "Definitive, two ways. L2 equip.xml `<Object id=\"MV Intermediate Fishing Rod\" type=\"0x50f2\">`: `<EffectInfo description=\"Only usable in the Moonlight Village. Aim at ripples in the water to catch fish!\" name=\"Fishing\" />` (attribute order is description-first here — parsed as a dict, not positionally). L1/sprite-sheet: same block carries `<Texture><File>moonlightVillageObjects8x8</File><Index>487</Index></Texture>`, a dungeon-specific sheet. Its thrown bait `<OnPlayerShootActivate … objectId=\"MV Intermediate Bait\" …>ObjectToss</OnPlayerShootActivate>` is likewise MV-prefixed. CAVEAT for the roadmap copy: this is an activity tool, not a boss drop — it carries no ORG_MOONLIGHT label (that token does exist in equip.xml, on the real MV drops) and does not appear on the TSV's 'Moonlight Village' row (Sage's Wakibiki|Ethereal Happi|Flowering Kimono|Rain Maker|Taiko Drums|Elegant Parasol|Makakoyumi|Tezutsu Hanabi|Kagenohikari). Source dungeon is certain; 'dropped by a boss' is not claimed."
+  },
+  "MV Master Fishing Rod": {
+   "source": "Moonlight Village",
+   "kind": "dungeon",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "high",
+   "evidence": "equip.xml `<File>moonlightVillageObjects8x8</File>` and `<EffectInfo description=\"Only usable in the Moonlight Village. Aim at ripples in the water to catch fish!\" name=\"Fishing\" />` (equip.xml line 63537). Type-id 0x50f3 sits inside the Moonlight Village fishing block defined in moonlightVillageObjects.xml: 0x50E7 `MV Fish Spawner`, 0x50EF-0x50F1 `MV Water Ripple 2/3/4`, 0x50F5 `MV Master Bait`, 0x50F8 `MV Basic Fishing Rod Dropper`. The item's own tag references that bait: `<OnPlayerShootActivate ... objectId=\"MV Master Bait\" ...>ObjectToss</OnPlayerShootActivate>`, and MV Master Bait is defined in moonlightVillageObjects.xml."
+  },
+  "MV Master Fishing Rod Shiny": {
+   "source": "Moonlight Village",
+   "kind": "dungeon",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "medium",
+   "evidence": "equip.xml line 63624 `<Object id=\"MV Master Fishing Rod Shiny\" type=\"0xF50\">` with `<DisplayId>Master Fishing Rod</DisplayId>` and line 63638 `<EffectInfo description=\"Only usable in the Moonlight Village. Aim at ripples in the water to catch fish!\" name=\"Fishing\" />`. It shares `<SharedCooldownChannel id=\"20703\" />` with the base MV Master Fishing Rod. Caveat: its own texture is the generic `<File>lofiObjShiny</File>` and type 0xF50 sits in a mixed shiny batch (0xF4C Vanguard's Visage Shiny, 0xF52 Ray Katana Shiny), so the Moonlight Village attribution is inherited from the base item, not proven independently."
+  },
+  "Oryx Dominus Crest": {
+   "source": "Sebchoof's 2026 RotMG Olympics Event",
+   "kind": "event",
+   "boss": null,
+   "method": "description",
+   "confidence": "high",
+   "evidence": "equip.xml line 108254 `<Description>A dazzling trophy commemorating the winners of Sebchoof's 2026 RotMG Olympics Event.</Description>`. No dungeon file references the item; its texture `<File>archbishopObjects16x16</File>` is shared only with its own proc object `ODC Banner Effect` (type 0x1CE0, immediately preceding 0x1CE1). This is a community/promo event award, not farmable content."
+  },
+  "Mouse Trap": {
+   "source": "Rodent Hunting with Herman",
+   "kind": "event",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "medium",
+   "evidence": "Type-id 0x469F sits inside the City Rat batch: 0x4692-0x4696 `Cheese x1`..`Cheese x5` (token.xml), 0x4697 `City Rat Progress Bar` and 0x4698 `City Rat Shop Decor 5` (heroes2.xml), 0x469A `Piper's Pan Flute` (equip.xml), 0x469B-0x469E `Piper's Pan Flute Rat 0-3` (allies.xml), 0x469F Mouse Trap, 0x46A0 `Mouse Trap Object` (allies.xml). The event is named in heroes2.xml line 4416: `<InteractInfo distance=\"4\" text=\"Adventurers, the situation is dire! I need your help to exterminate these pesky rats that have overrun the city.\\n\\n Kill as many as you can see around this area, and come back here to spend any Rat Coins you find to buy assistance from cats.\" title=\"Rodent Hunting with Herman\" />` on `<Object id=\"City Rat Hunter NPC\" type=\"0x465a\">` `<DisplayId>Herman the Rodent Hunter</DisplayId>`. Item desc agrees: \"A conventional tool used by rat hunters to snare rodents.\" Caveat: it may be bought at the City Rat Shop rather than dropped — token.xml Rat Coins carry `<SuccessorId>City Cat Bell 1</SuccessorId>`, i.e. that shop trades coins for gear."
+  },
+  "Needlessly Large Spoon": {
+   "source": "The Realm",
+   "kind": "boss",
+   "boss": "The Appetizer",
+   "method": "xml-crossref",
+   "confidence": "medium",
+   "evidence": "The item's own tag cross-references the Appetizer batch: equip.xml `<OnPlayerShootActivate color=\"-1\" targetMouseRange=\"3\" targetMouse=\"true\" objectId=\"tastyTreat\" proc=\".1\" throwTime=\"0\">ObjectToss</OnPlayerShootActivate>`, and `tastyTreat` is type 0x47B1 in allies.xml, adjacent to 0x47B2 `Spoon`, 0x47B3 `Appetizers Atire`, 0x47B5 `apetizerPlate1` (equip.xml); the spoon itself is 0x47A9. Its equip.xml file-order block is the same set: Spoon, Plate, Needlessly Large Spoon, Eggshell Cowl, apetizerPlate1, Appetizers Atire, Chef's Hat. Chef's Hat names the boss: `<Description>The Appetizers prized toque which shows his expertise in a variety of different cooking techniques.</Description>` (equip.xml). The Appetizer is a Realm event boss: eventChestObjects.xml `<Object type=\"0x80b8\" id=\"The Appetizer Spawner\">` with `<PerRealmMax>1</PerRealmMax>` and `<Terrain>Mountains</Terrain>` (line 2024), and `<Object type=\"0x80ba\" id=\"The Appetizer\">` with `<Quest />` `<TrackLoot />` `<MaxHitPoints>150000</MaxHitPoints>`. Caveat: this item carries RESKIN, and no file states The Appetizer drops it."
+  },
+  "Oryxmas Ornament: Energized": {
+   "source": "Oryxmas",
+   "kind": "event",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "medium",
+   "evidence": "equip.xml line 32974 `<Description>A blue ornament taken from Oryx's magical Oryxmas Tree. Inside, it contains the secrets to the past...</Description>` and `<File>santaWorkshopObjects8x8</File>`. In equip.xml exactly ten items use that sheet, and the rest are the Oryxmas seasonal consumables: `Oryxmas Mystery Ability`, `Oryxmas Mystery Pet Skin`, `Oryxmas Mystery Gift`, `Oryxmas Mystery Armor`, `Oryxmas Mystery Weapon`, `Guild Present`, plus the ST `Ornaments of Unity`. Caveat: the same sheet also backs santaWorkshopGround.xml / santaWorkshopObjects.xml, so this could specifically be the Santa's Workshop dungeon rather than the wider Oryxmas event; and the ornament does NOT carry ORG_ORYXMAS, which the Oryxmas weapon set does (`...,ORYXMAS_ENCHANTABLE,ORG_ORYXMAS`, equip.xml line 39345)."
+  },
+  "Oryxmas Ornament: Exposed": {
+   "source": "Oryxmas",
+   "kind": "event",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "medium",
+   "evidence": "equip.xml line 33025 `<Description>A red ornament taken from Oryx's magical Oryxmas Tree. It radiates with pure winter energy that highlights the weak spots of even the bulkiest of foes.</Description>`, texture `<File>santaWorkshopObjects8x8</File>`, type 0x64be — contiguous with its two siblings 0x64bc / 0x64bd. Same sheet-sharing evidence and same caveat as Oryxmas Ornament: Energized (sheet is shared by the Oryxmas Mystery * consumables AND by santaWorkshopGround.xml / santaWorkshopObjects.xml, so Santa's Workshop specifically is not ruled out; no ORG_ORYXMAS label present)."
+  },
+  "Oryxmas Ornament: Weak": {
+   "source": "Oryxmas",
+   "kind": "event",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "medium",
+   "evidence": "equip.xml line 32999 `<Description>A yellow ornament taken from Oryx's magical Oryxmas Tree. The aura it emits fills even the bitterest of hearts with pure joy...</Description>`, texture `<File>santaWorkshopObjects8x8</File>`, type 0x64bd — contiguous with 0x64bc / 0x64be. Same sheet-sharing evidence and same caveat as the other two ornaments."
+  },
+  "Blooming Sword": {
+   "source": "Blooming Flowers",
+   "kind": "event",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "high",
+   "evidence": "Object-type block lens: the 10 Blooming items occupy type 0xDF19-0xDF29 in equip.xml (`<Object type=\"0xDF1C\" id=\"Blooming Sword\">`), and the SAME hex block in newEventChestObjects.xml holds the realm event itself: `<Object type=\"0xDF10\" id=\"Blooming Flowers Realm Initiator\">`, `<Object type=\"0xDF18\" id=\"Blooming Flower Realm\">`, `<DisplayId>Blooming Flowers Realm</DisplayId>` (line 5098) and seven `Blooming Flowers Realm Spawner <biome>` objects (0xDF11-0xDF17). token.xml line 43715 carries the matching event currency: `<EffectInfo name=\"Event\" description=\"Blooming Flowers\" />` on Red/White/Yellow Seed Of Bounty. File<assets>/xml/equip.xml, newEventChestObjects.xml, token.xml."
+  },
+  "Piper's Pan Flute": {
+   "source": "Rats! (City Rats realm event)",
+   "kind": "event",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "medium",
+   "evidence": "Type block 0x4655-0x46a0 spans, in equip.xml: City Cat Bell 1/2/3, Giant Pocket Rat, Lucky Golden Rat, `<Object type=\"0x469a\" id=\"Piper's Pan Flute\">`, Mouse Trap; in heroes2.xml: the whole City Rat family plus `<Object id=\"City Rat Controller\" type=\"0x4654\">` and `<Object id=\"City Rat Progress Bar\" type=\"0x4697\">` with `<DisplayId>Rats!</DisplayId>` (heroes2.xml:4543) and `<Object id=\"City Rat Hunter NPC\" type=\"0x465a\"> <DisplayId>Herman the Rodent Hunter</DisplayId>` (heroes2.xml:4407-4408); in token.xml: City Rat Coin x1-x15 (0x4664+) whose tooltip reads \"Pay a minimum of 5, 10 or 15 coins to obtain a cat bell which calls upon an ally to help hunt the rats!\" and \"These coins can only be used near the Rodent Hunter.\" (token.xml:54318-54319), plus Cheese x1-x5. The item's own description matches: \"A peculiar instrument used by rat hunters of yore to lure rodents to their demise.\" and its allies (allies.xml `Piper's Pan Flute Rat 0..3`) use the same UGCSetPieceChars8x8 sheet as the City Rats. No dungeon file names it."
+  },
+  "Pool Noodle": {
+   "source": "Oryx Wood Totems (summer realm event)",
+   "kind": "event",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "medium",
+   "evidence": "The item's own proc names the event object: `<OnPlayerShootActivate ... objectId=\"Wood Totems Equipment Helper Object\" ...>ObjectToss</OnPlayerShootActivate>` and `<EffectInfo name=\"Extra Water Burst\" description=\"250 area damage within 4 tiles, deals more damage to the Realm Wood Totem\" />` (equip.xml:97497). Type block: `<Object type=\"0x6F2F\" id=\"Pool Noodle\">` sits inside 0x6F1A-0x6F33 together with the whole beach reskin set (Beach Shovel 0x6F2A ... Sun Hat 0x6F33), allies.xml `<Object type=\"0x6F29\" id=\"Wood Totems Equipment Helper Object\">`, and newEventChestObjects.xml `<Object type=\"0x6F1B\" id=\"Wood Totem Realm\"> <DisplayId>Oryx Wood Totem</DisplayId>`, `Wood Totem Realm Initiator` (0x6F20), `Wood Totems Realm Burn Text` and seven `Wood Totems Realm Spawner <biome>` objects (0x6F22-0x6F28). REJECTED alternative: the Beachzone dungeon is real (portals.xml:530 `<Object type=\"0x0742\" id=\"Beachzone Portal\"> <DungeonName>Beachzone</DungeonName>`) but is an unrelated, much older type block and nothing links the beach set to it."
+  },
+  "Rectangular Prism": {
+   "source": "Forge — craft from a blueprint + 2 dismantled REALMWHITE items",
+   "kind": "forge",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "high",
+   "evidence": "forgeProperties.xml:11479-11491 `<ForgeProperties type=\"0xbb4b\" id=\"Rectangular Prism\"> <CanDismantle /> <CanCraft /> <Description>Requires 2 items [sprite='CollectionIcon' index=100]</Description> ... <BlueprintRequired /> ... <RequireDismantleWithLabel amount=\"2\">REALMWHITE</RequireDismantleWithLabel>`. Consistent with equip.xml: it is the only item in its sprite neighbourhood (sorcEncountersObjects8x8: Kaiju Skull, Barnacle Shell, Rift Rippers, Babel Blocks, Obsidian Lyre, Skeletal Sigilpede) that does NOT carry the REALMWHITE label — it is the thing you make out of them. The `3D Rectangular Prism` in newThirdDimensionObjects.xml:7112 is a different object (type 0xbac0) and is not a drop link."
+  },
+  "Blooming Ring": {
+   "source": "Blooming Flowers",
+   "kind": "event",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "high",
+   "evidence": "Same chain as the rest of the Blooming set. `<Object type=\"0xDF29\" id=\"Blooming Ring\">` (DisplayId \"Ring Of Radiant Petals\") is the last of the 10-item 0xDF19-0xDF29 block; newEventChestObjects.xml holds the event in the same block — `<Object type=\"0xDF10\" id=\"Blooming Flowers Realm Initiator\">`, `<DisplayId>Blooming Flowers Realm</DisplayId>` (line 5098), spawners 0xDF11-0xDF17 for Coral Reefs / Ship Wreck / Haunted Hallows / Abandoned / Risen Hell / Dead Church / Sprite Forest. token.xml:43715 `<EffectInfo name=\"Event\" description=\"Blooming Flowers\" />`."
+  },
+  "Ring of the Burning Sun": {
+   "source": "Summer Solstice",
+   "kind": "set",
+   "boss": null,
+   "method": "description",
+   "confidence": "high",
+   "evidence": "equip.xml, inside `<Object type=\"0x2300\" id=\"Ring of the Burning Sun\">`: `<EffectInfo name=\"Set\" description=\"Summer Solstice\" />` (line 15879). Exactly four objects in the whole client carry that line — Staff of the Rising Sun (0x2299, line 15787), Thousand Suns Spell (0x229e, 15820), Robe of the Summer Solstice (0x229f, 15855), Ring of the Burning Sun (0x2300, 15879) — and they sit contiguously in equip.xml. IMPORTANT: this is a SET name, not a farm location; the drop source is still unresolved. Stat match makes it a reskin of the T6 tiered Ring of Unbound Defense (MAXHP 40 / MAXMP 40 / DEF 10), i.e. a seasonal reskin of a tiered item, so it has no base dungeon to inherit. Its two immediate file neighbours Bow of the Morning Star (ORG_UDL) and Sword of Illumination (ORG_ABYSS) DO carry dungeon labels because they reskin dungeon UTs; this one carries none. No token.xml event, no TSV row."
+  },
+  "Ringmaster's Bow": {
+   "source": "Oryx's Carnival",
+   "kind": "event",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "high",
+   "evidence": "Type block 0xCC05-0xCC22 is one release and contains all three pieces. equip.xml: Throwing Knives / Acrobat's Edge / Lion Tamer / Dreamcaster / `<Object type=\"0xcc21\" id=\"Ringmaster's Bow\">` / Carnival's Conjurer (0xcc22). newEventChestObjects.xml: `Jester Box Initiator`, `Jester Box Spawner Haunted Hallows / Sprite Forest / Coral Reefs`, `Carnival Confetti`, `Carnival Clown Spawner`, plus `<Object type=\"0xcbfd\" id=\"Oryx's Carnival Unicycle Clown\"> <DisplayId>Carnival Clown</DisplayId> ... <TrackLoot /> <HealthBarBoss radius=\"30\" />` and `<MinimapIcon color=\"#993399\" piece=\"Circus\" />`. token.xml: `<Object type=\"0xCC05\" id=\"Circus Ticket x1\">` ... `<EffectInfo name=\"Event\" description=\"Oryx's Carnival\" />` (token.xml:56194/56206) — the event currency is inside the same hex block as the weapon. Sprite lens agrees: Ringmaster's Bow is lofiObj index 790, immediately after the Jester Box's lofiObj 784-788 and Dreamcaster 789. Boss left blank on purpose: Carnival Clown is the event's TrackLoot boss but nothing in the files states it drops this bow."
+  },
+  "Robe of the Summer Solstice": {
+   "source": "Summer Solstice",
+   "kind": "set",
+   "boss": null,
+   "method": "description",
+   "confidence": "high",
+   "evidence": "equip.xml, inside `<Object type=\"0x229f\" id=\"Robe of the Summer Solstice\">`: `<EffectInfo name=\"Set\" description=\"Summer Solstice\" />` (line 15855), one of only four such lines in the client (the others on Staff of the Rising Sun 15787, Thousand Suns Spell 15820, Ring of the Burning Sun 15879). Description: \"A ceremonial robe worn by ritual leaders during the celebration of the Summer Solstice.\" IMPORTANT: set name, not a farm location — drop source still unresolved. Stat match (ATT 4 / DEF 13 / WIS 6 / MAXMP 55) makes it a reskin of the T12 tiered Robe of the Grand Sorcerer, so there is no base dungeon to inherit; its sibling reskins of the same tiered robe carry event labels it lacks (Frost Elementalist Robe = FROST_ENCHANTABLE, Robe of MotMG, Wanderer's Cape). Nothing in equipmentsets.xml, no token.xml event, no TSV row."
+  },
+  "Control Core Ring Archer": {
+   "source": "The Crucible",
+   "kind": "event",
+   "boss": null,
+   "method": "description",
+   "confidence": "high",
+   "evidence": "The item states it itself: equip.xml `<Object type=\"0x314\" id=\"Control Core Ring Archer\"> <DisplayId>Robotic Ring of the Crucible</DisplayId> ... <EffectInfo description=\"Item is obtained through Crucible challenges\" name=\"Crucible Reward\" />`. Corroborated in token.xml, where the event `<EffectInfo name=\"Event\" description=\"The Crucible\" />` is carried by exactly five tokens — Crown of the Control Core, Crown of the Exalted God, Crown of the Forgotten King, Crown of the Marble Colossus, Crown of the Void — which map 1:1 onto the four rings in type block 0x312-0x315 (Colossus Ring Melee \"Colossal Ring of the Crucible\", The Forgotten Ring Magic \"Shattered Ring of the Crucible\", Control Core Ring Archer \"Robotic Ring of the Crucible\", The Void Ring Tank \"Corrupted Ring of the Crucible\"). Not a dungeon."
+  },
+  "Blooming Dagger": {
+   "source": "Blooming Flowers",
+   "kind": "event",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "high",
+   "evidence": "`<Object type=\"0xDF1D\" id=\"Blooming Dagger\">` with `<DisplayId>Rosebite Dagger</DisplayId>` opens the 0xDF19-0xDF29 Blooming block in equip.xml. The event lives in the same hex block in newEventChestObjects.xml: `<Object type=\"0xDF10\" id=\"Blooming Flowers Realm Initiator\">`, `<Object type=\"0xDF18\" id=\"Blooming Flower Realm\">`, `<DisplayId>Blooming Flowers Realm</DisplayId>` (line 5098), and spawners 0xDF11-0xDF17 for seven realm biomes. token.xml:43715 carries the event currency: `<EffectInfo name=\"Event\" description=\"Blooming Flowers\" />` (Red / White / Yellow Seed Of Bounty)."
+  },
+  "Blooming Bouquet": {
+   "source": "Blooming Flowers",
+   "kind": "event",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "high",
+   "evidence": "equip.xml:92109 `<Object type=\"0xDF19\" id=\"Blooming Bouquet\">` sits one type-ID after newEventChestObjects.xml:5018 `<Object type=\"0xDF18\" id=\"Blooming Flower Realm\">`. The whole contiguous run 0xDF0F-0xDF27 contains ONLY that realm event's objects (newEventChestObjects.xml:5096 `<Object type=\"0xDF0F\" id=\"Blooming Flowers Realm Spawner Text\">` with `<DisplayId>Blooming Flowers Realm</DisplayId>`, plus its 7 biome spawners 0xDF11-0xDF17) and then the Blooming reskin items 0xDF19-0xDF27 and their projectiles. token.xml independently carries an event literally named Blooming Flowers: `<EffectInfo name=\"Event\" description=\"Blooming Flowers\" />` on the Seed Of Bounty tokens. No <ForgeProperties> entry exists for it in forgeProperties.xml, i.e. it is not craftable."
+  },
+  "Blooming Bow": {
+   "source": "Blooming Flowers",
+   "kind": "event",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "high",
+   "evidence": "equip.xml:92025 `<Object type=\"0xDF1B\" id=\"Blooming Bow\">` (DisplayId Blossom Bow) is inside the same contiguous 0xDF0F-0xDF27 block as newEventChestObjects.xml:5018 `<Object type=\"0xDF18\" id=\"Blooming Flower Realm\">` and newEventChestObjects.xml:5096 `<DisplayId>Blooming Flowers Realm</DisplayId>`. Its projectile block is byte-identical in stats to Blue Falcon (equip.xml:71967, `<MinDamage>135</MinDamage><MaxDamage>145</MaxDamage>` + `<MinDamage>35</MinDamage><MaxDamage>45</MaxDamage>`, `<ArcGap>8</ArcGap>`), so the Blooming set reskins the BASETYPE weapons — but the reskin's own source is the Blooming Flowers realm event, not the base's source. No forgeProperties.xml entry."
+  },
+  "Carnival's Conjurer": {
+   "source": "Oryx's Carnival",
+   "kind": "event",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "high",
+   "evidence": "equip.xml:84118 `<Object type=\"0xcc22\" id=\"Carnival's Conjurer\">` is the last entry of one unbroken type run that is entirely this event: token.xml:56536 `<Object type=\"0xCC18\" id=\"Circus Ticket x20\">` (the Circus Ticket tokens 0xCC05-0xCC18 all carry `<EffectInfo name=\"Event\" description=\"Oryx's Carnival\" />`), then newEventChestObjects.xml:2249 `<Object type=\"0xCC19\" id=\"Jester Box Initiator\">` with its biome spawners 0xCC1A-0xCC1C, then the six BASETYPE carnival weapons 0xCC1D-0xCC22 (Throwing Knives, Acrobat's Edge, Lion Tamer, Dreamcaster, equip.xml:84066 `<Object type=\"0xcc21\" id=\"Ringmaster's Bow\">`, Carnival's Conjurer), then their projectiles 0xCC23-0xCC2C in projectiles.xml. newEventChestObjects.xml also carries `<Object type=\"0xcbfd\" id=\"Oryx's Carnival Unicycle Clown\">` and `<Object type=\"0xCC3F\" id=\"Carnival Effigy\">` with all-biome spawners. No forgeProperties.xml entry."
+  },
+  "Chef's Hat": {
+   "source": "The Appetizer",
+   "kind": "event",
+   "boss": "The Appetizer",
+   "method": "description",
+   "confidence": "high",
+   "evidence": "equip.xml:38813 `<Description>The Appetizers prized toque which shows his expertise in a variety of different cooking techniques.</Description>` names the owner outright. 'The Appetizer' is a real event boss in this client: eventChestObjects.xml:6891 `<Object type=\"0x80ba\" id=\"The Appetizer\">` with `<Enemy />`, `<Quest />`, `<TrackLoot />`, `<MaxHitPoints>150000</MaxHitPoints>` and pizza/cookie projectiles, spawned by eventChestObjects.xml:6861 `<Object type=\"0x80b8\" id=\"The Appetizer Spawner\">` and newEventChestObjects.xml:204 `<Object type=\"0x4637\" id=\"New The Appetizer Spawner\">`. The client also names it as an event: token.xml:17190 `<EffectInfo name=\"Event\" description=\"The Appetizer\" />` on the Food Voucher tokens (types 0x7c01-0x7c28). Chef's Hat (equip.xml:38804 `<Object type=\"0x47b8\" id=\"Chef's Hat\">`) has no ORG_ label and no forgeProperties.xml entry."
+  },
+  "Appetizers Atire": {
+   "source": "The Appetizer",
+   "kind": "event",
+   "boss": "The Appetizer",
+   "method": "xml-crossref",
+   "confidence": "high",
+   "evidence": "The item id itself names the boss: equip.xml:38784 `<Object id=\"Appetizers Atire\" type=\"0x47b3\">` (DisplayId 'Chefs Atire'), and the boss exists at eventChestObjects.xml:6891 `<Object type=\"0x80ba\" id=\"The Appetizer\">` with `<Quest />` and `<TrackLoot />`. It is object #1530 in equip.xml, immediately before Chef's Hat (#1531), whose Description reads 'The Appetizers prized toque...' (equip.xml:38813), and its file neighbours are the rest of the same food-themed drop (Spoon, Plate, apetizerPlate1, Needlessly Large Spoon, Eggshell Cowl, all on the d2LofiObjEmbed sheet at contiguous types 0x47B2-0x47B8). token.xml carries `<EffectInfo name=\"Event\" description=\"The Appetizer\" />`. No ORG_ label, no forgeProperties.xml entry."
+  },
+  "Colossus Ring Melee": {
+   "source": "The Crucible",
+   "kind": "event",
+   "boss": null,
+   "method": "description",
+   "confidence": "high",
+   "evidence": "equip.xml:66805 `<Object type=\"0x312\" id=\"Colossus Ring Melee\">` (DisplayId 'Colossal Ring of the Crucible') carries equip.xml:66817 `<EffectInfo description=\"Item is obtained through Crucible challenges\" name=\"Crucible Reward\" />`. 'The Crucible' is a named event in this client: token.xml:34202 `<Object type=\"0xc635\" id=\"Crown of the Marble Colossus x1\">` carries `<EffectInfo name=\"Event\" description=\"The Crucible\" />`, and equip.xml has `<Object id=\"Crucible Mystery Chest\" type=\"0x61BD\">` with the same Event tag. The four Crucible rings sit at contiguous types 0x312-0x315 (Colossus Ring Melee, The Forgotten Ring Magic, Control Core Ring Archer, The Void Ring Tank) matching the four Crown tokens (Marble Colossus, Forgotten King, Control Core, Void)."
+  },
+  "The Void Ring Tank": {
+   "source": "The Crucible",
+   "kind": "event",
+   "boss": null,
+   "method": "description",
+   "confidence": "high",
+   "evidence": "equip.xml:66883 `<Object type=\"0x315\" id=\"The Void Ring Tank\">` (DisplayId 'Corrupted Ring of the Crucible') carries equip.xml:66895 `<EffectInfo description=\"Item is obtained through Crucible challenges\" name=\"Crucible Reward\" />`. token.xml:34202 `<Object type=\"0xc635\" id=\"Crown of the Marble Colossus x1\">` and its siblings (including Crown of the Void) carry `<EffectInfo name=\"Event\" description=\"The Crucible\" />`, confirming The Crucible is a named event, and equip.xml has a `Crucible Mystery Chest` with the same tag. Sits at 0x315, in the contiguous four-ring Crucible block 0x312-0x315."
+  },
+  "Abyssal Trophy": {
+   "source": "Abyss Runner competition (Abyss of Demons)",
+   "kind": "event",
+   "boss": null,
+   "method": "sprite-sheet",
+   "confidence": "medium",
+   "evidence": "equipKeys.xml:2407 `<Object type=\"0x6586\" id=\"Abyss Runner Key\">` with `<Description>A key which opens an entrance to an Abyss of Demons. Archdemon Malphas crafted his own fiery abode, which now torments the souls of the wicked.</Description>` and `<EffectInfo name=\"Competition Key\" description=\"This key can only be used in the Vault.\" />`. Abyssal Trophy is the very next type id — equip.xml:36256 `<Object type=\"0x6587\" id=\"Abyssal Trophy\">` — and its sprite is the very next cell on the same sheet: the key is `<File>d2LofiObjEmbed</File><Index>0x235</Index>` (equipKeys.xml), the trophy `<File>d2LofiObjEmbed</File><Index>0x236</Index>` (equip.xml), and equipKeys.xml:? `<Object type=\"0x6588\" id=\"Snake Pit Enchanted Key\">` takes 0x237. The trophy's own text names the same boss: `personally molded by Archdemon Malphas` (equip.xml). Malphas is the Abyss of Demons boss — abyssOfDemonsObjects.xml:119 `<Object type=\"0x090a\" id=\"Archdemon Malphas\">`. NOTE: this reads as a competition/leaderboard trophy for an Abyss speedrun, not a farmable Abyss of Demons drop — do not send anyone to farm AoD for it. Not present in the Abyss of Demons / Infernal / Legacy Heroic rows of realmeye-untiered-by-dungeon.tsv."
+  },
+  "Acrobat's Edge": {
+   "source": "Oryx's Carnival",
+   "kind": "event",
+   "boss": null,
+   "method": "neighbour-order",
+   "confidence": "medium",
+   "evidence": "Type id sits inside the Oryx's Carnival block. newEventChestObjects.xml:2366 `<Object type=\"0xcbfd\" id=\"Oryx's Carnival Unicycle Clown\">` with `<Labels>ENEMY,BOSS,BOSSFIGHT,STASISIMMUNE,ORYX_CARNIVAL</Labels>` (newEventChestObjects.xml:2411); emotes.xml:3704 `<Object type=\"0xcbff\" id=\"Sad Clown Emote\">`, emotes.xml:3748 `<Object type=\"0xcc01\" id=\"Jester Card Emote\">`; newEventChestObjects.xml:2413 `<Object type=\"0xcc02\" id=\"Carnival Confetti\">`; equip.xml:83933 `<Object type=\"0xcc1e\" id=\"Acrobat's Edge\">` inside the run 0xcc1d Throwing Knives / 0xcc1e Acrobat's Edge / 0xcc1f Lion Tamer / 0xcc20 Dreamcaster / 0xcc21 Ringmaster's Bow / 0xcc22 Carnival's Conjurer; then newEventChestObjects.xml:2957 `<Object type=\"0xCC3F\" id=\"Carnival Effigy\">`. Sprite sheet agrees: on lofiObj the cells are 794 Jester Card Emote, 795 Sad Clown Emote, 796 Clapping Jolly Chimp Emote, 799 Throwing Knives, 800 Acrobat's Edge, 801 Lion Tamer. equip.xml's own description gives no source: `A katana of unparalleled grace and agility, the Acrobat's Edge is a weapon crafted for both elegance and performance.` Not in realmeye-untiered-by-dungeon.tsv."
+  },
+  "Amulet of Desecration": {
+   "source": "Spectral Penitentiary",
+   "kind": "dungeon",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "high",
+   "evidence": "Three independent local signals. (1) Its own text, equip.xml:79902 `<Object type=\"0x5c4f\" id=\"Amulet of Desecration\">` `<Description>Once a mystical artifact that allowed its bearer to escape the grasp of death, this amulet remains as a relic of Murcian's past involvement with Skuld. Wearing this amulet is ill-advised.</Description>` — and Murcian is the Spectral Penitentiary boss: specPenObjects.xml:10315 `<Object id=\"SpecPen Soulwarden Murcian\" type=\"0x5c81\">` / `<DisplayId>Soulwarden Murcian</DisplayId>`. (2) Its sprite sheet is dungeon-specific: `<File>specPenObjects8x8</File><Index>550</Index>` (equip.xml). (3) Every equip.xml neighbour is ORG_SPECTRAL on that same sheet — the block immediately before it runs Motivational Megaphone, Sinister Syringes, Cackling Straitjacket, Command Cornea, Ocular Entrapment, Damnation, Deliverance, Pandemic Poison, Boundless Vessel and equip.xml:79864 `<Object type=\"0x5c48\" id=\"Amulet of Restoration\" collectionIcon=\"103\">` whose labels end `,ORG_SPECTRAL`; the block immediately after is SpecPen Contributor Reward / SpecPen Vanity Generator / Spectral Quest Chest Item / SpecPen Prison Ration. Dungeon name confirmed at dungeonTemplates.xml:569 `<DungeonModTemplate id=\"Spectral Penitentiary\">`. Boss left blank: Murcian is named as lore, not as the dropper."
+  },
+  "Amulet of Elemental Air": {
+   "source": "Elemental Equinox",
+   "kind": "event",
+   "boss": null,
+   "method": "sprite-sheet",
+   "confidence": "medium",
+   "evidence": "Same sprite sheet block as the event's own tokens. token.xml:24545 `<Object type=\"0x7d76\" id=\"Catalyst of Air x1\">` uses `<File>d2LofiObjEmbed</File>` index 1073 and carries `<EffectInfo name=\"Event\" description=\"Elemental Equinox\" />` (token.xml:24557); Catalyst of Earth = 1074, Catalyst of Fire = 1075, Catalyst of Water = 1076 — same event tag. equip.xml:51876 `<Object type=\"0x383f\" id=\"Amulet of Elemental Air\">` is `<File>d2LofiObjEmbed</File><Index>1080</Index>`, inside the contiguous run 1079 Amulet of Elemental Fire, 1080 Air, 1081 Water, 1082 Earth, 1083 Elemental Equilibrium, 1084-1087 Tsunami/Arashi/Ignis/Tectonus, 1113-1116 Book of Water/Air/Earth/Fire, and 1117 `<Object type=\"0x7dcb\" id=\"Elemental Gem\">` (token.xml:26242) which also carries `Event\" description=\"Elemental Equinox`. The amulet's description `We sought to ape its astonishing force, to reproduce it in our environment...` is an excerpt from the matching Book lore item on the same sheet. Event-scoped only — no dungeon named anywhere in the 246 XMLs, and the name is absent from realmeye-untiered-by-dungeon.tsv."
+  },
+  "Amulet of Elemental Earth": {
+   "source": "Elemental Equinox",
+   "kind": "event",
+   "boss": null,
+   "method": "sprite-sheet",
+   "confidence": "medium",
+   "evidence": "equip.xml:51916 `<Object type=\"0x3841\" id=\"Amulet of Elemental Earth\">` with `<File>d2LofiObjEmbed</File><Index>1082</Index>`. The four element-matched event tokens sit at 1073-1076 on that same sheet and each declares the event: token.xml `<Object type=\"0x7d8b\" id=\"Catalyst of Earth x1\">` / `<Description>A manifestation of pure elemental Earth.</Description>` / `<EffectInfo name=\"Event\" description=\"Elemental Equinox\" />`. The run 1079-1083 is Fire/Air/Water/Earth + Elemental Equilibrium, and the block closes at 1117 with `<Object type=\"0x7dcb\" id=\"Elemental Gem\">` (token.xml:26242), also `Event\" description=\"Elemental Equinox`. Its description `...our Mother and our Essence and our livelihood... we would now seek its full potential.` matches the Book of Earth lore item at index 1115 on the same sheet. No dungeon or enemy file anywhere in the 246 XMLs names this item (grep -rl returns equip.xml only); absent from realmeye-untiered-by-dungeon.tsv."
+  },
+  "Amulet of Elemental Fire": {
+   "source": "Elemental Equinox",
+   "kind": "event",
+   "boss": null,
+   "method": "sprite-sheet",
+   "confidence": "medium",
+   "evidence": "equip.xml:51856 `<Object type=\"0x383e\" id=\"Amulet of Elemental Fire\">` with `<File>d2LofiObjEmbed</File><Index>1079</Index>` — the cell immediately after the Elemental Equinox token block on the same sheet (1073 Catalyst of Air, 1074 Earth, 1075 Fire, 1076 Water). token.xml `<Object type=\"0x7da0\" id=\"Catalyst of Fire x1\">` carries `<Description>A manifestation of pure elemental Fire.</Description>` and `<EffectInfo name=\"Event\" description=\"Elemental Equinox\" />` (token.xml:24557 is the first such tag). The sheet block continues 1083 Elemental Equilibrium, 1084-1087 Tsunami/Arashi/Ignis/Tectonus, 1113-1116 the four lore Books, 1117 Elemental Gem (also Elemental Equinox). Description `...a driving force, indeed the driving force of nature and of civilization, would drive us once again to...` matches the Book of Fire lore. Only equip.xml mentions the item across all 246 files; absent from realmeye-untiered-by-dungeon.tsv."
+  },
+  "Amulet of Elemental Water": {
+   "source": "Elemental Equinox",
+   "kind": "event",
+   "boss": null,
+   "method": "sprite-sheet",
+   "confidence": "medium",
+   "evidence": "equip.xml:51896 `<Object type=\"0x3840\" id=\"Amulet of Elemental Water\">` with `<File>d2LofiObjEmbed</File><Index>1081</Index>`. token.xml `<Object type=\"0x7db5\" id=\"Catalyst of Water x1\">` sits at index 1076 on the same sheet with `<EffectInfo name=\"Event\" description=\"Elemental Equinox\" />`. Direct textual link to the sheet-neighbour lore book: this amulet's `<Description>...the principle of things that are, Water could take all forms that make up our world, and we harnessed it...</Description>` reuses the exact phrase in equip.xml `<Object type=\"0x3855\" id=\"Book of Water\">` `<Activate title=\"Book of Water\" text=\"{i}...that from which is everything that exists... ...the principle of things that are...` (index 1113, same sheet). Block bookended at 1117 by `<Object type=\"0x7dcb\" id=\"Elemental Gem\">` (token.xml:26242), also Elemental Equinox. No dungeon/enemy file names it; absent from realmeye-untiered-by-dungeon.tsv."
+  },
+  "MV Basic Fishing Rod": {
+   "source": "Moonlight Village",
+   "kind": "dungeon",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "high",
+   "evidence": "Direct cross-reference, not inference. moonlightVillageObjects.xml:20227 `<Object id=\"MV Basic Fishing Rod Dropper\" type=\"0x50f8\">` is `<Class>Container</Class><Container /><Loot />` and its payload at moonlightVillageObjects.xml:20237 is `<Equipment>0x50df, 0x50df, 0x50df, 0x50df, 0x50df, 0x50df, 0x50df, 0x50df</Equipment>` — 0x50df is exactly this item: equip.xml `<Object id=\"MV Basic Fishing Rod\" type=\"0x50df\">` / `<DisplayId>Basic Fishing Rod</DisplayId>`. Corroborated by its own words, `<EffectInfo description=\"Only usable in the Moonlight Village. Aim at ripples in the water to catch fish!\" name=\"Fishing\" />`, and by its dungeon-specific sheet `<File>moonlightVillageObjects8x8</File><Index>486</Index>` (equip.xml). Moonlight Village is a listed dungeon in realmeye-untiered-by-dungeon.tsv. Note this is a fishing tool from a fixed dropper object inside the dungeon, not a boss white bag."
+  },
+  "Beach Shovel": {
+   "source": "Oryx Wood Totems Realm event",
+   "kind": "event",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "medium",
+   "evidence": "Its own EffectInfo names the event enemy, and its type id sits inside that event's object block. equip.xml:97191 `<Object type=\"0x6F2A\" id=\"Beach Shovel\">` carries `<EffectInfo name=\"Extra Water Burst\" description=\"250 area damage within 4 tiles, deals more damage to the Realm Wood Totem\" />` and `<OnPlayerShootActivate ... objectId=\"Wood Totems Equipment Helper Object\" ...>` — that helper is allies.xml:13215 `<Object type=\"0x6F29\" id=\"Wood Totems Equipment Helper Object\">`, the id immediately below it. The surrounding type ids are all event objects in newEventChestObjects.xml: 0x6F1A Wood Totems Realm Burn Text 2, :5619 `<Object type=\"0x6F1B\" id=\"Wood Totem Realm\">` with `<DisplayId>Oryx Wood Totem</DisplayId>` and `<Labels>ENEMY,MINION,STASISIMMUNE,MINION_WEAK,WOOD_TOTEM</Labels>`, 0x6F1F Wood Totem Restored Realm, 0x6F20 Wood Totem Realm Initiator, 0x6F22-0x6F28 `Wood Totems Realm Spawner Coral Reefs / Ship Wreck / Haunted Hallows / Abandoned / Risen Hell / Dead Church / Sprite Forest`. equip.xml file order confirms the batch: Water Balloon, Beach Shovel, Dual Pops, Water Pistol, Beach Umbrella, Flip-Flops, Pool Noodle, Life Jacket, Summer Dress, Swim Tube, Sun Hat — all `LOOTABLE,...,RESKIN`. This is a Realm-wide event spawning across seven biomes, NOT one dungeon and not one biome. The client never prints a marketing name for it, so the source is given as the enemy's own DisplayId. (Checked and rejected: the three `Event\" description=\"Mad God's Beach Bash` items in equip.xml are Seasonal Mystery Ocean Shells I/II/III at types 0xC9B2-0xC9B4, a different release entirely.) Absent from realmeye-untiered-by-dungeon.tsv."
+  },
+  "Beach Umbrella Weapon": {
+   "source": "Oryx Wood Totems Realm event",
+   "kind": "event",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "medium",
+   "evidence": "Same block and same mechanic as Beach Shovel. equip.xml:97349 `<Object type=\"0x6F2D\" id=\"Beach Umbrella Weapon\">` / `<DisplayId>Beach Umbrella</DisplayId>` with `<Description>Protect yourself from the sun and heat with this umbrella, or use it to defeat some enemies that want to steal your place at the Realm's beach. While firing, every 3 seconds a burst of water appears, damaging nearby enemies and extinguishing fires caused by heat waves.</Description>`, `<EffectInfo name=\"Extra Water Burst\" description=\"250 area damage within 4 tiles, deals more damage to the Realm Wood Totem\" />`, and `<OnPlayerShootActivate ... objectId=\"Wood Totems Equipment Helper Object\" ...>` = allies.xml:13215 `<Object type=\"0x6F29\" id=\"Wood Totems Equipment Helper Object\">`. The event's enemies bracket it: newEventChestObjects.xml:5619 `<Object type=\"0x6F1B\" id=\"Wood Totem Realm\">` / `<DisplayId>Oryx Wood Totem</DisplayId>`, plus the 0x6F22-0x6F28 `Wood Totems Realm Spawner <biome>` set; its own projectiles are projectiles.xml 0x6F39/0x6F3A `Beach Umbrella Projectile 1/2`. Labels `EQUIPMENT,WEAPON,FLAIL,LOOTABLE,SUBTYPE,UT,UT_TAB,RESKIN` — RESKIN with no ORG_ token, consistent with an event drop rather than the base weapon's dungeon. Realm-wide event across seven biomes, not one dungeon. Absent from realmeye-untiered-by-dungeon.tsv."
+  },
+  "Blacksmith Hammer": {
+   "source": "Mining Event 2025",
+   "kind": "event",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "medium",
+   "evidence": "Its own projectile is a Mining-event projectile, and its type id sits mid-block. equip.xml:95980 `<Object type=\"0xA471\" id=\"Blacksmith Hammer\">` fires `<ObjectId>Mining Sword Proj</ObjectId>` (equip.xml:95992) = projectiles.xml `<Object type=\"0xA472\" id=\"Mining Sword Proj\">`, the very next type id. The interleaved run is 0xA465 Stone Pickaxe, 0xA467 Iron Pickaxe, 0xA468 Emerald Pickaxe, 0xA469 Diamond Pickaxe, 0xA46C `Diamond Pickaxe Helper Object` (allies.xml), 0xA46D Explorer's Shovel, 0xA46E Mining Staff Proj, 0xA46F Seeker's Chisel, 0xA470 Mining Dagger Proj, **0xA471 Blacksmith Hammer**, 0xA472 Mining Sword Proj, 0xA473 Metal Tray, 0xA474 Mining Bow Proj, 0xA475 Dynamite, 0xA477 Glowing Torch, 0xA479-0xA47C Rock Monster / Ferrous Golem / Emerald Head / Diamond Crystal Proj, then the realm ore spawners newEventChestObjects.xml 0xA486 `Realm Stone Ores Spawner Beach`, 0xA487 Undead Forest, 0xA488 Forest (each `<Terrain>...</Terrain><SpawnProb>1</SpawnProb><PerRealmMax>2</PerRealmMax>`), and finally the event's own tokens: token.xml:62179 `<Object type=\"0xA489\" id=\"Ancient Ruby\">` carrying `<EffectInfo name=\"Event\" description=\"Mining Event 2025\" />` (token.xml:62189). The event string is quoted verbatim from token.xml; the year rests on that token adjacency, so the safe reading is 'the Mining event' with 2025 as the client's own label. Its own description `A heavy hammer designed for multiple uses, like smashing enemies, breaking through walls, and forging new tools.` names no dungeon; `grep -rl` finds it only in equip.xml; absent from realmeye-untiered-by-dungeon.tsv."
+  },
+  "Thousand Suns Spell": {
+   "source": "Summer Solstice",
+   "kind": "set",
+   "boss": null,
+   "method": "description",
+   "confidence": "high",
+   "evidence": "equip.xml:15820, inside `<Object type=\"0x229e\" id=\"Thousand Suns Spell\">` (equip.xml:15810): `<EffectInfo name=\"Set\" description=\"Summer Solstice\" />`. Exactly four items in the whole 5.3 MB file declare this set — Staff of the Rising Sun (15787), Thousand Suns Spell (15820), Robe of the Summer Solstice (15855), Ring of the Burning Sun (15879) — all RESKIN, none with a `<SetType>` hex, so equipmentsets.xml has no row for it. Note for the roadmap: two adjacent members of the same release run DO carry dungeon labels (Bow of the Morning Star `ORG_UDL,DOOM_BOW`, Sword of Illumination `ORG_ABYSS,DEMON_BLADE`), so this set's members are seeded per-dungeon; Thousand Suns Spell itself has no ORG_*, so the set name is all the client proves."
+  },
+  "Throwing Knives": {
+   "source": "Oryx's Carnival",
+   "kind": "event",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "medium",
+   "evidence": "equip.xml:83900 `<Object type=\"0xcc1d\" id=\"Throwing Knives\">`, description \"designed with the precision and flair of circus performers\". Type 0xCC1D is the first item in a perfectly contiguous, unmixed cross-file event release 0xCC00–0xCC30: emotes 'Jester Card Emote' (0xCC01), newEventChestObjects.xml:2423 `<Object type=\"0xcc03\" id=\"Carnival Clown Spawner\">`, token.xml:56194 `<Object type=\"0xCC05\" id=\"Circus Ticket x1\">` carrying `<EffectInfo name=\"Event\" description=\"Oryx's Carnival\" />` (through Circus Ticket x20 at 0xCC18), newEventChestObjects.xml:2249 `<Object type=\"0xCC19\" id=\"Jester Box Initiator\">` plus `Jester Box Spawner Haunted Hallows / Sprite Forest / Coral Reefs` (0xCC1A–0xCC1C), then the six carnival weapons 0xCC1D–0xCC22 (Throwing Knives, Acrobat's Edge, Lion Tamer, Dreamcaster, Ringmaster's Bow, Carnival's Conjurer), then their projectiles 0xCC23–0xCC2C ('Clown Balloons', 'Clown Juggling Balls', 'Throwing Knifes Shot'). No foreign object anywhere in the run."
+  },
+  "Seeker's Chisel": {
+   "source": "Mining Event 2025",
+   "kind": "event",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "medium",
+   "evidence": "L2, its own words: equip.xml:95961 `<ObjectId>Mining Dagger Proj</ObjectId>` is Seeker's Chisel's projectile (equip.xml:95949 `<Object type=\"0xA46F\" id=\"Seeker's Chisel\">`; projectiles.xml:24865 `<Object type=\"0xA470\" id=\"Mining Dagger Proj\">`), and `<Description>This chisel carves through a wide variety of materials in search of new information about the realm's forgotten past.</Description>`. L3: it is item 6 of a contiguous LOOTABLE/BASETYPE tool block — Stone Pickaxe, Iron Pickaxe, Emerald Pickaxe, Diamond Pickaxe, Explorer's Shovel, Seeker's Chisel, Blacksmith Hammer, Metal Tray, Dynamite, Glowing Torch — immediately followed by equip.xml:96125 `<Object type=\"0xA0A6\" id=\"Mystery Mining Chest\">` and `<Object type=\"0xA0A5\" id=\"Miner's Arsenal Chest\">`. L1: the same 0xA4xx type range holds the event's content — newEventChestObjects.xml:6202 `<Object type=\"0xA440\" id=\"Stone Ore Realm\">` (line 6230 `<Labels>ENEMY,MINION,STASISIMMUNE,MINION_WEAK,REALM_ORE</Labels>`) and the event's currency, token.xml:62189 `<EffectInfo name=\"Event\" description=\"Mining Event 2025\" />` on `Ancient Ruby` (0xA489). CAVEAT: no file states the chisel's drop source; the year 2025 comes from the only mining event named in the client."
+  },
+  "The Forgotten Ring Magic": {
+   "source": "The Crucible",
+   "kind": "event",
+   "boss": null,
+   "method": "description",
+   "confidence": "high",
+   "evidence": "The item says it itself — equip.xml:66831 `<Object type=\"0x313\" id=\"The Forgotten Ring Magic\">` / `<DisplayId>Shattered Ring of the Crucible</DisplayId>` / `<EffectInfo description=\"Item is obtained through Crucible challenges\" name=\"Crucible Reward\" />`. The Crucible is a first-class event in the client, not a dungeon: staticobjects.xml:9492 `<Object type=\"0x44CD\" id=\"Crucible Changer\">` with `<Class>CrucibleSwitcher</Class>` and `<HelperDialog title=\"The Crucible\">The Crucible is not for the faint of heart. Enter to face greater danger with powerful trade-offs and better rewards.</HelperDialog>`; token.xml:34214 `<EffectInfo name=\"Event\" description=\"The Crucible\" />`; equip.xml has `Crucible Mystery Chest` tagged `EVENT= The Crucible`. Confirmed by its three siblings in file order: `Colossus Ring Melee`/Colossal Ring of the Crucible, `Control Core Ring Archer`/Robotic Ring of the Crucible, `The Void Ring Tank`/Corrupted Ring of the Crucible."
+  },
+  "Ship's Wheel Shield": {
+   "source": "September 2024 pirate event chest",
+   "kind": "event",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "medium",
+   "evidence": "L1 cross-reference through its own contiguous type block. equip.xml:78360 `<Object type=\"0xCE0\" id=\"Ship's Wheel Shield\">` opens a pirate block 0xCE0-0xCE8: 0xCE1 X-Marks-the-Spot Spell, 0xCE2 Tome of Piracy, 0xCE3 Brine Quiver, 0xCE4 Crossbones Skull, 0xCE5 Parrot Skeleton Scepter, then projectiles.xml:18974 `<Object type=\"0xCE6\" id=\"Ship's Wheel Projectile\">` and projectiles.xml:19004 `<Object type=\"0xCE8\" id=\"Brine Quiver Projectile\">`. That last projectile is wielded by the event enemies: eventChestObjects.xml:12726 `<Object id=\"September 2024 Pirate Low\" type=\"0xD4A\">` / `<DisplayId>Pirate Guard</DisplayId>` with `<ObjectId>Brine Quiver Projectile</ObjectId>` (line 12742), repeated on `September 2024 Pirate Mid` (0xD4B) and `September 2024 Pirate High` (0xD4C), guarding eventChestObjects.xml:12534 `<Object type=\"0xD47\" id=\"September 2024 Chest Low\">` / `<DisplayId>Treasure Chest</DisplayId>`. The client also names a `Talk like a pirate` event in token.xml, consistent with September, but its token types (0x2986+) are nowhere near 0xCE0, so I am not asserting that name. CAVEAT: the link runs through a sibling item's projectile, not the shield itself."
+  },
+  "Stone Pickaxe": {
+   "source": "Mining Event 2025",
+   "kind": "event",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "high",
+   "evidence": "Full chain, all local. equip.xml:95835 `<Object type=\"0xA465\" id=\"Stone Pickaxe\">`, `<Description>With the stone pickaxe, you can break the stone ores found throughout the Realm! To do so, use your character's special ability and move the pickaxe by pressing the mouse wheel (default keybind).</Description>`, and `<OnPlayerAbilityActivate ... objectId=\"Stone Pickaxe Helper Object\" ...>SpawnCreep</OnPlayerAbilityActivate>`. That summon is allies.xml:13245 `<Object type=\"0xA466\" id=\"Stone Pickaxe Helper Object\">` firing `<ObjectId>Stone Pickaxe Proj</ObjectId>` (projectiles.xml:24972, 0xA47D). The ores it breaks are newEventChestObjects.xml:6202 `<Object type=\"0xA440\" id=\"Stone Ore Realm\">` with newEventChestObjects.xml:6230 `<Labels>ENEMY,MINION,STASISIMMUNE,MINION_WEAK,REALM_ORE</Labels>`, spawned realm-wide by `Realm Ores Initiator` (0xA448) and per-biome spawners (`Realm Stone Ores Spawner Beach/Forest/Plains/Coral Reefs/...`). The event is named in token.xml:62189 `<EffectInfo name=\"Event\" description=\"Mining Event 2025\" />` on `Ancient Ruby` (0xA489) — same 0xA4xx allocation block. Sibling equip items Iron/Emerald/Diamond Pickaxe, Explorer's Shovel, Seeker's Chisel follow it contiguously, then `Mystery Mining Chest` / `Miner's Arsenal Chest`."
+  },
+  "Retro Celestial Blade": {
+   "source": "Legacy Lair of Draconis",
+   "kind": "dungeon",
+   "boss": null,
+   "method": "sprite-sheet",
+   "confidence": "medium",
+   "evidence": "Four independent local sources agree. (1) Dungeon-specific sheet: equip.xml:113906 `<Object type=\"0xcfcb\" id=\"Retro Celestial Blade\">` / `<DisplayId>Sullen Blade</DisplayId>` / `<File>timeChamberObjects8x8</File>` `<Index>284</Index>` — that sheet is used by exactly four equip objects and otherwise only by timeChamberObjects.xml / timeChamberGrounds.xml / equipKeys.xml. (2) Its three same-sheet neighbours in file order are `Retro Leaf Dragon Hide Armor`, `Retro Water Dragon Silk Robe`, `Retro Fire Dragon Battle Armor`. (3) TSV line 45: `Lair of Draconis\\tCelestial Blade|Leaf Dragon Hide Armor|Water Dragon Silk Robe|Fire Dragon Battle Armor|Midnight Star|Vision of Draconis|Draconic Insignia` — the base forms of all four map to Lair of Draconis. (4) The Time Chamber is a HUB, not the farm: timeChamberObjects.xml holds 187 `<Class>GameObject</Class>` walls/decor and exactly one `<Class>Character</Class>` (`Time Keeper Craig`); equipKeys.xml:6640 `<Description>A key which opens a passage to the Time Chamber. Reworked dungeons are a replacement not just an improvment, Craig strives to maintain his olds friends sanity so they don't get lost to time..</Description>`, and portals.xml:882 `<DungeonName>Legacy Lair of Draconis</DungeonName>` is one of a contiguous run of Legacy portals ending at portals.xml:2755 `<DungeonName>Time Chamber</DungeonName>`. CAVEAT: no file literally states the drop; the TSV has no 'Legacy Lair of Draconis' row."
+  },
+  "MV Legendary Fishing Rod": {
+   "source": "Moonlight Village",
+   "kind": "dungeon",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "high",
+   "evidence": "equip.xml L63650 `<Object id=\"MV Legendary Fishing Rod\" type=\"0x50f6\">` with `<File>moonlightVillageObjects8x8</File>` and `<EffectInfo description=\"Only usable in the Moonlight Village. Aim at ripples in the water to catch fish!\" name=\"Fishing\" />`. It is granted by equip.xml L63279 `<Object id=\"MV Fish Gift\" type=\"0x5173\">` / `<DisplayId>Umi's Fishy Parcel</DisplayId>` / `<Description>A special gift from Umi! The box appears to contain a unique fishing rod.</Description>`, whose body is `<Activate id=\"MV Legendary Fishing Rod\" classId=\"768,775,...\">CreateObject</Activate>` (L63293). Type ids 0x50ec-0x50f8 are one unbroken Moonlight Village block (moonlightVillageObjects.xml: MV Water Ripple 2-4, MV Intermediate/Master Bait, `0x50f7 MV Legendary Bait`, `0x50f8 MV Basic Fishing Rod Dropper`). Not a boss drop - it is fishing-progression loot inside the Moonlight Village."
+  },
+  "Retro Leaf Dragon Hide Armor": {
+   "source": "Time Chamber",
+   "kind": "dungeon",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "high",
+   "evidence": "equip.xml L113839 `<Object type=\"0xcfc8\" id=\"Retro Leaf Dragon Hide Armor\">` with `<File>timeChamberObjects8x8</File><Index>281</Index>`. The Time Chamber Key uses index 280 on the same sheet: equipKeys.xml `<Object type=\"0xcfd0\" id=\"Time Chamber Key\">` ... `<File>timeChamberObjects8x8</File><Index>280</Index>` ... `<Description>A key which opens a passage to the Time Chamber...</Description>` / `<Activate id=\"Time Chamber Portal\">CreatePortal</Activate>`. The dungeon is real: portals.xml L2751 `<Object type=\"0xcfbd\" id=\"Time Chamber Portal\">` with `<DungeonName>Time Chamber</DungeonName>`. The whole 'Retro *' item run 0xcfbe-0xcfcf sits between that portal (0xcfbd) and the key (0xcfd0) / timeChamberObjects.xml L3 `<Object type=\"0xcfd1\" id=\"Time Keeper Craig\">` - one unbroken type-id block. NOTE this is NOT the RETROWINDS event set: those are separate items 0xF97B-0xF98A ('Retrowinds Dagger' etc., labelled RETROWINDS)."
+  },
+  "Lion Tamer": {
+   "source": "Oryx's Carnival",
+   "kind": "event",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "medium",
+   "evidence": "equip.xml L83967 `<Object type=\"0xcc1f\" id=\"Lion Tamer\">`. Unbroken type-id block: token.xml `<Object type=\"0xCC05\" id=\"Circus Ticket x1\">` ... x20 (0xCC05-0xCC18), whose body carries `<EffectInfo name=\"Event\" description=\"Oryx's Carnival\" />`; then newEventChestObjects.xml `<Object type=\"0xCC19\" id=\"Jester Box Initiator\">`, `0xCC1A/1B/1C Jester Box Spawner Haunted Hallows / Sprite Forest / Coral Reefs`; then the circus weapon sextet 0xcc1d-0xcc22 (Throwing Knives, Acrobat's Edge, **Lion Tamer**, Dreamcaster, Ringmaster's Bow, Carnival's Conjurer); then projectiles.xml 0xcc23-0xcc29 including `<Object type=\"0xcc27\" id=\"Lion Tamer Flail\">`. Its own description backs the theme: 'the Lion's Tamer is a weapon that commands respect and awe, perfect for those who wield strength with precision and showmanship.'"
+  },
+  "Blooming Jacket": {
+   "source": "Blooming Flowers",
+   "kind": "event",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "medium",
+   "evidence": "equip.xml L92252 `<Object type=\"0xDF27\" id=\"Blooming Jacket\">`. Unbroken type-id block 0xDF0F-0xDF29 across three files: newEventChestObjects.xml L5096 `<Object type=\"0xDF0F\" id=\"Blooming Flowers Realm Spawner Text\">` with `<DisplayId>Blooming Flowers Realm</DisplayId>`, plus 0xDF10-0xDF17 'Blooming Flowers Realm Initiator/Spawner Coral Reefs/Ship Wreck/Haunted Hallows/Abandoned/Risen Hell/Dead Church/Sprite Forest' and L5018 `<Object type=\"0xDF18\" id=\"Blooming Flower Realm\">`; then equip.xml 0xDF19-0xDF1E + 0xDF26-0xDF29 (the ten Blooming items); then projectiles.xml 0xDF1F-0xDF25 (`<Object type=\"0xDF20\" id=\"Blooming Flower Projectile\">` etc.). The event's canonical name appears in token.xml on 'Red Seed Of Bounty x1' (0xc93f): `<EffectInfo name=\"Event\" description=\"Blooming Flowers\" />`. Realm-wide event, not a dungeon: the spawner carries `<Terrain>CoralReefs</Terrain><SpawnProb>1</SpawnProb><PerRealmMax>1</PerRealmMax>`."
+  },
+  "Blooming Robe": {
+   "source": "Blooming Flowers",
+   "kind": "event",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "medium",
+   "evidence": "equip.xml L92229 `<Object type=\"0xDF26\" id=\"Blooming Robe\">` (DisplayId 'Leaf Woven Robe'). Same unbroken 0xDF0F-0xDF29 block as Blooming Jacket: newEventChestObjects.xml L5096 `<Object type=\"0xDF0F\" id=\"Blooming Flowers Realm Spawner Text\">` / `<DisplayId>Blooming Flowers Realm</DisplayId>` through newEventChestObjects.xml L5018 `<Object type=\"0xDF18\" id=\"Blooming Flower Realm\">`, then the ten Blooming equip items and their projectiles (projectiles.xml `<Object type=\"0xDF1F\" id=\"Blooming Bouquet Projectile\">`). Event name confirmed by token.xml 'Red Seed Of Bounty x1': `<EffectInfo name=\"Event\" description=\"Blooming Flowers\" />`. Reskin handled per instructions as an event drop, not as the base item's dungeon."
+  },
+  "Emerald Pickaxe": {
+   "source": "Mining Event 2025",
+   "kind": "event",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "high",
+   "evidence": "equip.xml:95875 <Object type=\"0xA468\" id=\"Emerald Pickaxe\">; equip.xml:95890 spawns objectId=\"Emerald Pickaxe Helper Object\" = allies.xml:13287 <Object type=\"0xA46B\" id=\"Emerald Pickaxe Helper Object\">. Same contiguous type run as newEventChestObjects.xml:6872 <Object type=\"0xA460\" id=\"Realm Diamond Ores Spawner Haunted Hallows\"> and token.xml:62189 <EffectInfo name=\"Event\" description=\"Mining Event 2025\" /> (on 0xA489 Ancient Ruby). equip.xml:96125 <Object type=\"0xA0A6\" id=\"Mystery Mining Chest\"> sits right after the four pickaxes."
+  },
+  "Blooming Flower": {
+   "source": "Blooming Flowers",
+   "kind": "event",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "high",
+   "evidence": "equip.xml:92076 <Object type=\"0xDF1A\" id=\"Blooming Flower\">. newEventChestObjects.xml:5018 <Object type=\"0xDF18\" id=\"Blooming Flower Realm\"> and :5098 <DisplayId>Blooming Flowers Realm</DisplayId>, with per-terrain spawners 0xDF11-0xDF17. token.xml:43715 <EffectInfo name=\"Event\" description=\"Blooming Flowers\" />. The ten Blooming equipment pieces occupy 0xDF19-0xDF29, abutting the event's 0xDF0F-0xDF18 map objects. Rejected: equip.xml:84426 Valentine's Event 2025 on Blooming Bud Mystery Chest (type 0x688C, unrelated block)."
+  },
+  "MV Expert Fishing Rod": {
+   "source": "Moonlight Village",
+   "kind": "dungeon",
+   "boss": null,
+   "method": "sprite-sheet",
+   "confidence": "high",
+   "evidence": "equip.xml:63580 <File>moonlightVillageObjects8x8</File> (dungeon-specific sheet); equip.xml:63587 <EffectInfo description=\"Only usable in the Moonlight Village. Aim at ripples in the water to catch fish!\" name=\"Fishing\" />. Its four siblings (MV Basic/Intermediate/Master/Legendary Fishing Rod) share that sheet. realmeye-untiered-by-dungeon.tsv has a \"Moonlight Village\" row, but no fishing rod in it (RealmEye's untiered list omits utility items), so the TSV neither confirms nor contradicts."
+  },
+  "Explorer's Shovel": {
+   "source": "Mining Event 2025",
+   "kind": "event",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "high",
+   "evidence": "equip.xml:95915 <Object type=\"0xA46D\" id=\"Explorer's Shovel\">; equip.xml:95927 <ObjectId>Mining Staff Proj</ObjectId> = projectiles.xml:24857 <Object type=\"0xA46E\" id=\"Mining Staff Proj\">. Same 0xA45D-0xA47F run as newEventChestObjects.xml:6872 Realm Diamond Ores Spawner and token.xml:62189 <EffectInfo name=\"Event\" description=\"Mining Event 2025\" />. Its five equip.xml neighbours (Seeker's Chisel, Blacksmith Hammer, Metal Tray, Dynamite, Glowing Torch) all use Mining* projectiles and are followed by equip.xml:96143 <Object type=\"0xA0A5\" id=\"Miner's Arsenal Chest\">."
+  },
+  "Flip-Flops": {
+   "source": "Oryx Wood Totems (realm event)",
+   "kind": "event",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "medium",
+   "evidence": "equip.xml:97415 <Object type=\"0x6F2E\" id=\"Flip-Flops\">; equip.xml:97480 <OnPlayerShootActivate ... objectId=\"Wood Totems Equipment Helper Object\" ...>ObjectToss</OnPlayerShootActivate> = allies.xml:13215 <Object type=\"0x6F29\" id=\"Wood Totems Equipment Helper Object\">. Its type sits in the run 0x6F1A-0x6F2E with newEventChestObjects.xml:5619 <Object type=\"0x6F1B\" id=\"Wood Totem Realm\"> / :5622 <DisplayId>Oryx Wood Totem</DisplayId> and the per-terrain spawners 0x6F22-0x6F28. equip.xml:97428 <EffectInfo name=\"Extra Water Burst\" description=\"250 area damage within 4 tiles, deals more damage to the Realm Wood Totem\" />. NOT claimed: the summer/beach neighbours (Beach Shovel, Water Pistol, Pool Noodle, Sun Hat) hint at equip.xml:74513 <EffectInfo name=\"Event\" description=\"Mad God's Beach Bash\" />, but that tag is on Seasonal Mystery Ocean Shell (0xC9B2-4), a different block - unproven."
+  },
+  "Blooming Katana": {
+   "source": "Blooming Flowers",
+   "kind": "event",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "medium",
+   "evidence": "equip.xml:92176 <Object type=\"0xDF1E\" id=\"Blooming Katana\"> (DisplayId Floral Edge Katana), texture lofiObj5new index 335, one of ten contiguous Blooming pieces at 0xDF19-0xDF29. That run directly abuts newEventChestObjects.xml:5018 <Object type=\"0xDF18\" id=\"Blooming Flower Realm\"> / :5098 <DisplayId>Blooming Flowers Realm</DisplayId>, and token.xml:43715 <EffectInfo name=\"Event\" description=\"Blooming Flowers\" /> attests \"Blooming Flowers\" as a client event name. Weaker than the wand: no direct name match, evidence is type-block membership plus set membership."
+  },
+  "Blooming Armor": {
+   "source": "Blooming Flowers",
+   "kind": "event",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "medium",
+   "evidence": "equip.xml:92209 <Object type=\"0xDF28\" id=\"Blooming Armor\"> (DisplayId Floral Guard Armor), texture lofiObj5new index 338, inside the same ten-piece run 0xDF19-0xDF29 that abuts newEventChestObjects.xml:5018 <Object type=\"0xDF18\" id=\"Blooming Flower Realm\">. token.xml:43715 <EffectInfo name=\"Event\" description=\"Blooming Flowers\" />. No setType, no ORG_ label, absent from realmeye-untiered-by-dungeon.tsv. Type-block + set membership only, hence medium."
+  },
+  "Geb's Lost Hedjet": {
+   "source": "High Tech Terror",
+   "kind": "dungeon",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "medium",
+   "evidence": "equip.xml:71901 <Object type=\"0x567\" id=\"Geb's Lost Hedjet\" collectionIcon=\"147\">. Every one of the 17 other equip.xml objects with collectionIcon=\"147\" that carries an ORG_ label carries ORG_HTT - e.g. equip.xml:38982 <Object type=\"0x3d8d\" id=\"B.O.W.\" collectionIcon=\"147\"> and equip.xml:91862 <Object type=\"0x1445\" id=\"S.H.E.A.T.H.\" collectionIcon=\"147\">; realmeye-untiered-by-dungeon.tsv line \"High Tech Terror\\tB.O.W.|S.T.A.F.F.|Q.U.I.V.E.R.|S.H.E.A.T.H.|E.Y.E.\" independently pins that icon to High Tech Terror. Geb's Lost Hedjet is the ONLY collectionIcon=147 object with no ORG label. Corroborating: it is 0x567, last of the contiguous run 0x564 Cursed Canopic Jar (collectionIcon 124 = ORG_SEWER), 0x565 An Ancient's Embrace (133 = ORG_ABYSS), 0x566 Cobra Serpentis Scroll (144 = ORG_PARASITE) - the four Egyptian UTs shipped with equip.xml:71753/71774 <EffectInfo name=\"Event\" description=\"The Ancient's Curse\" /> chests, one scattered per dungeon. NOT Tomb of the Ancients despite the Geb name (that is collectionIcon 153 / ORG_TOMB)."
+  },
+  "Glowing Torch": {
+   "source": "Mining Event 2025",
+   "kind": "event",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "high",
+   "evidence": "equip.xml:96093 <Object type=\"0xA477\" id=\"Glowing Torch\">; equip.xml:96105 <ObjectId>Mining Wand Proj</ObjectId> = projectiles.xml:24936 <Object type=\"0xA478\" id=\"Mining Wand Proj\">. Same 0xA45D-0xA47F allocation as newEventChestObjects.xml:6872 <Object type=\"0xA460\" id=\"Realm Diamond Ores Spawner Haunted Hallows\"> and token.xml:62189 <EffectInfo name=\"Event\" description=\"Mining Event 2025\" />. Sits six objects after Explorer's Shovel in release order, followed immediately by equip.xml:96143 <Object type=\"0xA0A5\" id=\"Miner's Arsenal Chest\"> (ChestType 2, a weapon-choice chest)."
+  },
+  "Heart of the Eternal Pyre": {
+   "source": "Eternal Phoenix (realm event)",
+   "kind": "event",
+   "boss": "Eternal Phoenix",
+   "method": "xml-crossref",
+   "confidence": "medium",
+   "evidence": "equip.xml:105296 <Object type=\"0x1CC5\" id=\"Heart of the Eternal Pyre\">, texture equip.xml:105300 <File>lofiObj6</File> <Index>449</Index> - index 449 follows 443-448 which are Ashen Talon Dagger / Sovereign Cinder-Blade / Blade of Eternal Rebirth and their projectiles. Its type 0x1CC5 sits between those phoenix items (0x1C93-0x1C9D) and eventChestObjects.xml:13703 <Object type=\"0x1CCA\" id=\"Eternal Phoenix Easy\"> / :13704 <DisplayId>Eternal Phoenix</DisplayId> plus :13975 <Object type=\"0x1CD8\" id=\"Eternal Phoenix Hard\"> (MinimapIcon piece=\"Miniboss\"). Its equip.xml neighbours all carry a dungeon label (ORG_NEST, ORG_SHTT, ORG_LH, ORG_KOGBOLD, REALMWHITE) while this ring carries none, and it is followed by Pyre-Forged Arsenal / Phoenix Blaze / Phoenix Embers chests. Effect equip.xml:105306 name=\"Phoenix Rebirth\". Medium: the client never tags the ring itself."
+  },
+  "Crystal Key": {
+   "source": "The Keyper",
+   "kind": "event",
+   "boss": "The Keyper",
+   "method": "xml-crossref",
+   "confidence": "high",
+   "evidence": "eventChestObjects.xml holds `<Object type=\"0x4b2e\" id=\"The Keyper\">` (Class Character, Enemy, `<MinimapIcon piece=\"Boss\" />`, `<TrackLoot />`, `<Terrain>Mountains</Terrain>` + `<PerRealmMax>1</PerRealmMax>` on its spawner `<Object type=\"0x4b2d\" id=\"Keyper Initiator\">` = a Realm event boss). The item is `<Object type=\"0x4b32\" id=\"Crystal Key\">` in equip.xml — same type block, four ids later, with its own proc at 0x4b33 `Crystal Key Proc`. The item's own words in equip.xml: `A mysterious key bestowed upon the Keyper by the Crystal Entity, imbued with an aura of forbidden magic.` token.xml also carries `<EffectInfo name=\"Event\" description=\"The Keyper\" />` on the Crystal Fragment x1-x30 tokens (0x73da+)."
+  },
+  "Dagger of the Hasteful Rabbit": {
+   "source": "Biff the Buffed Bunny (Easter Realm event)",
+   "kind": "event",
+   "boss": "Biff the Buffed Bunny",
+   "method": "xml-crossref",
+   "confidence": "high",
+   "evidence": "The item's type 0x899 is interleaved inside the boss's own type block in buffedBunnyObjects.xml: `<Object type=\"0x898\" id=\"BB Egg Cannon 2\">` and `<Object type=\"0x89a\" id=\"BB Low Egg\">` bracket it, and the block ends at `<Object type=\"0x89f\" id=\"BB Biff the Buffed Bunny\">` with `<DisplayId>Biff the Buffed Bunny</DisplayId>`. The item in equip.xml uses that content's sprite sheet and the boss's own bullet: `<File>buffedBunnyObjects8x8</File>` and `<ObjectId>BB Bunny Bullet 1</ObjectId>` (whose sibling `<Object type=\"0x896\" id=\"BB Bunny Bullet 2\">` lives in buffedBunnyObjects.xml). Description: `forged from the teeth of a murderous rabbit, it has the incredible power to summon angry rabbits.` Sheet neighbours on buffedBunnyObjects8x8 are index 32 Helm of the Swift Bunny and 33 Vitamine Buster, which the local TSV lists on the `The Realm` row as `Helm of the Swift Bunny (Seasonal)` / `Vitamine Buster (Seasonal)` — i.e. this content drops in the Realm during the Easter/bunny event, not in a dungeon."
+  },
+  "Diamond Pickaxe": {
+   "source": "Mining Event 2025",
+   "kind": "event",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "high",
+   "evidence": "token.xml: `<Object type=\"0xA489\" id=\"Ancient Ruby\">` and `<Object type=\"0xA48A\" id=\"Ancient Topaz\">` both carry `<EffectInfo name=\"Event\" description=\"Mining Event 2025\" />` — the same 0xA4xx allocation block as the item `<Object type=\"0xA469\" id=\"Diamond Pickaxe\">`. Its summon exists in allies.xml as `<Object type=\"0xA46C\" id=\"Diamond Pickaxe Helper Object\">` (siblings 0xA466 Stone / 0xA46A Iron / 0xA46B Emerald), and the ore targets are in newEventChestObjects.xml: `<Object type=\"0xA446\" id=\"Diamond Ore Realm\">` with `<Labels>ENEMY,MINION,STASISIMMUNE,MINION_WEAK,REALM_ORE</Labels>` plus per-biome spawners `<Object type=\"0xA460\" id=\"Realm Diamond Ores Spawner Haunted Hallows\">` etc. Item description: `you can break the diamond, emerald, iron and stone ores found throughout the Realm!`"
+  },
+  "Dreamcaster": {
+   "source": "Oryx's Carnival",
+   "kind": "event",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "high",
+   "evidence": "token.xml: `<Object type=\"0xcc15\" id=\"Circus Ticket x17\">` (through x20 at 0xcc18) carries `<EffectInfo name=\"Event\" description=\"Oryx's Carnival\" />` — the immediately preceding ids in the same block as `<Object type=\"0xcc20\" id=\"Dreamcaster\">` in equip.xml. The rest of that block is the carnival weapon family: 0xcc1d Throwing Knives, 0xcc1e Acrobat's Edge, 0xcc1f Lion Tamer, 0xcc21 Ringmaster's Bow, 0xcc22 Carnival's Conjurer (contiguous on sheet lofiObj indices 789-791). Event objects in newEventChestObjects.xml: `<Object type=\"0xcbfd\" id=\"Oryx's Carnival Unicycle Clown\">` and `<Object type=\"0xCC3F\" id=\"Carnival Effigy\">` with per-biome spawners 0xCC41-0xCC47."
+  },
+  "Dual Pops": {
+   "source": "Oryx Wood Totems (summer heatwave Realm event)",
+   "kind": "event",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "medium",
+   "evidence": "The item's own proc object is the event's helper: equip.xml `<OnPlayerShootActivate ... objectId=\"Wood Totems Equipment Helper Object\" ...>ObjectToss</OnPlayerShootActivate>` -> allies.xml `<Object type=\"0x6F29\" id=\"Wood Totems Equipment Helper Object\">`, whose type is the one immediately before `<Object type=\"0x6F2A\" id=\"Beach Shovel\">` / `<Object type=\"0x6F2B\" id=\"Dual Pops\">` in equip.xml. The rest of that block is the event itself, in newEventChestObjects.xml: `<Object type=\"0x6F1B\" id=\"Wood Totem Realm\">` with `<DisplayId>Oryx Wood Totem</DisplayId>` and per-biome spawners 0x6F22-0x6F28 (`Wood Totems Realm Spawner Coral Reefs` ... `Sprite Forest`). Item tooltip: `<EffectInfo name=\"Extra Water Burst\" description=\"250 area damage within 4 tiles, deals more damage to the Realm Wood Totem\" />` and description `extinguishing fires caused by heat waves`. Family = a summer beach reskin set on sheet lofiObj 1223-1234 (Beach Shovel, Dual Pops, Water Pistol, Beach Umbrella Weapon, Flip-Flops, Pool Noodle, Life Jacket, Summer Dress, Swim Tube, Sun Hat, Chocsicle). CAVEAT: the Wood Totem event objects carry no `<EffectInfo name=\"Event\" ...>` tag, so this is the in-game display name, not a canonical event label; the only beach-flavoured canonical label in the client is `<EffectInfo name=\"Event\" description=\"Mad God's Beach Bash\" />` on Seasonal Mystery Ocean Shell I-III (0xC9B2-0xC9B4, equip.xml), which is on a different sheet block (d2LofiObjEmbed 1348-1350) and is SeasonalOnly, so I did not use it."
+  },
+  "Dynamite": {
+   "source": "Mining Event 2025",
+   "kind": "event",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "high",
+   "evidence": "Same allocation block and event as the pickaxes: token.xml `<Object type=\"0xA489\" id=\"Ancient Ruby\">` carries `<EffectInfo name=\"Event\" description=\"Mining Event 2025\" />`, and the item is `<Object type=\"0xA475\" id=\"Dynamite\">` (equip.xml) firing `<ObjectId>Mining Katana Proj</ObjectId>` = projectiles.xml `<Object type=\"0xA476\" id=\"Mining Katana Proj\">`, one of the Mining Staff/Dagger/Sword/Bow/Katana/Wand projectiles at 0xA46E-0xA478. Its BASETYPE weapon siblings in equip.xml are Explorer's Shovel 0xA46D, Seeker's Chisel 0xA46F, Blacksmith Hammer 0xA471, Metal Tray 0xA473, Glowing Torch 0xA477, all `LOOTABLE`. Description: `An explosive that not only uncovers hidden paths but also deals damage to enemies.`"
+  },
+  "Eden's Embrace": {
+   "source": "Legend of the White Snake ~ Lunar New Year 2025",
+   "kind": "event",
+   "boss": null,
+   "method": "xml-crossref",
+   "confidence": "high",
+   "evidence": "equip.xml, the very next object after the item (`<Object type=\"0xE9F5\" id=\"Eden's Embrace\">`) is `<Object type=\"0xE9F6\" id=\"Eden's Embrace Piece\">` whose tooltip states both the redemption and the event: `<EffectInfo name=\"Reward\" description=\"Collect pieces to redeem Eden's Embrace\" />` and `<EffectInfo name=\"Event\" description=\"Legend of the White Snake ~ Lunar New Year 2025\" />`, with description `Redeem this token in the Tinkerer to build towards a powerful reward!`. Both share sheet `<File>whiteSnakeObjects8x8</File>` (indices 5 and 6) whose object file whiteSnakeObjects.xml holds `<Object type=\"0xEA12\" id=\"LNY The White Snake\">` and `<Object type=\"0xE9F0\" id=\"White Snake Invasion III Portal\">`. Note the ring's own tooltip warns `<EffectInfo name=\"Limited Reveal\" description=\"Item may appear in a future expansion...\" />`, i.e. Tinkerer redemption, not a direct boss drop."
+  },
+  "Eggshell Cowl": {
+   "source": "The Appetizer",
+   "kind": "event",
+   "boss": "The Appetizer",
+   "method": "sprite-sheet",
+   "confidence": "high",
+   "evidence": "The cowl fires the Appetizer set's own item as a projectile: equip.xml `<ObjectId>Plate</ObjectId>` -> `<Object type=\"0x47b7\" id=\"Plate\">`, and its type 0x47b6 is interleaved with the set (0x47b2 Spoon, 0x47b3 `Appetizers Atire`, 0x47b5 apetizerPlate1, 0x47b7 Plate, 0x47b8 Chef's Hat) on a contiguous d2LofiObjEmbed run 736-744 (Needlessly Large Spoon 736, Spoon 740, Eggshell Cowl 741, Plate 742, Appetizers Atire 743, Chef's Hat 744). Chef's Hat (0x47b8) names the boss outright: `The Appetizers prized toque which shows his expertise in a variety of different cooking techniques.` The event's own token sits in the same sheet block: token.xml `<Object type=\"0x7c01\" id=\"Food Voucher x1\">`, `<File>d2LofiObjEmbed</File><Index>0x2da</Index>` (=730), carrying `<EffectInfo name=\"Event\" description=\"The Appetizer\" />`. The boss is a Realm event boss: eventChestObjects.xml `<Object type=\"0x80ba\" id=\"The Appetizer\">` with spawner `<Object type=\"0x80b8\" id=\"The Appetizer Spawner\">`."
+  }
+ }
+}

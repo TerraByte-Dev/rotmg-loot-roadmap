@@ -1,0 +1,27 @@
+# Raw extracted game assets never enter this repo. Only the DERIVED dataset does -
+# rotmg-data.json and .build/sprite-atlas.png - which is what the release workflow needs
+# in order to build the app at all. The 246 client XML files, spritesheetf and the Tomato
+# jar stay out entirely, and live outside this folder anyway.
+
+# Internal working notes - the project's decision log, not documentation for
+# anyone installing this. Stays on the dev box.
+CONTEXT.md
+assets-path.txt
+
+# .build is scratch. Exactly one file in it is a build INPUT for CI.
+.build/*
+!.build/sprite-atlas.png
+
+# Build output
+dist-app/
+dist-standalone/
+roadmap.html
+node_modules/
+src-tauri/target/
+src-tauri/gen/
+__pycache__/
+*.pyc
+
+# Never commit the updater's signing key
+*.key
+*.pem

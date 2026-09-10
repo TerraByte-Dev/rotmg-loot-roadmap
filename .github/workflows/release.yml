@@ -1,0 +1,134 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # Catch the classic mismatch before spending 10 minutes on a build:
+      # tauri-action reads the version from tauri.conf.json, not from the tag.
+      - name: Tag must match app version
+        shell: pwsh
+        run: |
+          $tag = '${{ github.ref_name }}'.TrimStart('v')
+          $cfg = (Get-Content src-tauri/tauri.conf.json -Raw | ConvertFrom-Json).version
+          if ($cfg -ne $tag) { throw "tag v$tag does not match tauri.conf.json version $cfg" }
+          Write-Host "version ok: $cfg"
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Build, sign, create release
+        id: tauri
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'RotMG Loot Roadmap __VERSION__'
+          releaseDraft: false
+          prerelease: false
+          uploadUpdaterJson: true          # renamed from includeUpdaterJson in v1.0.0
+          updaterJsonPreferNsis: true
+          uploadUpdaterSignatures: true
+
+      # tauri-action v1.0.0 (PR #1315) writes api.github.com asset URLs into
+      # latest.json. api.github.com is 60 req/hr per IP unauthenticated, so a
+      # household or campus NAT would break updates for everyone behind it.
+      # Rewrite every url back to the release CDN download path.
+      - name: Repoint latest.json at the release CDN
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $tag  = '${{ github.ref_name }}'
+          $repo = '${{ github.repository }}'
+
+          $assets = gh api "repos/$repo/releases/tags/$tag" `
+                      --jq '[.assets[] | {id, name, browser_download_url}]' | ConvertFrom-Json
+
+          gh release download $tag --repo $repo --pattern 'latest.json' --dir . --clobber
+          $json = Get-Content latest.json -Raw | ConvertFrom-Json
+
+          $rewrote = 0
+          foreach ($k in @($json.platforms.PSObject.Properties.Name)) {
+            $u = $json.platforms.$k.url
+            if ($u -match 'releases/assets/(\d+)/?$') {
+              $id = [int]$Matches[1]
+              $a  = $assets | Where-Object { $_.id -eq $id } | Select-Object -First 1
+              if (-not $a) { throw "latest.json references asset id $id, which is not on release $tag" }
+              $json.platforms.$k.url = $a.browser_download_url
+              $rewrote++
+            }
+          }
+
+          $json | ConvertTo-Json -Depth 10 | Set-Content latest.json -Encoding utf8
+          Write-Host "rewrote $rewrote url(s)"
+          Get-Content latest.json
+
+          if ((Get-Content latest.json -Raw) -match 'api\.github\.com') {
+            throw 'latest.json still points at api.github.com'
+          }
+
+          gh release upload $tag latest.json --repo $repo --clobber
+
+      - name: Portable ZIP, checksums, install notes
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $tag  = '${{ github.ref_name }}'
+          $repo = '${{ github.repository }}'
+          $ver  = $tag.TrimStart('v')
+
+          # target/release/<cargo package name>.exe
+          $bin = (Select-String -Path src-tauri/Cargo.toml -Pattern '^\s*name\s*=\s*"([^"]+)"' |
+                  Select-Object -First 1).Matches[0].Groups[1].Value
+          $exe = Get-Item "src-tauri/target/release/$bin.exe"
+
+          $zip = "RotMG-Loot-Roadmap_${ver}_x64_portable.zip"
+          Compress-Archive -Path $exe.FullName -DestinationPath $zip -Force
+          gh release upload $tag $zip --repo $repo --clobber
+
+          $setup = Get-ChildItem src-tauri/target/release/bundle/nsis/*-setup.exe | Select-Object -First 1
+          $hSetup = (Get-FileHash $setup.FullName -Algorithm SHA256).Hash.ToLower()
+          $hZip   = (Get-FileHash $zip           -Algorithm SHA256).Hash.ToLower()
+
+          $body = @"
+### Install — Windows 10/11, 64-bit
+
+| File | SHA-256 |
+| --- | --- |
+| ``$($setup.Name)`` | ``$hSetup`` |
+| ``$zip`` | ``$hZip`` |
+
+**This build is not code-signed.** The first time you run it, Windows shows
+**"Windows protected your PC"**. Click **More info** -> **Run anyway**.
+That is expected, and it happens exactly once — in-app updates after this
+never show it again.
+
+Want to check the download first?

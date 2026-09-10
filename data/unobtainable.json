@@ -1,0 +1,156 @@
+{
+ "_README": "Items that can no longer be obtained. HIDDEN BY DEFAULT in the roadmap - Tate: 'We dont care about limited items at all.'\n\nIMPORTANT: the client does NOT encode this. There is no LIMITED / RETIRED / UNOBTAINABLE token in any of the 4,240 items' <Labels>, and Ceremonial Wand even carries ORG_LIBRARY as though it still drops in the Cursed Library. So this list is CURATED, not derived, and it is the one file here that needs a human. Add an id, save, re-run build.ps1.\n\nSeasonal items are deliberately NOT listed: Easter, Halloween and Oryxmas gear comes back.",
+ "_count": 30,
+ "items": {
+  "Sword of Illumination": {
+   "reason": "Limited",
+   "evidence": "RealmEye's Untiered Items by Dungeon page marks it '(Limited)' in the The Trials of Cronus row.",
+   "confidence": "high"
+  },
+  "Shield of Jawgmur": {
+   "reason": "Limited",
+   "evidence": "RealmEye's Untiered Items by Dungeon page marks it '(Limited)' in the Wine Cellar row.",
+   "confidence": "high"
+  },
+  "Longbow of Spirits and Shadows": {
+   "reason": "Limited",
+   "evidence": "RealmEye's Untiered Items by Dungeon page marks it '(Limited)' in the Wine Cellar row.",
+   "confidence": "high"
+  },
+  "Bow of the Morning Star": {
+   "reason": "Limited",
+   "evidence": "RealmEye's Untiered Items by Dungeon page marks it '(Limited)' in the The Trials of Cronus row.",
+   "confidence": "high"
+  },
+  "Keychain Cutlass": {
+   "reason": "Limited",
+   "evidence": "RealmEye's Untiered Items by Dungeon page marks it '(Limited)' in the The Realm row.",
+   "confidence": "high"
+  },
+  "Gem of Tenderness": {
+   "reason": "Limited",
+   "evidence": "RealmEye's Untiered Items by Dungeon page marks it '(Limited)' in the The Realm row.",
+   "confidence": "high"
+  },
+  "Gem of Tenderness Shiny": {
+   "reason": "Limited",
+   "evidence": "RealmEye's Untiered Items by Dungeon page marks it '(Limited)' in the The Realm row.",
+   "confidence": "high"
+  },
+  "Gem of Adoration": {
+   "reason": "Limited",
+   "evidence": "RealmEye's Untiered Items by Dungeon page marks it '(Limited)' in the The Realm row.",
+   "confidence": "high"
+  },
+  "Gem of Adoration Shiny": {
+   "reason": "Limited",
+   "evidence": "RealmEye's Untiered Items by Dungeon page marks it '(Limited)' in the The Realm row.",
+   "confidence": "high"
+  },
+  "Soulful Affection": {
+   "reason": "Limited",
+   "evidence": "RealmEye's Untiered Items by Dungeon page marks it '(Limited)' in the The Realm row.",
+   "confidence": "high"
+  },
+  "Soulful Affection Shiny": {
+   "reason": "Limited",
+   "evidence": "RealmEye's Untiered Items by Dungeon page marks it '(Limited)' in the The Realm row.",
+   "confidence": "high"
+  },
+  "Heart of Gold Prism": {
+   "reason": "Limited",
+   "evidence": "RealmEye's Untiered Items by Dungeon page marks it '(Limited)' in the The Realm row.",
+   "confidence": "high"
+  },
+  "Yokai Amulet": {
+   "reason": "Limited",
+   "evidence": "RealmEye's Untiered Items by Dungeon page marks it '(Limited)' in the The Realm row.",
+   "confidence": "high"
+  },
+  "Loaded Core": {
+   "reason": "Limited",
+   "evidence": "RealmEye's Untiered Items by Dungeon page marks it '(Limited)' in the (Daily Quest Room) row.",
+   "confidence": "high"
+  },
+  "Entropy Reactor": {
+   "reason": "Limited",
+   "evidence": "RealmEye's Untiered Items by Dungeon page marks it '(Limited)' in the (Daily Quest Room) row.",
+   "confidence": "high"
+  },
+  "Bronze Medal": {
+   "reason": "Limited",
+   "evidence": "RealmEye's Untiered Items by Dungeon page marks it '(Limited)' in the Miscellaneous row.",
+   "confidence": "high"
+  },
+  "Silver Medal": {
+   "reason": "Limited",
+   "evidence": "RealmEye's Untiered Items by Dungeon page marks it '(Limited)' in the Miscellaneous row.",
+   "confidence": "high"
+  },
+  "Gold Medal": {
+   "reason": "Limited",
+   "evidence": "RealmEye's Untiered Items by Dungeon page marks it '(Limited)' in the Miscellaneous row.",
+   "confidence": "high"
+  },
+  "America Ring": {
+   "reason": "Limited",
+   "evidence": "RealmEye's Untiered Items by Dungeon page marks it '(Limited)' in the Miscellaneous row.",
+   "confidence": "high"
+  },
+  "The Crimson Blade": {
+   "reason": "Limited event reskin",
+   "evidence": "One of the 11 blood/occult reskins at contiguous type ids 0xA526-0xA53D, one per dungeon (UDL, Puppet, Library, Manor, CDepths, Cem, Spectral, Encore). Tate: Ceremonial Wand is a limited-time reskin that can no longer be obtained.",
+   "confidence": "medium"
+  },
+  "Blood Coated Dirk": {
+   "reason": "Limited event reskin",
+   "evidence": "One of the 11 blood/occult reskins at contiguous type ids 0xA526-0xA53D, one per dungeon (UDL, Puppet, Library, Manor, CDepths, Cem, Spectral, Encore). Tate: Ceremonial Wand is a limited-time reskin that can no longer be obtained.",
+   "confidence": "medium"
+  },
+  "Ceremonial Wand": {
+   "reason": "Limited event reskin",
+   "evidence": "One of the 11 blood/occult reskins at contiguous type ids 0xA526-0xA53D, one per dungeon (UDL, Puppet, Library, Manor, CDepths, Cem, Spectral, Encore). Tate: Ceremonial Wand is a limited-time reskin that can no longer be obtained.",
+   "confidence": "medium"
+  },
+  "Blood Siphoning Katana": {
+   "reason": "Limited event reskin",
+   "evidence": "One of the 11 blood/occult reskins at contiguous type ids 0xA526-0xA53D, one per dungeon (UDL, Puppet, Library, Manor, CDepths, Cem, Spectral, Encore). Tate: Ceremonial Wand is a limited-time reskin that can no longer be obtained.",
+   "confidence": "medium"
+  },
+  "Occult Bow": {
+   "reason": "Limited event reskin",
+   "evidence": "One of the 11 blood/occult reskins at contiguous type ids 0xA526-0xA53D, one per dungeon (UDL, Puppet, Library, Manor, CDepths, Cem, Spectral, Encore). Tate: Ceremonial Wand is a limited-time reskin that can no longer be obtained.",
+   "confidence": "medium"
+  },
+  "Scepter of the Transgressor": {
+   "reason": "Limited event reskin",
+   "evidence": "One of the 11 blood/occult reskins at contiguous type ids 0xA526-0xA53D, one per dungeon (UDL, Puppet, Library, Manor, CDepths, Cem, Spectral, Encore). Tate: Ceremonial Wand is a limited-time reskin that can no longer be obtained.",
+   "confidence": "medium"
+  },
+  "Esoteric Buckler": {
+   "reason": "Limited event reskin",
+   "evidence": "One of the 11 blood/occult reskins at contiguous type ids 0xA526-0xA53D, one per dungeon (UDL, Puppet, Library, Manor, CDepths, Cem, Spectral, Encore). Tate: Ceremonial Wand is a limited-time reskin that can no longer be obtained.",
+   "confidence": "medium"
+  },
+  "Scarlet Etched Branch": {
+   "reason": "Limited event reskin",
+   "evidence": "One of the 11 blood/occult reskins at contiguous type ids 0xA526-0xA53D, one per dungeon (UDL, Puppet, Library, Manor, CDepths, Cem, Spectral, Encore). Tate: Ceremonial Wand is a limited-time reskin that can no longer be obtained.",
+   "confidence": "medium"
+  },
+  "Blood Ritual Tools": {
+   "reason": "Limited event reskin",
+   "evidence": "One of the 11 blood/occult reskins at contiguous type ids 0xA526-0xA53D, one per dungeon (UDL, Puppet, Library, Manor, CDepths, Cem, Spectral, Encore). Tate: Ceremonial Wand is a limited-time reskin that can no longer be obtained.",
+   "confidence": "medium"
+  },
+  "Sacramental Crossbow": {
+   "reason": "Limited event reskin",
+   "evidence": "One of the 11 blood/occult reskins at contiguous type ids 0xA526-0xA53D, one per dungeon (UDL, Puppet, Library, Manor, CDepths, Cem, Spectral, Encore). Tate: Ceremonial Wand is a limited-time reskin that can no longer be obtained.",
+   "confidence": "medium"
+  },
+  "The Hemomancer's Ring": {
+   "reason": "Limited event reskin",
+   "evidence": "One of the 11 blood/occult reskins at contiguous type ids 0xA526-0xA53D, one per dungeon (UDL, Puppet, Library, Manor, CDepths, Cem, Spectral, Encore). Tate: Ceremonial Wand is a limited-time reskin that can no longer be obtained.",
+   "confidence": "medium"
+  }
+ }
+}

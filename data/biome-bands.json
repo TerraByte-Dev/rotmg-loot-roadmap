@@ -1,0 +1,119 @@
+{
+ "_README": "Biome bands in assets/bestiary.jpg (2019x5195), read by 10 vision agents over overlapping slices. 'exact' means one agent saw the whole band; otherwise the range is the union of partial views and may be loose. Agents were told not to guess a label they could not read, so unlabelled bands are absent rather than invented.",
+ "image": {
+  "w": 2019,
+  "h": 5195
+ },
+ "bands": {
+  "Deep Sea Abyss": {
+   "y0": 152,
+   "y1": 380,
+   "exact": true
+  },
+  "Runic Tundra": {
+   "y0": 381,
+   "y1": 617,
+   "exact": false,
+   "inferredTop": true
+  },
+  "Carboniferous": {
+   "y0": 618,
+   "y1": 849,
+   "exact": true
+  },
+  "Floral Escape": {
+   "y0": 850,
+   "y1": 1089,
+   "exact": true
+  },
+  "Sanguine Forest": {
+   "y0": 1090,
+   "y1": 1318,
+   "exact": true
+  },
+  "Abandoned City": {
+   "y0": 1389,
+   "y1": 1627,
+   "exact": false,
+   "inferredTop": true,
+   "note": "a tier-badge separator strip sits at 1319-1388, above this band"
+  },
+  "Risen Hell": {
+   "y0": 1628,
+   "y1": 1863,
+   "exact": true
+  },
+  "Coral Reefs": {
+   "y0": 1864,
+   "y1": 2100,
+   "exact": true
+  },
+  "Shipwreck Cove": {
+   "y0": 2101,
+   "y1": 2336,
+   "exact": true
+  },
+  "Sprite Forest": {
+   "y0": 2337,
+   "y1": 2572,
+   "exact": true
+  },
+  "Haunted Hallows": {
+   "y0": 2573,
+   "y1": 2807,
+   "exact": true
+  },
+  "Dead Church": {
+   "y0": 2808,
+   "y1": 3036,
+   "exact": true
+  },
+  "High Forest": {
+   "y0": 3108,
+   "y1": 3340,
+   "exact": true
+  },
+  "Med Forest": {
+   "y0": 3341,
+   "y1": 3576,
+   "exact": true
+  },
+  "Med Desert": {
+   "y0": 3577,
+   "y1": 3810,
+   "exact": false,
+   "inferredTop": true
+  },
+  "Plains": {
+   "y0": 3811,
+   "y1": 4046,
+   "exact": true
+  },
+  "Desert": {
+   "y0": 4047,
+   "y1": 4262,
+   "exact": false,
+   "inferredTop": true
+  },
+  "Low Jungle": {
+   "y0": 4263,
+   "y1": 4482,
+   "exact": true
+  },
+  "Dark Forest": {
+   "y0": 4483,
+   "y1": 4719,
+   "exact": true
+  },
+  "Forest": {
+   "y0": 4720,
+   "y1": 4958,
+   "exact": true
+  },
+  "Beach": {
+   "y0": 4958,
+   "y1": 5186,
+   "exact": true
+  }
+ }
+}
