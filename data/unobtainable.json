@@ -1,6 +1,6 @@
 {
  "_README": "Items that can no longer be obtained. HIDDEN BY DEFAULT in the roadmap - Tate: 'We dont care about limited items at all.'\n\nIMPORTANT: the client does NOT encode this. There is no LIMITED / RETIRED / UNOBTAINABLE token in any of the 4,240 items' <Labels>, and Ceremonial Wand even carries ORG_LIBRARY as though it still drops in the Cursed Library. So this list is CURATED, not derived, and it is the one file here that needs a human. Add an id, save, re-run build.ps1.\n\nSeasonal items are deliberately NOT listed: Easter, Halloween and Oryxmas gear comes back.",
- "_count": 31,
+ "_count": 32,
  "items": {
   "Sword of Illumination": {
    "reason": "Limited",
@@ -155,6 +155,11 @@
   "Feed": {
    "reason": "Developer object",
    "evidence": "equip.xml: <Object type=\"0x5e1f\" id=\"Feed\"> carries <Description>Ultimate Feed Power.</Description>, <PetFood /> and <feedPower>50000</feedPower> - twice the next-highest food in the game. It has no name beyond \"Feed\", no drop source in any of the 246 files, and no source resolver in this project matches it.",
+   "confidence": "high"
+  },
+  "Stat Test Helm1": {
+   "reason": "Developer object",
+   "evidence": "equip.xml: <Object type=\"0x44a1\" id=\"Stat Test Helm1\"> with <DisplayId>Helm of minstack</DisplayId>. The id says what it is; it carries the ST label with no set, no source in any of the 246 files, and a BagType of 8 which is what slips it past the AdminOnly/no-BagType filter.",
    "confidence": "high"
   }
  }

@@ -1,6 +1,6 @@
 # `data/` — the files a human has to write
 
-Everything else in this project is read out of the game client. These five are not, and
+Everything else in this project is read out of the game client. These are not, and
 each one exists because the client genuinely does not contain what it holds. They are all
 optional: the build runs without any of them and simply says less.
 
@@ -8,6 +8,7 @@ optional: the build runs without any of them and simply says less.
 |---|---|---|
 | `realmeye-untiered-by-dungeon.tsv` | UT item → dungeon | captured, 521 rows |
 | `realmeye-set-tier-items.tsv` | **ST item → dungeon** | **empty — see below** |
+| `captures/` | anything saved from RealmEye, in any shape | empty, and read automatically |
 | `derived-sources.json` | sources traced out of the client by cross-reference | 68 entries, each with quoted evidence |
 | `unobtainable.json` | items that can no longer be obtained | 31, curated |
 | `pet-levels.json` | feed power → pet level | empty — the client has no pet levels at all |
@@ -17,10 +18,32 @@ optional: the build runs without any of them and simply says less.
 **Claude does not fetch these.** `realmeye.com/robots.txt` names `Claude-Code`, `ClaudeBot`,
 `Claude-User`, `Claude-Web` and `anthropic-ai` among 197 agents and then says `Disallow: /`.
 Routing around that with a third-party fetcher would be the same request with a different
-return address. A person browsing the site themselves is not a crawler, so the capture is a
-human step by design — which is how the untiered file got here.
+return address. A person browsing the site themselves is not a crawler, so the fetch is a
+human step — but the reshaping is not.
 
-Both files are the same shape: one dungeon per line, a tab, then the items separated by
+### The easy way: `data/captures/`
+
+Save the page, or select-all and paste it into a text file, and drop it in
+`data/captures/`. Any name, any extension. Then run `build.ps1`.
+
+The parser recognises **both ends against names the client already ships**: a line becomes
+the current place only if it matches a real portal, and a line becomes an item only if it
+matches a real item. That makes it safe to point at an arbitrary file — it cannot invent a
+dungeon or an item — and tolerant of how the page came out. All three of these work:
+
+```
+Undead Lair                          <h2>Undead Lair</h2>        Undead Lair: Doom Bow,
+Doom Bow                             <li>Doom Bow</li>             Spectral Sword
+Spectral Sword                       <li>Spectral Sword</li>
+```
+
+The build prints what it did — `capture: page.html -> 137 items placed, 4 names not
+recognised (…)` — so a page that came out wrong says so instead of silently doing nothing.
+A capture only ever fills a gap: an item the client already places is never overruled.
+
+### The precise way: a TSV
+
+`realmeye-untiered-by-dungeon.tsv` and `realmeye-set-tier-items.tsv` are the same shape: one dungeon per line, a tab, then the items separated by
 pipes.
 
 ```

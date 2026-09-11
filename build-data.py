@@ -802,6 +802,101 @@ def load_forge_craft():
         out[a["id"]] = d
     return out
 
+def load_captures(portals, items):
+    """Whatever a human saved into data/captures/, in whatever shape it came out in.
+
+    The point of this is to make the one step Claude cannot take as small as possible.
+    realmeye.com's robots.txt names five Claude agents among 197 and then says
+    Disallow: /, so the fetch is a person's job - but the RESHAPING does not have to be.
+    Save the page, paste the text, export the table; drop the file in and this reads it.
+
+    It works by recognising BOTH ends against names the client already ships: a line is a
+    place only if it matches a real portal or an existing source name, and a word is an
+    item only if it matches a real item name. Nothing here can invent a dungeon or an
+    item, which is what makes a free-form parser safe to point at an arbitrary file.
+
+    Shape it assumes: places and the items under them, in reading order. That is how the
+    page is laid out, how a copy-paste of it comes out, and how a TSV of it would look.
+    """
+    folder = os.path.join(HERE, "data", "captures")
+    if not os.path.isdir(folder):
+        return {}
+
+    # Both sides of the match, keyed the same way item names are matched everywhere else.
+    place_by_key = {}
+    for p in portals:
+        place_by_key[norm_name(p["name"])] = p["name"]
+        if p.get("dungeon"):
+            place_by_key.setdefault(norm_name(p["dungeon"]), p["name"])
+    item_by_key = {}
+    for it in items:
+        item_by_key.setdefault(norm_name(it["name"]), it)
+
+    out, report = {}, []
+    for fn in sorted(os.listdir(folder)):
+        path = os.path.join(folder, fn)
+        if not os.path.isfile(path) or fn.startswith("."):
+            continue
+        with open(path, encoding="utf-8", errors="ignore") as f:
+            text = f.read()
+        # A saved page is HTML. Turn every tag into a line break so the text keeps its
+        # reading order, then unescape the handful of entities that carry meaning in a
+        # RotMG item name.
+        if "<" in text and ">" in text:
+            text = re.sub(r"(?is)<(script|style)\b.*?</\1>", " ", text)
+            text = re.sub(r"<[^>]+>", chr(10), text)
+        for a, b in (("&amp;", "&"), ("&#39;", "'"), ("&rsquo;", "'"), ("&nbsp;", " "),
+                     ("&quot;", '"'), ("&lt;", "<"), ("&gt;", ">")):
+            text = text.replace(a, b)
+
+        here_place, seen, unmatched = None, 0, []
+        # Split on line breaks AND on the separators a pasted list uses, so
+        # "Undead Lair: Doom Bow, Spectral Sword" reads the same as three lines.
+        def take(cell, depth=0):
+            """Match one cell. True if it was a place or an item."""
+            nonlocal here_place, seen
+            cell = cell.strip().strip(":- ").strip("– ")
+            if not cell or len(cell) > 80:
+                return False
+            key = norm_name(cell)
+            if not key:
+                return False
+            if key in place_by_key:
+                here_place = place_by_key[key]
+                return True
+            if key in item_by_key:
+                if here_place:
+                    out.setdefault(key, here_place)
+                    seen += 1
+                return True
+            # "Undead Lair: Doom Bow" on one line. Split on the FIRST colon only, and only
+            # after the whole cell has failed - several real items have a colon in their
+            # own name ("Alien Core: Corrosion") and must match as themselves first.
+            if depth == 0 and ":" in cell:
+                head, tail = cell.split(":", 1)
+                got = take(head, 1)
+                return take(tail, 1) or got
+            return False
+
+        for raw in re.split(r"[" + chr(10) + chr(13) + r"|	;,]+", text):
+            if take(raw):
+                continue
+            # Only worth reporting if it looks like a name rather than page furniture.
+            cell = raw.strip().strip(":- ")
+            if here_place and len(cell) <= 80 and re.match(r"^[A-Z][\w' \-]{3,}$", cell):
+                unmatched.append(cell)
+        report.append((fn, seen, len(set(unmatched)), sorted(set(unmatched))[:6]))
+
+    for fn, seen, miss, sample in report:
+        print("  capture: %s -> %d items placed%s"
+              % (fn, seen, (", %d names not recognised (%s)" % (miss, ", ".join(sample)))
+                 if miss else ""))
+        if seen == 0:
+            FAILURES.append("capture %s placed nothing - is it the right page, and does it "
+                            "list a dungeon before its items?" % fn)
+    return out
+
+
 def has_place(sources):
     """Does this item already have somewhere to GO?
 
@@ -1296,8 +1391,12 @@ def main():
                     sources.append({"kind": "boss", "name": m.group(2).strip().rstrip("."),
                                     "boss": m.group(1).strip(), "note": d["desc"]})
 
-        if not sources:
-            # 4. ST set membership. Join on the setType HEX, never the display name:
+        # 4. ST set membership. Recorded ALWAYS, not only when nothing else answered:
+        #    a set and a dungeon answer different questions, and gating this on "no source
+        #    yet" dropped the setName the client states plainly from DruidST0/2/3, which
+        #    carry their own ORG_KOGBOLD label. It is appended after any place so the
+        #    place still leads the list.
+        if True:
             #    the client ships the typo "Venertable Pyramid Set" and a name join
             #    silently loses every piece of it.
             nm = (set_by_type.get((oattr.get("setType") or "").lower())
@@ -1333,7 +1432,15 @@ def main():
             # 7. community layer - RealmEye's untiered-items-by-dungeon page, captured
             #    once into data/. External knowledge, flagged as such, never blended
             #    into the client facts above.
-            cd = community.get(norm_name(disp))
+            # norm_name() strips " Shiny", so a re-printing matches its BASE's row on the
+            # captured page - never a row about itself. That shipped Perennial Cranium
+            # Shiny as Belladonna's Garden while the client's own ORG_PARASITE label put
+            # the base in Parasite Chambers: the same item in two places, and the external
+            # layer winning over the game files. Re-printings skip this step and inherit
+            # from their base further down, which lands on the same answer when the base
+            # only has a community source and on the RIGHT one when it does not.
+            reprint = "SHINY" in labels or "RESKIN" in labels or iid.endswith(" Shiny")
+            cd = None if reprint else community.get(norm_name(disp))
             if cd:
                 sources.append({"kind": "community", "name": cd,
                                 "note": "From RealmEye's Untiered Items by Dungeon page, "
@@ -1520,15 +1627,34 @@ def main():
     for ci, members in by_icon.items():
         agreed = {m["sources"][0]["name"] for m in members
                   if m["sk"] in ("dungeon", "boss") and m["sources"]}
-        resolved = sum(1 for m in members if m["sk"] in ("dungeon", "boss"))
+        # Count distinct BASE NAMES, not rows. Icon 149's "four resolved members" are
+        # Cnidaria Rod, Bottled Medusozoan and the Shiny re-printing of each - two
+        # witnesses wearing four coats. A re-printing is not independent evidence of
+        # where its base drops, and both Cnidarian Reef assignments rested on that.
+        resolved = len({norm_name(m["name"]) for m in members
+                        if m["sk"] in ("dungeon", "boss")})
         if len(agreed) != 1 or resolved < 3:
+            continue
+        # Icons 1, 2 and 3 are not dungeons. They hold 137, 122 and 86 items spanning
+        # dozens of unrelated ST sets - they are the collection TABS - and icon 1 happens
+        # to contain three items resolved to Kogbold Steamworks, which is enough to pass
+        # the unanimity test above and would file 137 ST pieces under it. Nothing shipping
+        # today goes through that door (all six live resolutions are on pure dungeon icons
+        # 137-149), but the guard costs two lines and the failure is silent.
+        sets_in_group = {m["sources"][0].get("name") for m in members
+                         if m["sk"] == "set" and m["sources"]}
+        if len(sets_in_group) > 1 or resolved * 4 < len(members):
             continue
         name = agreed.pop()
         for m in members:
             if m["sk"] != "none":
                 continue
             m["sources"] = [{"kind": "dungeon", "name": name, "via": "collection",
-                             "conf": "high",
+                             # The same evidence class a human rated "medium" in
+                             # data/derived-sources.json (Geb's Lost Hedjet, on an
+                             # identical icon-group argument). An automated version of a
+                             # vetted inference cannot outrank the vetted one.
+                             "conf": "medium",
                              "note": ("Every one of the %d items in this dungeon's collection "
                                       "that names a source names this one." % resolved)}]
             m["sk"] = "dungeon"
@@ -1691,6 +1817,27 @@ def main():
     guard(ench_xml, "ActivateOnEquip", sum(len(e["mut"]) for e in enchants), "enchant mutations")
     print("  enchantments: %d  (%d stat mutations)"
           % (len(enchants), sum(len(e["mut"]) for e in enchants)))
+
+    # ---- captured pages ------------------------------------------------------
+    # Applied AFTER the item loop rather than inside it, because matching needs the
+    # finished item list and the portal list, and both are built above. Only items that
+    # still have nowhere to go are touched, so a capture can never overrule the client.
+    cap = load_captures(portals, items)
+    if cap:
+        placed = 0
+        for it in items:
+            if has_place(it["sources"]):
+                continue
+            where = cap.get(norm_name(it["name"]))
+            if not where:
+                continue
+            it["sources"].append({
+                "kind": "community", "name": where,
+                "note": "From a RealmEye page captured by hand into data/captures/. "
+                        "Community knowledge, not game data."})
+            it["sk"] = it["sources"][0]["kind"]
+            placed += 1
+        print("  captures placed %d items that had no source" % placed)
 
     # ---- coverage ------------------------------------------------------------
     # The ratchet. This project has shipped eight silent parse failures; a table of
