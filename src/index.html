@@ -32,6 +32,41 @@
   --atlas:url("__SPRITE_ATLAS__");
   --ico:32px;                       /* 16px art; use multiples of 16 to stay crisp */
 }
+/* ---- the pixel headline font -------------------------------------------------
+   Silkscreen, by the Silkscreen Project Authors, SIL Open Font License 1.1 - the
+   licence travels with it at assets/fonts/OFL.txt. It is NOT the game's font: RotMG
+   uses Adobe's Myriad Pro, which is not redistributable, and the extracted client
+   assets contain no font file and no glyph sheet at all. This is the closest thing
+   that can legally ship.
+
+   It is a HEADLINE font on purpose. A pixel face at 11px with tabular numbers in it
+   is unreadable, so the tables, the stat chips and every number stay monospace and
+   only the chrome - brand, nav, section headers, tabs - takes it. */
+@font-face{font-family:"Silkscreen";font-style:normal;font-weight:400;font-display:swap;
+  src:url("__FONT_PIXEL_400__") format("woff2")}
+@font-face{font-family:"Silkscreen";font-style:normal;font-weight:700;font-display:swap;
+  src:url("__FONT_PIXEL_700__") format("woff2")}
+/* Off by default; Settings sets data-pixel on <html>. Everything that should take the
+   font points at --font-display, so the switch is one token. */
+:root{--font-display:var(--font)}
+html[data-pixel="1"]{--font-display:"Silkscreen",var(--font)}
+html[data-pixel="1"] .brandbtn .btxt b,
+html[data-pixel="1"] .navbtn,
+html[data-pixel="1"] .dsec,
+html[data-pixel="1"] .railhead,
+html[data-pixel="1"] .slottab .lbl,
+html[data-pixel="1"] .pettab,
+html[data-pixel="1"] .tab,
+html[data-pixel="1"] .wdg .bar .t,
+html[data-pixel="1"] .home h2,
+html[data-pixel="1"] .charcard b,
+html[data-pixel="1"] .dghead .nm,
+html[data-pixel="1"] h1,html[data-pixel="1"] h3{font-family:var(--font-display);
+  letter-spacing:.02em}
+/* Silkscreen has no descender room to speak of and rides high in its box. */
+html[data-pixel="1"] .navbtn,html[data-pixel="1"] .pettab,html[data-pixel="1"] .tab{
+  padding-top:calc(0.35em + 2px)}
+
 /* ---- scrollbars -----------------------------------------------------------
    Drawn from the same tokens as everything else, so each theme gets its own. The
    thumb is a 5px bar floating inside an 11px gutter: the transparent border plus
@@ -523,6 +558,7 @@ const S = {
   enchTop: LS("rm.enchTop")!==false,   // he only cares about the best roll; default on
   petFrom: null, petTo: null,
   statf: LS("rm.statf") || "",   // "show me everything that touches ATT"
+  pixel: LS("rm.pixel")===true,
   // biome name -> "g" (hunting here) or "r" (done). Kept out of S.biome, which is just
   // where the view is scrolled to.
   biomeMark: (LS("rm.biomeMark") && typeof LS("rm.biomeMark")==="object"
@@ -794,11 +830,11 @@ function drawItems(){
   // left. Without it the Item column absorbed all the slack and opened a canyon between
   // an item's name and its bag.
   $("#list").innerHTML = rows.length ? `<table class="items"><thead><tr>
-      <th style="width:82px"></th><th style="width:252px">Item</th>
+      <th style="width:82px"></th><th style="width:238px">Item</th>
       <th style="width:46px" title="loot bag rarity">Bag</th>
       <th style="width:62px" class="num">DPS*</th>
       <th title="what the item gives you while it is equipped">On equip</th>
-      <th style="width:104px" title="hover a door for the place it drops">Drops in</th>
+      <th style="width:126px" title="hover a door for the place it drops">Drops in</th>
       <th></th></tr></thead><tbody>${
     rows.map(i=>`<tr data-id="${esc(i.id)}" aria-selected="${S.sel===i.id}"
       class="${S.track.includes(i.id)?'tracked':''}" title="click to track / untrack">
@@ -1603,6 +1639,14 @@ const THEMES = {
   steel:       mkTheme("Steel",       "#7FA8D9", "#C3D0DE", "#3a4a5e", PLEX),
 };
 
+// The pixel font rides on <html> rather than on the theme, because it is orthogonal:
+// any of the 15 palettes can have it on or off.
+function applyPixel(on){
+  S.pixel = !!on;
+  document.documentElement.dataset.pixel = S.pixel ? "1" : "0";
+  LSet("rm.pixel", S.pixel);
+}
+
 function applyTheme(id){
   const th = THEMES[id] || THEMES.roadmap;
   const r = document.documentElement;
@@ -1626,6 +1670,11 @@ function settingsSheet(){
     <div class="themes">${Object.entries(THEMES).map(([id,th])=>`
       <button class="thm" type="button" data-theme="${id}" aria-pressed="${S.theme===id}">
         <span class="swatch" style="background:${th.swatch}"></span>${esc(th.name)}</button>`).join("")}</div>
+    <label class="srow" style="cursor:pointer" title="Silkscreen, SIL Open Font License.
+      Not the game's font - RotMG uses Myriad Pro, which cannot be redistributed, and the
+      extracted client assets contain no font at all. Headings only: a pixel face is not
+      readable at table size.">
+      <input type="checkbox" id="pixelfont" ${S.pixel?"checked":""}> pixel headings</label>
 
     <div class="grp">Overlay widget</div>
     <div class="srow"><span>Opacity</span>
@@ -2112,6 +2161,7 @@ document.addEventListener("input", e=>{
   if(e.target.id==="enchtop"){ S.enchTop=e.target.checked; LSet("rm.enchTop",S.enchTop); drawEnch(); return; }
   if(e.target.id==="petfrom"){ S.petFrom=+e.target.value; drawPets(); return; }
   if(e.target.id==="petto"){ S.petTo=+e.target.value; drawPets(); return; }
+  if(e.target.id==="pixelfont"){ applyPixel(e.target.checked); return; }
   if(e.target.id==="petgear"){ S.petGear=e.target.checked; LSet("rm.petGear",S.petGear); drawPets(); return; }
   if(["q","tier","srcf","statf","hidere","showgone"].includes(e.target.id)){
     if(S.view==="items") drawItems();
@@ -2271,6 +2321,7 @@ if (!D.classes.some(c => c.name === S.cls)) S.cls = D.classes[0].name;
 // this class is never set and the title bar stays display:none.
 if (globalThis.__TAURI__) document.body.classList.add("tauri");
 applyTheme(S.theme);
+applyPixel(S.pixel);
 if (globalThis.__ROTMG_WIDGET__) renderWidget(); else render();
 </script>
 </body>

@@ -90,6 +90,13 @@ disk is the one that was just built.
 
 ## Credits
 
+The pixel headline font is **Silkscreen** by the Silkscreen Project Authors, under the SIL
+Open Font License 1.1 — the licence travels with it at `assets/fonts/OFL.txt`. It is not the
+game's font: RotMG uses Adobe's Myriad Pro, which is not redistributable, and the extracted
+client assets contain no font file and no glyph sheet at all. It is off by default and is a
+headline face only — the tables stay monospace, because a pixel font is not readable at
+table size.
+
 The bestiary infographic is community work by **GHZD** and is included with credit; it is not
 game data and is not cross-checked against the client. Realm of the Mad God is Deca Games'.
 This project reads files the game already put on your disk and talks to nothing.

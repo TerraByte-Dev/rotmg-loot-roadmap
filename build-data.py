@@ -406,25 +406,40 @@ def load_drop_locations():
     return out
 
 
+# Pages a human captured from RealmEye into data/. Both are the same shape:
+#     <dungeon name> TAB <item>|<item>|<item>
+# The untiered page is the one that has been here since the start. The set-tier one is
+# the ST equivalent and ships EMPTY - see data/README.md - because the client genuinely
+# does not record where a set drops. Swept for it four ways: no enemy file names an ST
+# item, no dungeon file names a set, set shards carry no ORG label, and no file anywhere
+# references a shard object. The moment that file has rows in it, 265 set pieces get a
+# place through the same community step everything else uses.
+COMMUNITY_FILES = ("realmeye-untiered-by-dungeon.tsv", "realmeye-set-tier-items.tsv")
+
+
 def load_community_sources():
-    """RealmEye's "Untiered Items by Dungeon" page, captured once into data/.
+    """RealmEye pages, captured by hand into data/.
     Community knowledge, NOT game data - every entry is labelled as such."""
-    path = os.path.join(HERE, "data", "realmeye-untiered-by-dungeon.tsv")
-    if not os.path.exists(path):
-        return {}
     TAB = chr(9)
     out = {}
-    with open(path, encoding="utf-8") as f:
-        for line in f:
-            line = line.rstrip(chr(10)).rstrip(chr(13))
-            if TAB not in line:
-                continue
-            dungeon, items = line.split(TAB, 1)
-            for it in items.split("|"):
-                nm = it.strip()
-                if not nm:
+    for fn in COMMUNITY_FILES:
+        path = os.path.join(HERE, "data", fn)
+        if not os.path.exists(path):
+            continue
+        rows = 0
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                line = line.rstrip(chr(10)).rstrip(chr(13))
+                if TAB not in line:
                     continue
-                out.setdefault(norm_name(nm), dungeon.strip())
+                dungeon, items = line.split(TAB, 1)
+                for it in items.split("|"):
+                    nm = it.strip()
+                    if not nm:
+                        continue
+                    rows += 1
+                    out.setdefault(norm_name(nm), dungeon.strip())
+        print("  community: %s (%d item rows)" % (fn, rows))
     return out
 
 
@@ -2000,6 +2015,18 @@ def main():
                                 "data:image/png;base64," + base64.b64encode(f.read()).decode("ascii"))
     else:
         html = html.replace("__SPRITE_ATLAS__", "")
+
+    # The pixel headline font, inlined. 16 KB for the pair, and the app's CSP will not
+    # fetch a font from anywhere, so there is no other way for it to arrive.
+    for token, fn in (("__FONT_PIXEL_400__", "silkscreen-400.woff2"),
+                      ("__FONT_PIXEL_700__", "silkscreen-700.woff2")):
+        fp = os.path.join(HERE, "assets", "fonts", fn)
+        if os.path.exists(fp):
+            with open(fp, "rb") as f:
+                html = html.replace(token, "data:font/woff2;base64," +
+                                    base64.b64encode(f.read()).decode("ascii"))
+        else:
+            html = html.replace(token, "")
 
     best = os.path.join(HERE, "assets", "bestiary.jpg")
     if os.path.exists(best):

@@ -27,6 +27,8 @@ const PAYLOAD = {
   atlas: p('.build/sprite-atlas.png'),
   bestiary: p('assets/bestiary.jpg'),
   shell: p('src/shell.js'),
+  font400: p('assets/fonts/silkscreen-400.woff2'),
+  font700: p('assets/fonts/silkscreen-700.woff2'),
 }
 const ATLAS_FILE = 'sprite-atlas.png'
 const BESTIARY_FILE = 'bestiary.jpg'
@@ -87,6 +89,12 @@ function rotmgPayload({ inline }) {
         // block ends the block, and item descriptions contain arbitrary text.
         const json = readFileSync(must(PAYLOAD.data), 'utf8').replace(/<\//g, '<\\/')
         html = put(html, '__ROTMG_DATA__', json)
+
+        // The pixel font is inlined in BOTH builds, unlike the atlas and the bestiary.
+        // It is 16 KB for the pair, the CSP forbids fetching a font from anywhere, and a
+        // headline font that arrives late is worse than one that costs 21 KB of base64.
+        html = put(html, '__FONT_PIXEL_400__', dataUri('font/woff2', PAYLOAD.font400))
+        html = put(html, '__FONT_PIXEL_700__', dataUri('font/woff2', PAYLOAD.font700))
 
         if (inline) {
           html = put(html, '__SPRITE_ATLAS__', dataUri('image/png', PAYLOAD.atlas))
