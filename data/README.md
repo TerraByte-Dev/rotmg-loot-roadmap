@@ -41,6 +41,23 @@ The build prints what it did — `capture: page.html -> 137 items placed, 4 name
 recognised (…)` — so a page that came out wrong says so instead of silently doing nothing.
 A capture only ever fills a gap: an item the client already places is never overruled.
 
+### What a capture can yield besides dungeons
+
+The Set Tier Items page has **no dungeons on it**, because ST sets do not have one. What
+it does carry is a table the client does not — which class a set belongs to and which
+**generation** it is — and that is the thing that actually decides how you get one. The
+build reads it out of the same file automatically:
+
+| generation | how you get it, in the page's own words |
+|---|---|
+| current (newest for that class) | campaigns, Mystery Boxes, Mystery ST Chests, plus *"rare drops in orange bags"* from enemies |
+| previous | drops only; no longer purchasable |
+| reskin | comes back with its event |
+| legacy | *"replaced with soulbound, slightly modified versions"* — not obtainable |
+
+"Current" is derived from the table itself (the highest generation that class has), not
+from a date, so a re-capture keeps it right without a code change.
+
 ### The precise way: a TSV
 
 `realmeye-untiered-by-dungeon.tsv` and `realmeye-set-tier-items.tsv` are the same shape: one dungeon per line, a tab, then the items separated by

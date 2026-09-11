@@ -891,9 +891,86 @@ def load_captures(portals, items):
         print("  capture: %s -> %d items placed%s"
               % (fn, seen, (", %d names not recognised (%s)" % (miss, ", ".join(sample)))
                  if miss else ""))
-        if seen == 0:
-            FAILURES.append("capture %s placed nothing - is it the right page, and does it "
-                            "list a dungeon before its items?" % fn)
+        # Not a failure on its own. The Set Tier Items page, for instance, places no
+        # items because it has no dungeons on it - and still yields the generation table,
+        # which is read separately. The caller decides whether a file was useless.
+    return out
+
+
+GEN_COLS = ("1st", "2nd", "3rd", "reskin", "legacy", "vanity")
+GEN_ORDER = {"1st": 1, "2nd": 2, "3rd": 3}
+
+
+def load_set_generations(set_names, class_names):
+    """Which class a set belongs to and which generation it is, from a captured page.
+
+    The Set Tier Items page has no dungeons on it - ST sets do not have one - but it
+    carries a table the client does not:
+
+        Class   1st Generation   2nd Generation   3rd Generation   Reskin  Legacy  Vanity
+        Paladin Swoll Paladin    Corrupted Paladin Frost Harbinger Unholy PaladinFresh…
+
+    Note the Reskin column: the page renders several links in one cell and a copy-paste
+    smashes them into one string with no separator. They are split by matching greedily
+    against the set names the CLIENT ships, longest first, so a name can only come out
+    of this if the game has it - the same both-ends rule the capture parser uses.
+    """
+    folder = os.path.join(HERE, "data", "captures")
+    if not os.path.isdir(folder):
+        return {}
+    known = {}
+    for nm in set_names:
+        known[nm] = nm
+        if nm.endswith(" Set"):
+            known[nm[:-4]] = nm
+
+    out = {}
+    for fn in sorted(os.listdir(folder)):
+        path = os.path.join(folder, fn)
+        if not os.path.isfile(path) or fn.startswith("."):
+            continue
+        with open(path, encoding="utf-8", errors="ignore") as f:
+            text = f.read()
+        if "<" in text and ">" in text:
+            text = re.sub(r"(?is)<(script|style)\b.*?</\1>", " ", text)
+            text = re.sub(r"</t[dh]>", chr(9), text)
+            text = re.sub(r"<[^>]+>", chr(10), text)
+        text = text.replace("&#39;", "'").replace("&rsquo;", "'").replace("&amp;", "&")
+
+        for line in text.split(chr(10)):
+            cells = line.split(chr(9))
+            if len(cells) < 4:
+                continue
+            cls = cells[0].strip()
+            if cls not in class_names:
+                continue
+            for col, cell in enumerate(cells[1:1 + len(GEN_COLS)]):
+                rest = cell.strip()
+                while rest:
+                    hit = None
+                    for cand in sorted(known, key=len, reverse=True):
+                        if rest.startswith(cand):
+                            hit = cand
+                            break
+                    if not hit:
+                        break
+                    out[known[hit]] = {"cls": cls, "gen": GEN_COLS[col]}
+                    rest = rest[len(hit):].strip()
+                    # "Love Witch Necromancer SetRose Keeper Necromancer Set" - the base
+                    # name matched, and the "Set" that belonged to it is still sitting
+                    # in front of the next one.
+                    if rest.startswith("Set"):
+                        rest = rest[3:].strip()
+
+    # Current = the highest numbered generation that class has. Derived from the table
+    # rather than from a date, so a re-capture keeps it right without a code change.
+    best = {}
+    for nm, v in out.items():
+        n = GEN_ORDER.get(v["gen"])
+        if n:
+            best[v["cls"]] = max(best.get(v["cls"], 0), n)
+    for nm, v in out.items():
+        v["current"] = GEN_ORDER.get(v["gen"]) == best.get(v["cls"])
     return out
 
 
@@ -1839,6 +1916,37 @@ def main():
             placed += 1
         print("  captures placed %d items that had no source" % placed)
 
+    # ---- ST generations ------------------------------------------------------
+    # The captured Set Tier Items page has no dungeons on it, because there are none:
+    # an ST set is not a dungeon drop. What it does carry is the one table the client
+    # does not - which set belongs to which class, and which GENERATION it is - and
+    # that is the thing that actually decides how you get one:
+    #
+    #   "current generation" sets    campaigns, Mystery Boxes, Mystery ST Chests, and
+    #                                rare orange-bag drops from enemies
+    #   previous generation          drops only; no longer purchasable
+    #   legacy                       not obtainable at all
+    #
+    # quoted from the page: "Stage 3: The items are introduced as normal drops" and
+    # "obtainable from enemies as rare drops in orange bags".
+    #
+    # Current = the highest generation present for that class, derived from the table
+    # itself rather than from a date, so it stays right as the table is re-captured.
+    set_gen = load_set_generations(set(eqsets), {c["name"] for c in classes})
+
+    # A captured file that yielded neither a placement nor a generation row is the one
+    # worth shouting about: wrong page, or a paste that lost its structure.
+    cap_dir = os.path.join(HERE, "data", "captures")
+    if os.path.isdir(cap_dir) and not cap and not set_gen:
+        live = [f for f in os.listdir(cap_dir) if not f.startswith(".")]
+        if live:
+            FAILURES.append("data/captures/ has %d file(s) and none of them yielded "
+                            "anything: %s" % (len(live), ", ".join(live)))
+    if set_gen:
+        cur = sum(1 for v in set_gen.values() if v.get("current"))
+        print("  ST generations: %d sets across %d classes (%d current)"
+              % (len(set_gen), len({v["cls"] for v in set_gen.values()}), cur))
+
     # ---- coverage ------------------------------------------------------------
     # The ratchet. This project has shipped eight silent parse failures; a table of
     # what resolved, by kind, is the cheapest way to see the next one arrive.
@@ -2125,6 +2233,7 @@ def main():
         "portals": portals, "enchants": enchants, "slotNames": SLOT_NAMES,
         "sourceIcons": source_icons, "combos": combos,
         "stats": STATS,
+        "setGen": set_gen or None,
         "pets": {"abilities": pet_abilities, "food": pet_food,
                  "levels": pet_levels,
                  "ladders": feed_ladders, "yard": pet_yard},

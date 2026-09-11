@@ -1,0 +1,191 @@
+eyeRealmEye
+Wiki
+Forum
+Set Tier Items
+Last updated: Exalt Version 6.6.0.0 (Feb 2026)
+Set Tier Items are equipment items with the designation ST and are part of a special themed set. ST sets confer additional stat bonuses to the wearer when at least two pieces of the same set are worn. When all items of the set are equipped together, the character will transform, adopting a set-specific skin and benefiting fully from the stat bonuses of the set. More recently released ST sets tend to include weapons or abilities that have additional effects when a specific other piece in the set is equipped.
+
+There is at least one standard ST set for each of the 19 classes. Other ST sets include the vanity Golden Archer set (with intentionally poor, “joke” stats), 6 reskinned Halloween-themed sets, the Oryx Awesome Knight set & 3 legacy sets (which were once the standard sets, but have been replaced with soulbound, slightly modified versions). As Alien Cores and Reactors provide set bonuses based on the number of Alien Gear items equipped, they are also classified as ST.
+
+It is possible to benefit from two different ST set bonuses at once by wearing two pairs of items from two different sets. Note that legacy sets do not confer stat bonuses.
+
+The standard, legacy & halloween sets grant the character a 16x16 skin sprite when all pieces are worn. The Golden Archer set has an associated 8x8 skin.
+
+Items from the first six ST sets, which were introduced during the Kabam era, are tradable. Newer sets are soulbound. Four of these tradable sets were converted into ‘Legacy’ sets, and new soulbound versions of these sets were released to replace them, usually with updated stats.
+
+Some UT items are considered part of a Themed Set based on similar appearance and drop location, such as the Coral Huntress or Void Archer sets. These sets are not considered ST because they do not offer a skin transformation or provide additional stat bonuses. Like other UTs, these cannot be purchased for Realm Gold.
+
+Obtaining
+Unlike regular untiered (UT) items, “current generation” ST sets, which are the most recently released sets for each class, can be purchased for Realm Gold through Mystery Boxes, in addition to being obtainable from enemies as rare drops in orange bags. Current generation STs can also be obtained from Mystery ST Chests, which can be acquired through Mystery Boxes, packages, campaigns, and occasionally given out for free through the Login Seer.
+
+As of Patch X.32.2.1 (Nov 2019), ST sets are released in a three-stage system, usually in groups of two to three sets.
+
+Stage 1 (2-3 weeks): The ST set is available exclusively through a tiered spender campaign. Older sets for the class will have their drop rates increased. The campaign has multiple tiers of rewards, including class-specific Mystery ST Crates and Avarice Medallions. The Mystery ST Crates have an uncommon chance to reward a new ST item of the respective class when used, while an Avarice Medallion can be exchanged at the Tinkerer for a new ST item of choice. The top rewards for the campaign will include one full set for each class. Note that fully completing an ST campaign will require a significant financial investment (more than $500 to $650 USD, depending on the number of sets available).
+
+Stage 2 (2-3 weeks): The items are obtainable as bonus rewards from opening enchanted keys, which turn into a generic Mystery ST Crate when used. Like the class-specific Mystery ST Crates, these have an uncommon chance to reward an ST item when used.
+
+Stage 3: The items are introduced as normal drops.
+Note that the “2-3 week” periods for Stages 1 and 2 indicate the total duration of the promotional events only, not the total length of time since Stage 1 initiated, so a given set may be exclusive for >2 months. There is usually a break between Stages 1 and 2.
+
+“Previous generation” ST sets can only be obtained as drops from enemies and can no longer be purchased with Realm Gold or acquired through Mystery ST Chests. The Priest of Geb and Phylactery Mystic sets, along with all Legacy sets, can also be obtained from trading with other players. All other ST items are soulbound.
+
+List of ST sets
+Class	1st Generation	2nd Generation	3rd Generation	Reskin	Legacy	Vanity
+Rogue	Skuld 2 The ReGhostening	Vampire Rogue	Spectral Sentry Rogue		Legacy Skuld 2 The ReGhostening	
+Archer	Phantom Archer	Treasure Hunter Archer	Kogbold Turretsmith Archer	Reanimated ArcherValentine's Day ArcherPainted Egg ArcherFrost Wander Archer		Golden Archer
+Wizard	Twilight Archmage	Slurp Scion Wizard	Kogbold Pyrotechnician Wizard	Paranormal WizardUndersea Phantom Wizard	Legacy Twilight Archmage	
+Priest	Priest of Geb	Mad God's Messenger	Plague Doctor Priest	Archexorcist PriestVoid Doctor Priest		
+Warrior	Dragon Tamer	Pirate King Warrior	Killbilly Warrior	Lycan Warrior		
+Knight	Oryx's Battle Attires	Nordic Knight	Mad Minotaur	Easter KnightBlood Viking Knight	Oryx Awesome	
+Paladin	Swoll Paladin	Corrupted Paladin	Frost Harbinger	Unholy PaladinFresh Carrot Paladin	Legacy Swoll Paladin	
+Assassin	Flesh Collector	Acidified Assassin	Alchemist Assassin			
+Necromancer	Hollow King Necromancer	Cuboid Necromancer	Shaman Necromancer	Reaper NecromancerGlobular NecromancerLove Witch Necromancer SetRose Keeper Necromancer Set		
+Huntress	Swarming Huntress	Horticultural Huntress	Resurrected Huntress	Cursed Cursebreaker Huntress		
+Mystic	Phylactery Mystic	Magmatic Mystic	Astral Arcanist	Totalia Mystic2-Bit MysticTimekeeper Mystic		
+Trickster	Lost Golem	Daeva Trickster	Spellbound Soulthief	Scarecrow Trickster		
+Sorcerer	Horrific Sorcerer	Court Magician Sorcerer	Storm Shaman	Incubus Sorcerer		
+Ninja	Raijin Disciple	Crystal Kunoichi	Onmyoji Ninja	Lei Gong Valentine's Day Ninja		
+Samurai	Akuma Slayer	Daring Discoverer Samurai	Frost Advisor	Valentine's Day Samurai		
+Bard	Angelic Bard	Storm Caller Bard	Ancestral Shaman	Demon Guitarist		
+Summoner	Scientific Summoner	Earthen Bulwark Summoner	Phytomancer Summoner	Ghostly Banshee SummonerChocolate Bunny Summoner		
+Kensei	Tidal Wave Kensei	Fiery Kensei				
+Druid	Mechanical Raptor Druid					
+Wiki Search
+Wiki search
+Navigation
+Realm of the Mad God
+Getting Started
+Game Objectives
+Classes
+Character Stats
+Items
+Equipment
+Weapons
+Ability Items
+Armor
+Rings
+Weapon Attributes
+Untiered Drops
+Untiered Items by Dungeon
+Biome Whites
+Event Whites
+Reskinned Equipment
+Themed Sets
+Set Tier Items
+Vampire Rogue Set
+Skuld 2 The ReGhostening Set
+Legacy Skuld 2 The ReGhostening Set
+Phantom Archer Set
+Treasure Hunter Archer Set
+Kogbold Turretsmith Archer Set
+Golden Archer Set
+Valentine's Day Archer Set
+Reanimated Archer Set
+Twilight Archmage Set
+Slurp Scion Wizard Set
+Kogbold Pyrotechnician Wizard Set
+Paranormal Wizard Set
+Undersea Phantom Wizard Set
+Legacy Twilight Archmage Set
+Priest of Geb Set
+Mad God's Messenger Set
+Plague Doctor Priest Set
+Archexorcist Priest Set
+Dragon Tamer Set
+Pirate King Warrior Set
+Killbilly Warrior Set
+Lycan Warrior Set
+Oryx's Battle Attires Set
+Nordic Knight Set
+Mad Minotaur Set
+Easter Knight Set
+Oryx Awesome Set
+Swoll Paladin Set
+Corrupted Paladin Set
+Frost Harbinger Set
+Unholy Paladin Set
+Legacy Swoll Paladin Set
+Flesh Collector Set
+Acidified Assassin Set
+Alchemist Assassin Set
+Hollow King Necromancer Set
+Cuboid Necromancer Set
+Shaman Necromancer Set
+Reaper Necromancer Set
+Swarming Huntress Set
+Horticultural Huntress Set
+Resurrected Huntress Set
+Cursed Cursebreaker Huntress Set
+Phylactery Mystic Set
+Magmatic Mystic Set
+Astral Arcanist Set
+Totalia Mystic Set
+Lost Golem Set
+Daeva Trickster Set
+Spellbound Soulthief Set
+Scarecrow Trickster Set
+Horrific Sorcerer Set
+Court Magician Sorcerer Set
+Storm Shaman Set
+Incubus Sorcerer Set
+Raijin Disciple Set
+Crystal Kunoichi Set
+Onmyoji Ninja Set
+Lei Gong Set
+Valentine's Day Ninja Set
+Akuma Slayer Set
+Daring Discoverer Samurai Set
+Frost Advisor Set
+Valentine's Day Samurai Set
+Angelic Bard Set
+Storm Caller Bard Set
+Demon Guitarist Set
+Scientific Summoner Set
+Earthen Bulwark Summoner Set
+Ghostly Banshee Summoner Set
+Tidal Wave Kensei Set
+Fiery Kensei Set
+Chocolate Bunny Summoner Set
+Fresh Carrot Paladin Set
+Painted Egg Archer Set
+Void Doctor Priest Set
+Blood Viking Knight Set
+Globular Necromancer Set
+Frost Wander Archer Set
+Spectral Sentry Rogue Set
+Ancestral Shaman Set
+Love Witch Necromancer Set
+Rose Keeper Necromancer Set
+Mechanical Raptor Druid Set
+Phytomancer Summoner Set
+2-Bit Mystic Set
+Timekeeper Mystic Set
+Equipment Set Gear
+April Fool's Equipment Versions
+Shiny Items
+Consumables
+Pet Food
+Other Items
+Loot Containers
+Forge
+Enchanting
+Pets
+The Realm
+Dungeons
+Monsters
+Guides
+Lore
+Useful Links
+Development
+Wiki Archive
+Help the Wiki
+Page Tools
+Links to this page
+Page history
+Wiki Tools
+Recent Changes
+Broken links
+Unlinked pages
+Inconsistent paths
+Pages not part of the navigation tree
+Random page

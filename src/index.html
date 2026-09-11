@@ -452,6 +452,10 @@ body.tauri .titlebar{display:flex;align-items:center;height:34px;background:var(
 .thm:hover{border-color:var(--accent-dim)}
 .thm[aria-pressed=true]{border-color:var(--accent);color:var(--accent);background:var(--accent-glow)}
 .door.set{outline:1px solid var(--st);outline-offset:-1px;border-radius:2px}
+.gen{font-size:10px;letter-spacing:.04em;color:var(--ink-faint);border:1px solid var(--line-soft);
+  border-radius:var(--radius);padding:0 4px;white-space:nowrap}
+.gen.cur{color:var(--st);border-color:var(--st)}
+.gen.legacy{color:var(--ink-faint);text-decoration:line-through}
 .swatch{width:15px;height:15px;border-radius:3px;flex:0 0 auto;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
 .srow{display:flex;align-items:center;gap:9px;margin:9px 0;font-size:11.5px;color:var(--ink-dim)}
 .srow input[type=range]{flex:1;accent-color:var(--accent)}
@@ -628,6 +632,25 @@ function srcText(it){
 // Sources with no portal (event whites, alien invasion, unmapped codes) keep a text chip
 // rather than borrowing some other dungeon's door.
 const SRCI = D.sourceIcons || {};
+// How you get an ST set, straight out of the captured page's own prose. Not a dungeon:
+// "obtainable from enemies as rare drops in orange bags", and for the newest set of each
+// class also "Mystery ST Chests, which can be acquired through Mystery Boxes, packages,
+// campaigns". Previous generations lose the purchase routes and keep the drop.
+const SETGEN = D.setGen || {};
+const GENLBL = {"1st":"gen 1", "2nd":"gen 2", "3rd":"gen 3",
+                reskin:"reskin", legacy:"legacy", vanity:"vanity"};
+function GENWHY(g){
+  const who = `${g.cls} · ${GENLBL[g.gen]||g.gen}`;
+  if(g.gen === "legacy") return `${who} — replaced by a newer version and no longer obtainable.`;
+  if(g.gen === "reskin") return `${who} — a seasonal reskin; it comes back with its event.`;
+  if(g.gen === "vanity") return `${who} — a joke set, deliberately weak.`;
+  if(g.current) return `${who}, the CURRENT set for this class — campaigns, Mystery Boxes`
+    + ` and Mystery ST Chests, plus rare orange-bag drops from enemies. No single dungeon:`
+    + ` the client files do not name one and neither does the captured page.`;
+  return `${who} — a previous generation. Drops only now: rare orange-bag drops from`
+    + ` enemies, no longer purchasable. No single dungeon.`;
+}
+
 function srcDoors(it){
   // Tiered gear now resolves to its own "Any dungeon" source in the data, so it never
   // reaches here. Only a real gap does - and for a UT or ST that gap is the honest answer.
@@ -654,16 +677,18 @@ function srcDoors(it){
   // A source with no door art has nothing to show, so it keeps its name - an event or an
   // ST set would otherwise be a blank cell.
   const nameless = parts.filter(p => p.e.sp == null);
-  // A set on its own does not answer "where". 265 ST pieces have nothing else, and an
-  // empty cell reads as a missing feature rather than as a missing fact - so say it.
+  // A set on its own used to say nothing, because the client has no dungeon for one.
+  // The captured Set Tier Items page does not have dungeons either - ST sets do not have
+  // one - but it does say which GENERATION a set is, and that decides how you get it.
   const setOnly = parts.length === 1 && parts[0].e.kind === "set";
+  const gen = setOnly ? SETGEN[parts[0].key] : null;
   return `<span class="dropin">
       <span class="doors">${parts.map(art).join("")}</span>
       ${nameless.length?`<span class="dname" title="${esc(nameless[0].label)}">${
         esc(nameless[0].key)}</span>`:""}
-      ${setOnly?`<span class="dim" style="font-size:10.5px" title="${esc(parts[0].key)} — the
-        client files do not say where this set drops, and the one page captured into data/
-        is untiered items only.">set only</span>`:""}
+      ${setOnly?`<span class="gen ${gen?esc(gen.gen):""}${gen&&gen.current?" cur":""}"
+        title="${gen?esc(GENWHY(gen)):esc(parts[0].key)}">${
+        gen?esc(GENLBL[gen.gen]||gen.gen):"set only"}</span>`:""}
     </span>`;
 }
 function tierTag(it){
