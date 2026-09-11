@@ -34,8 +34,8 @@ it in any browser, or drop it in a Discord DM.
 - **Dungeons** — every portal in the client, with the difficulty rating the game itself
   stores on its dungeon keys.
 - **Bestiary** — the community realm infographic, with a jump-to-biome picker.
-- **Pets** — what every pet ability actually does at each end of its scale, and what
-  everything in the game is worth as pet food.
+- **Pets** — what every pet ability does **at your ability level**, and what everything
+  in the game is worth as pet food, with a feed-to-level calculator.
 
 ## Where the data comes from, and how much to trust it
 

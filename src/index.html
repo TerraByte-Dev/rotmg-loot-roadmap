@@ -190,6 +190,11 @@ table.dmg td.down{color:#ff6b6b}
 .prow .v .to{color:var(--ink-faint);padding:0 3px}
 .prow .c{margin-left:auto;color:var(--ink-faint);font-size:10px}
 .prow.sub .k{padding-left:11px;font-style:italic}
+.atlv{border:1px solid var(--accent-dim);background:var(--accent-glow);border-radius:var(--radius);
+  padding:6px 8px;margin-bottom:7px}
+.atlv .k{color:var(--accent);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase}
+.atlv .v{font-size:13px;color:var(--ink);margin:2px 0}
+.atlv .v b{color:var(--accent);font-variant-numeric:tabular-nums}
 .ladder{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
 .ladder b{background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius);
   padding:2px 6px;font-weight:400;color:var(--ink-dim);font-size:11.5px}
@@ -561,6 +566,9 @@ const S = {
   petGear: LS("rm.petGear")===true,
   enchTop: LS("rm.enchTop")!==false,   // he only cares about the best roll; default on
   petFrom: null, petTo: null,
+  petSlot: ["first","second","third"].includes(LS("rm.petSlot")) ? LS("rm.petSlot") : "first",
+  petLv: (typeof LS("rm.petLv")==="number" && LS("rm.petLv")>=1 && LS("rm.petLv")<=100)
+         ? LS("rm.petLv") : 50,
   statf: LS("rm.statf") || "",   // "show me everything that touches ATT"
   pixel: LS("rm.pixel")===true,
   // biome name -> "g" (hunting here) or "r" (done). Kept out of S.biome, which is just
@@ -1117,6 +1125,47 @@ function dungeonDrops(name){
 // ---------------------------------------------------------------------------
 const PETS = D.pets || {};
 
+// A level picker that drives both halves of the pets page: what the ability does at that
+// level, and what it cost to get there. S.petLv is the pet's ability level, 1-100.
+const PLV = () => PETS.levels;
+
+// "21 every 2.85s — 7.4/sec" plus the sheet's own stat-equivalent column.
+function abilityAtLevel(key, lv){
+  const L = PLV(); if(!L || !L.abil || !L.abil[key]) return null;
+  return L.abil[key].find(r => r[0] === lv) || null;
+}
+
+function petLevelBar(){
+  const L = PLV();
+  if(!L) return "";
+  const lv = S.petLv;
+  return `<div class="bar" style="border-top:1px solid var(--line-soft)">
+    <label>ability level
+      <input type="range" id="petlv" min="1" max="100" value="${lv}" style="width:190px">
+    </label>
+    <b style="color:var(--accent);font-variant-numeric:tabular-nums">${lv}</b>
+    <span class="spacer" title="${esc(L.source)}">levels are community data, not game files</span>
+  </div>`;
+}
+
+// The two heal abilities are the ones every player runs, and "how much is this actually
+// healing me for" is the question the client can only answer at the two ends.
+function healAtLevel(a){
+  const key = a.id === "Heal" ? "Heal" : a.id === "Magic Heal" ? "MagicHeal" : null;
+  if(!key) return "";
+  const row = abilityAtLevel(key, S.petLv);
+  if(!row) return "";
+  const [lv, amt, delay, ps, eq] = row;
+  const unit = key === "Heal" ? "HP" : "MP";
+  const stat = key === "Heal" ? "VIT" : "WIS";
+  return `<div class="atlv">
+    <div class="k">at level ${lv}</div>
+    <div class="v"><b>${amt}</b> ${unit} every <b>${delay}</b>s
+      <span class="dim">&mdash; ${ps} ${unit}/sec</span></div>
+    <div class="dim">worth about <b>${eq}</b> ${stat} of regeneration, by the same table.</div>
+  </div>`;
+}
+
 function petsView(){
   const tabs = [["ability","Abilities"],["feed","Feed"]].map(([k,l])=>
     `<button class="pettab" type="button" data-ptab="${k}"
@@ -1135,6 +1184,7 @@ function petsView(){
         : ""}
       <span class="spacer" id="count"></span>
     </div>
+    ${(S.ptab||"ability")==="ability"?petLevelBar():""}
     <div class="scroll" id="list"></div>`;
 }
 
@@ -1170,6 +1220,7 @@ function petAbilityCard(a){
     <div class="pnm">${esc(a.id)}</div>
     <div class="grp">${esc(a.group||"")}${a.base?` &middot; ${esc(a.base)}`:""}</div>
     <div class="dim" style="margin-bottom:7px;line-height:1.5">${esc(a.desc||"")}</div>
+    ${healAtLevel(a)}
     ${proj}${params}
     <div class="prow"><span class="k">Starter pets</span>
       <span class="v">${first||"&mdash;"}</span>
@@ -1185,11 +1236,13 @@ function drawPets(){
       (a.id+" "+(a.group||"")+" "+(a.desc||"")).toLowerCase().includes(q));
     $("#count").textContent=`${rows.length} of ${(PETS.abilities||[]).length}`;
     $("#list").innerHTML =
-      `<div class="hint">These are the <b>endpoints</b> the game files declare &mdash; the value
-        at an ability's lowest level and at its highest. The curve between them is named in
-        <code>pets.xml</code> and <b>defined nowhere</b> in the client, and nothing in the files
-        says what level range the two ends span. So there is no honest way to show what your
-        pet heals for right now, and this app will not invent one.</div>` +
+      `<div class="hint">The <b>min &rarr; max</b> columns are the endpoints the game files
+        declare &mdash; an ability's value at its lowest level and at its highest. The curve
+        between them is named in <code>pets.xml</code> and <b>defined nowhere</b> in the client.
+        ${PLV()?`The <b>at level</b> boxes fill that gap from a community table, not from the
+        game files, and it says so: <span class="dim">${esc(PLV().source)}</span>`
+        :`So the app shows both ends and nothing in between &mdash; put a table into
+        <code>data/pet-levels.json</code> and it will.`}</div>` +
       `<div class="pgrid">${rows.map(petAbilityCard).join("")}</div>` +
       petFootnotes();
     return;
@@ -1245,7 +1298,11 @@ function petLevelCalc(){
       community table you trust into <code>data/pet-levels.json</code> (it explains the
       shape) and re-run the build; this turns into a calculator and labels every number
       it draws from that file.</div></div>`;
-  const rows=L.feedToLevel, lv=rows.map(r=>r[0]);
+  // A pet levels each ability slot separately and the later ones cost far more for the
+  // same level - the third is roughly 3.3x the first at 100 - so the slot is part of the
+  // question, not a detail.
+  const slot = S.petSlot || "first";
+  const rows=(L.by && L.by[slot]) || L.feedToLevel, lv=rows.map(r=>r[0]);
   const cum=Object.fromEntries(rows);
   const from=S.petFrom!=null?S.petFrom:lv[0], to=S.petTo!=null?S.petTo:lv[lv.length-1];
   const opt=(sel)=>lv.map(n=>`<option value="${n}"${n===sel?" selected":""}>${n}</option>`).join("");
@@ -1279,6 +1336,8 @@ function petLevelCalc(){
     <div class="note">These numbers are <b>not from the game files</b>. They come from
       <code>data/pet-levels.json</code>: ${esc(L.source)}</div>
     <div class="bar" style="padding:9px 0;border:0">
+      <label>ability <select id="petslot">${["first","second","third"].map(k=>
+        `<option value="${k}"${k===slot?" selected":""}>${k}</option>`).join("")}</select></label>
       <label>from level <select id="petfrom">${opt(from)}</select></label>
       <label>to <select id="petto">${opt(to)}</select></label>
       <span class="spacer">${need==null?"not in the table"
@@ -1314,7 +1373,9 @@ function petFootnotes(){
       (<code>exp_incr</code>, <code>dim_returns</code>, <code>exp_decr</code>, <code>linear</code>)
       and not one of them is defined on disk.<br>
       <b>What level the ends are.</b> No file states a floor or ceiling for a pet or an
-      ability level.<br>
+      ability level &mdash; the 1&ndash;100 range this page uses comes from the community
+      table, whose two ends happen to match the client's exactly, which is the reason to
+      believe the rest of it.<br>
       <b>Whether the heal is the heal.</b> The element is <code>MaxHeal</code> &mdash; a
       ceiling. The client never says whether the actual heal equals it, and never states its
       units.<br>
@@ -2184,6 +2245,9 @@ document.addEventListener("input", e=>{
   if(e.target.id==="lvl1"){ S.lvl1=e.target.checked; render(); return; }
   if(e.target.id==="fitkit"){ drawEnch(); return; }
   if(e.target.id==="enchtop"){ S.enchTop=e.target.checked; LSet("rm.enchTop",S.enchTop); drawEnch(); return; }
+  if(e.target.id==="petlv"){ S.petLv=+e.target.value; LSet("rm.petLv",S.petLv); drawPets();
+    const b2=e.target.closest(".bar"); if(b2) b2.querySelector("b").textContent=S.petLv; return; }
+  if(e.target.id==="petslot"){ S.petSlot=e.target.value; LSet("rm.petSlot",S.petSlot); drawPets(); return; }
   if(e.target.id==="petfrom"){ S.petFrom=+e.target.value; drawPets(); return; }
   if(e.target.id==="petto"){ S.petTo=+e.target.value; drawPets(); return; }
   if(e.target.id==="pixelfont"){ applyPixel(e.target.checked); return; }

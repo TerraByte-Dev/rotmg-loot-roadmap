@@ -1274,8 +1274,22 @@ def load_pet_levels():
                   key=lambda r: r[0])
     if not rows:
         return None
+    # The per-ability-slot tables and the heal magnitudes ride along when the file has
+    # them. They are what answers "what is my Heal actually doing at level 47", which is
+    # the question that started this - and the client can only answer it at 1 and 100.
+    by = {}
+    for k, v in (d.get("feedToLevelBy") or {}).items():
+        t = sorted(([int(x), int(y)] for x, y in v), key=lambda r: r[0])
+        if t:
+            by[k] = t
+    ab = {}
+    for k, v in (d.get("abilityLevels") or {}).items():
+        t = [r for r in v if len(r) >= 4]
+        if t:
+            ab[k] = sorted(t, key=lambda r: r[0])
     return {"source": d["source"].strip(), "maxLevel": d.get("maxLevel") or {},
-            "feedToLevel": rows}
+            "feedToLevel": rows, "by": by or None, "abil": ab or None,
+            "repairs": d.get("_repairs") or None}
 
 def load_pet_yard():
     """The Pet Yard upgrades, with the gold and fame the client actually asks for."""
