@@ -61,7 +61,7 @@ draws nothing in between, and there is no feed-to-level calculator unless you pu
 community table into `data/pet-levels.json` — which the app then labels as not-from-the-files
 wherever it uses it.
 
-**81 UT/ST items still say "not recorded".** That is deliberate. Nothing in the client, the
+**80 UT/ST items still say "not recorded".** That is deliberate. Nothing in the client, the
 captured page or the derived layer says where they drop, and a wrong dungeon costs somebody an
 evening of farming.
 
